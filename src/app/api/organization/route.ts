@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     // Build query
-    const query: any = {};
+    const query: { name?: { $regex: string, $options: string }, status?: string } = {};
     if (search) {
       query.name = { $regex: search, $options: 'i' };
     }
@@ -44,10 +44,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in GET /api/organizations:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch organizations' },
+      { error: (error as Error).message || 'Failed to fetch organizations' },
       { status: 500 }
     );
   }
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       message: 'Organization created successfully',
       organization
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in POST /api/organizations:', error);
     
     // Handle duplicate orgId error
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     // }
 
     return NextResponse.json(
-      { error: error.message || 'Failed to create organization' },
+      { error: (error as Error).message || 'Failed to create organization' },
       { status: 500 }
     );
   }
@@ -122,10 +122,10 @@ export async function PUT(request: NextRequest) {
       message: 'Organization updated successfully',
       organization
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in PUT /api/organizations:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to update organization' },
+      { error: (error as Error).message || 'Failed to update organization' },
       { status: 500 }
     );
   }
@@ -157,10 +157,10 @@ export async function DELETE(request: NextRequest) {
       message: 'Organization deleted successfully',
       success: true
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in DELETE /api/organization:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to delete organization' },
+      { error: (error as Error).message || 'Failed to delete organization' },
       { status: 500 }
     );
   }

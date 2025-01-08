@@ -6,7 +6,6 @@ import {
   Search, Plus, Filter, Building2, Edit, Trash2,
   ChevronLeft, ChevronRight, AlertCircle, RefreshCw, X 
 } from 'lucide-react';
-import { LoadingAnimation } from '@/components/loadinganimation';
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import OrganizationForm from '@/components/organization/orgform/form';
 import { IOrganization } from '@/types/organization';
@@ -24,7 +23,7 @@ export default function OrganizationList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [isFilterLoading, setIsFilterLoading] = useState(false);
+ 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOrganization, setEditingOrganization] = useState<IOrganization | null>(null);
@@ -72,7 +71,7 @@ export default function OrganizationList() {
       console.error('Error:', err);
     } finally {
       setIsLoading(false);
-      setIsFilterLoading(false);
+
     }
   };
 
@@ -91,7 +90,7 @@ export default function OrganizationList() {
       if (!response.ok) throw new Error('Failed to delete organization');
       
       await fetchOrganizations();
-    } catch (err) {
+    } catch  {
       setError('Failed to delete organization');
     } finally {
       setIsDeleting(null);

@@ -5,25 +5,20 @@ import {
     BoxIcon,
     UserCircle,
     Hotel,
-    ClipboardList,
     PlusCircle,
-    ListIcon,
-    LogOut,
-    Settings,
-    UserPlus,
-    LogIn,
+    ListIcon
   } from 'lucide-react';
   
   export interface SubNavItem {
     title: string;
     href: string;
-    icon?: any;
+    icon?: React.ComponentType;
   }
   
   export interface NavItem {
     title: string;
     href?: string;
-    icon?: any;
+    icon?: React.ComponentType;
     subItems?: SubNavItem[];
   }
   

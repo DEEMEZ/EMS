@@ -69,7 +69,7 @@ export default function OrganizationForm({ initialData, onCancel, onSuccess }: O
       } else {
         setError('Failed to save organization');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to save organization');
     } finally {
       setIsSubmitting(false);

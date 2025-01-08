@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import ProductForm from '@/components/productform';
 import ProductList from '@/components/productlist';
-import { div } from 'framer-motion/client';
 import NavbarComponent from '@/components/navbar/navbar';
 
 export default function Home() {

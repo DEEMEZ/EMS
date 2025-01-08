@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     const product = await Product.create(data);
     return NextResponse.json(product, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Error creating product' }, { status: 500 });
   }
 }
@@ -18,7 +18,7 @@ export async function GET() {
     await dbConnect();
     const products = await Product.find({}).sort({ createdAt: -1 });
     return NextResponse.json(products);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Error fetching products' }, { status: 500 });
   }
 }
@@ -30,7 +30,7 @@ export async function PUT(request: NextRequest) {
     const { _id, ...updateData } = data;
     const product = await Product.findByIdAndUpdate(_id, updateData, { new: true });
     return NextResponse.json(product);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Error updating product' }, { status: 500 });
   }
 }
@@ -42,7 +42,7 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
     await Product.findByIdAndDelete(id);
     return NextResponse.json({ message: 'Product deleted successfully' });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Error deleting product' }, { status: 500 });
   }
 }

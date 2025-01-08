@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Menu, X, UserCircle } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import { navigationConfig, NavItem } from '@/config/navigation';
 
 const NavbarComponent = () => {
@@ -46,7 +46,7 @@ const NavbarComponent = () => {
           className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all
             ${isOpen ? 'text-blue-600 bg-blue-50' : 'hover:bg-gray-50'}`}
         >
-          {item.icon && <item.icon className="w-5 h-5" />}
+          {item.icon && React.createElement(item.icon as React.ComponentType<{ className: string }>, { className: "w-5 h-5" })}
           <span className="text-sm font-medium">{item.title}</span>
           <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         </button>
@@ -70,7 +70,7 @@ const NavbarComponent = () => {
                       : 'text-gray-700 hover:bg-gray-50'
                     }`}
                 >
-                  {subItem.icon && <subItem.icon className="w-4 h-4" />}
+                  {subItem.icon && React.createElement(subItem.icon as React.ComponentType<{ className: string }>, { className: "w-4 h-4" })}
                   {subItem.title}
                 </Link>
               ))}
@@ -93,7 +93,7 @@ const NavbarComponent = () => {
             ${isOpen ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}
         >
           <div className="flex items-center gap-2">
-            {item.icon && <item.icon className="w-5 h-5" />}
+            {item.icon && React.createElement(item.icon as React.ComponentType<{ className: string }>, { className: "w-5 h-5" })}
             <span className="text-sm font-medium">{item.title}</span>
           </div>
           {hasSubItems && (
@@ -119,7 +119,7 @@ const NavbarComponent = () => {
                       : 'text-gray-700 hover:bg-gray-50'
                     }`}
                 >
-                  {subItem.icon && <subItem.icon className="w-4 h-4" />}
+                  {subItem.icon && React.createElement(subItem.icon as React.ComponentType<{ className: string }>, { className: "w-4 h-4" })}
                   {subItem.title}
                 </Link>
               ))}
@@ -155,7 +155,7 @@ const NavbarComponent = () => {
                       : 'hover:bg-gray-50'
                     }`}
                 >
-                  {item.icon && <item.icon className="w-5 h-5" />}
+                  {item.icon && React.createElement(item.icon as React.ComponentType<{ className: string }>, { className: "w-5 h-5" })}
                   <span className="text-sm font-medium">{item.title}</span>
                 </Link>
               )

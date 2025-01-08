@@ -42,88 +42,6 @@ import {
           href: '/organization/add',
           icon: PlusCircle,
         },
-        {
-          title: 'Locations List',
-          href: '/organization/locations',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Location',
-          href: '/organization/locations/add',
-          icon: PlusCircle,
-        },
-      ],
-    },
-    {
-      title: 'Inventory',
-      icon: BoxIcon,
-      subItems: [
-        {
-          title: 'Items List',
-          href: '/inventory/items',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Item',
-          href: '/inventory/items/add',
-          icon: PlusCircle,
-        },
-        {
-          title: 'Categories List',
-          href: '/inventory/categories',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Category',
-          href: '/inventory/categories/add',
-          icon: PlusCircle,
-        },
-        {
-          title: 'Subcategories List',
-          href: '/inventory/subcategories',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Subcategory',
-          href: '/inventory/subcategories/add',
-          icon: PlusCircle,
-        },
-      ],
-    },
-    {
-      title: 'Rooms',
-      icon: Hotel,
-      subItems: [
-        {
-          title: 'Rooms List',
-          href: '/rooms/list',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Room',
-          href: '/rooms/add',
-          icon: PlusCircle,
-        },
-        {
-          title: 'Bookings List',
-          href: '/rooms/bookings',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Booking',
-          href: '/rooms/bookings/add',
-          icon: PlusCircle,
-        },
-        {
-          title: 'Categories List',
-          href: '/rooms/categories',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Category',
-          href: '/rooms/categories/add',
-          icon: PlusCircle,
-        },
       ],
     },
     {
@@ -142,4 +60,85 @@ import {
         },
       ],
     },
+    {
+      title: 'Expense Categories',
+      icon: UserCircle,
+      subItems: [
+        {
+          title: 'Expense Category List',
+          href: '/expensecategories/list',
+          icon: ListIcon,
+        },
+        {
+          title: 'Add Expense Category',
+          href: '/expensecategories/add',
+          icon: PlusCircle,
+        },
+      ],
+    },
+    {
+      title: 'Income Sources',
+      icon: UserCircle,
+      subItems: [
+        {
+          title: 'Income Sources List',
+          href: '/incomesources/list',
+          icon: ListIcon,
+        },
+        {
+          title: 'Add Income Sources',
+          href: '/incomesources/add',
+          icon: PlusCircle,
+        },
+      ],
+    },
+    {
+      title: 'Banks',
+      icon: UserCircle,
+      subItems: [
+        {
+          title: 'Banks List',
+          href: '/banks/list',
+          icon: ListIcon,
+        },
+        {
+          title: 'Add Banks',
+          href: '/banks/add',
+          icon: PlusCircle,
+        },
+      ],
+    },
+    {
+      title: 'Tags',
+      icon: UserCircle,
+      subItems: [
+        {
+          title: 'Tags List',
+          href: '/tags/list',
+          icon: ListIcon,
+        },
+        {
+          title: 'Add Tags',
+          href: '/tags/add',
+          icon: PlusCircle,
+        },
+      ],
+    },
+    {
+      title: 'Payment Methods',
+      icon: UserCircle,
+      subItems: [
+        {
+          title: 'Payment Methods List',
+          href: '/paymentmethods/list',
+          icon: ListIcon,
+        },
+        {
+          title: 'Add Payment Methods',
+          href: '/paymentmethods/add',
+          icon: PlusCircle,
+        },
+      ],
+    },
+    
   ];

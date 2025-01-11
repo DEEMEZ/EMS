@@ -16,7 +16,7 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
   const [formData, setFormData] = useState<IIncomeSources>({
     Name: initialData?.Name || '',
     Description: initialData?.Description || '',
-    Status: initialData?.Status || 'Active'
+    status: initialData?.status || 'Active'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,7 +63,7 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
           setFormData({
             Name: '',
             Description: '',
-            Status: 'Active',
+            status: 'Active',
           });
         }
       } else {
@@ -158,7 +158,7 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
                   key={status}
                   className={`
                     flex items-center justify-center px-4 py-2 rounded-xl border cursor-pointer
-                    ${formData.Status === status 
+                    ${formData.status === status 
                       ? 'border-blue-500 bg-blue-50 text-blue-600' 
                       : 'border-gray-300 hover:border-blue-200'}
                   `}

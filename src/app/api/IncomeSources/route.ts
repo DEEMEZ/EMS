@@ -1,7 +1,7 @@
-// src/app/api/IncomeSourcess/route.ts
+// src/app/api/IncomeSources/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbconnect';
-import IncomeSources from '@/models/IncomeSources';
+import IncomeSourcesModel from '@/models/IncomeSources'; // Renamed to avoid naming conflict
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,16 +26,16 @@ export async function GET(request: NextRequest) {
 
     // Execute query with pagination
     const skip = (page - 1) * limit;
-    const IncomeSources = await IncomeSources.find(query)
+    const incomeSources = await IncomeSourcesModel.find(query)
       .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)
       .select('-__v'); // Exclude version key
 
-    const total = await IncomeSources.countDocuments(query);
+    const total = await IncomeSourcesModel.countDocuments(query);
 
     return NextResponse.json({
-      IncomeSources,
+      incomeSources,
       pagination: {
         total,
         page,
@@ -58,12 +58,7 @@ export async function POST(request: NextRequest) {
     await dbConnect();
     const data = await request.json();
 
-    // Generate unique orgId if not provided
-    // if (!data.orgId) {
-    //   data.orgId = Math.floor(Math.random() * 1000000);
-    // }
-    
-    const IncomeSources = await IncomeSources.create({
+    const incomeSource = await IncomeSourcesModel.create({
       ...data,
       modifiedBy: 'System', // Replace with actual user when auth is implemented
       modifiedDate: new Date(),
@@ -71,22 +66,14 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      message: 'IncomeSources created successfully',
-      IncomeSources
+      message: 'IncomeSource created successfully',
+      incomeSource
     }, { status: 201 });
   } catch (error: unknown) {
     console.error('Error in POST /api/IncomeSources:', error);
-    
-    // Handle duplicate orgId error
-    // if (error.code === 11000) {
-    //   return NextResponse.json(
-    //     { error: 'An IncomeSources with this ID already exists' },
-    //     { status: 409 }
-    //   );
-    // }
 
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to create IncomeSources' },
+      { error: (error as Error).message || 'Failed to create IncomeSource' },
       { status: 500 }
     );
   }
@@ -98,34 +85,31 @@ export async function PUT(request: NextRequest) {
     const data = await request.json();
     const { _id, ...updateData } = data;
 
-    // Remove orgId from update if it exists
-    // delete updateData.orgId; // Prevent orgId modification
-
-    const IncomeSources = await IncomeSources.findByIdAndUpdate(
+    const incomeSource = await IncomeSourcesModel.findByIdAndUpdate(
       _id,
       {
         ...updateData,
         modifiedBy: 'System', // Replace with actual user when auth is implemented
         modifiedDate: new Date()
       },
-      { new: true, runValidators: true }//ensures updated doc is returned and the the update is validated agains the schema
+      { new: true, runValidators: true } // Ensures updated doc is returned and the update is validated
     );
 
-    if (!IncomeSources) {
+    if (!incomeSource) {
       return NextResponse.json(
-        { error: 'IncomeSources not found' },
+        { error: 'IncomeSource not found' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: 'IncomeSources updated successfully',
-      IncomeSources
+      message: 'IncomeSource updated successfully',
+      incomeSource
     });
   } catch (error: unknown) {
     console.error('Error in PUT /api/IncomeSources:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to update IncomeSources' },
+      { error: (error as Error).message || 'Failed to update IncomeSource' },
       { status: 500 }
     );
   }
@@ -139,28 +123,28 @@ export async function DELETE(request: NextRequest) {
 
     if (!_id) {
       return NextResponse.json(
-        { error: 'IncomeSources ID is required' },
+        { error: 'IncomeSource ID is required' },
         { status: 400 }
       );
     }
 
-    const IncomeSources = await IncomeSources.findByIdAndDelete(_id);
+    const incomeSource = await IncomeSourcesModel.findByIdAndDelete(_id);
     
-    if (!IncomeSources) {
+    if (!incomeSource) {
       return NextResponse.json(
-        { error: 'IncomeSources not found' },
+        { error: 'IncomeSource not found' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: 'IncomeSources deleted successfully',
+      message: 'IncomeSource deleted successfully',
       success: true
     });
   } catch (error: unknown) {
     console.error('Error in DELETE /api/IncomeSources:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to delete IncomeSources' },
+      { error: (error as Error).message || 'Failed to delete IncomeSource' },
       { status: 500 }
     );
   }

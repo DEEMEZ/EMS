@@ -11,6 +11,7 @@
   "dependencies": {
     "@types/lodash": "^4.17.14",
     "framer-motion": "^11.15.0",
+    "inventory-management": "file:",
     "lodash": "^4.17.21",
     "lucide-react": "^0.469.0",
     "mongoose": "^8.9.3",

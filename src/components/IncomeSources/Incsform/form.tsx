@@ -14,9 +14,9 @@ interface IncomeSourcesFormProps {
 
 export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: IncomeSourcesFormProps) {
   const [formData, setFormData] = useState<IIncomeSources>({
-    Name: initialData?.Name || '',
-    Description: initialData?.Description || '',
-    status: initialData?.status || 'Active'
+    name: initialData?.name || '',
+    description: initialData?.description || '',
+    
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,9 +61,8 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
           }));
         } else {
           setFormData({
-            Name: '',
-            Description: '',
-            status: 'Active',
+            name: '',
+            description: '',
           });
         }
       } else {
@@ -124,8 +123,8 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
             <input
               type="text"
               required
-              value={formData.Name}
-              onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               placeholder="Enter IncomeSources name"
             />
@@ -138,44 +137,14 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
               Description
             </label>
             <textarea
-              value={formData.Description}
-              onChange={(e) => setFormData({ ...formData, Description: e.target.value })}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               placeholder="Enter IncomeSources description"
             />
           </div>
 
-          {/* Status Field */}
-          <div>
-            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
-              <Activity className="w-4 h-4" />
-              Status
-            </label>
-            <div className="mt-1 grid grid-cols-3 gap-4">
-              {['Active', 'Inactive', 'Pending'].map((status) => (
-                <label
-                  key={status}
-                  className={`
-                    flex items-center justify-center px-4 py-2 rounded-xl border cursor-pointer
-                    ${formData.status === status 
-                      ? 'border-blue-500 bg-blue-50 text-blue-600' 
-                      : 'border-gray-300 hover:border-blue-200'}
-                  `}
-                >
-                  <input
-                    type="radio"
-                    name="status"
-                    value={status}
-                    checked={formData.status === status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as IIncomeSources['status'] })}
-                    className="sr-only"
-                  />
-                  {status}
-                </label>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Form Actions */}

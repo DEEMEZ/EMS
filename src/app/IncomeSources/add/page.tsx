@@ -1,8 +1,9 @@
 'use client';
-import IncomeSourcesForm from "@/components/IncomeSources/Incsform/form";
-import NavbarComponent from "@/components/navbar/navbar";
 
-export default function AddIncomeSources() {
+import NavbarComponent from "@/components/navbar/navbar";
+import IncomeSourcesForm from "@/components/IncomeSources/Incsform/form";
+
+export default function AddIncomeSource() {
     return (
         <div>
             <NavbarComponent />

@@ -1,11 +1,12 @@
-import IncomeSourcesList from "@/components/IncomeSources/Incslist/list";
-import NavbarComponent from "@/components/navbar/navbar";
 
-export default function IncomeSourcesPage() {
-    return (
+import NavbarComponent from "@/components/navbar/navbar";
+import IncomeSourcesList from "@/components/IncomeSources/Incslist/list";
+
+export default function IncomeSourceListpage(){
+    return(
         <div>
             <NavbarComponent />
             <IncomeSourcesList />
         </div>
-    );
+    )
 }

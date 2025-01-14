@@ -16,7 +16,6 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
   const [formData, setFormData] = useState<IIncomeSources>({
     name: initialData?.name || '',
     description: initialData?.description || '',
-    
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);

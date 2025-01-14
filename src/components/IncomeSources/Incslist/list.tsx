@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search, Plus, Filter, Building2, Edit, Trash2,
+  Search, Plus,  Building2, Edit, Trash2,
   ChevronLeft, ChevronRight, AlertCircle, RefreshCw, X 
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/loadiingspinner';
@@ -19,7 +19,7 @@ export default function IncomeSourcesList() {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -42,10 +42,8 @@ export default function IncomeSourcesList() {
     debouncedSearch(value);
   };
 
-  const handleStatusChange = (status: string) => {
-    setSelectedStatus(status);
-    setPage(1); // Reset to first page when filter changes
-  };
+
+    
 
   // Fetch Income Sources
   const fetchIncomeSources = async () => {
@@ -57,7 +55,7 @@ export default function IncomeSourcesList() {
         page: page.toString(),
         limit: '10',
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-        ...(selectedStatus && { status: selectedStatus })
+
       });
   
       const response = await fetch(`/api/IncomeSources?${params.toString()}`);
@@ -89,7 +87,7 @@ export default function IncomeSourcesList() {
       if (!response.ok) throw new Error('Failed to delete Income Source');
       
       await fetchIncomeSources();
-    } catch (err) {
+    } catch  {
       setError('Failed to delete Income Source');
     } finally {
       setIsDeleting(null);
@@ -115,7 +113,7 @@ export default function IncomeSourcesList() {
   // Effect Hooks
   useEffect(() => {
     fetchIncomeSources();
-  }, [debouncedSearchTerm, selectedStatus, page]);
+  }, [debouncedSearchTerm,  page]);
 
   useEffect(() => {
     return () => {

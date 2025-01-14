@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, Save, X, FileText, Activity, CheckCircle } from 'lucide-react';
+import { Building2, Save, X, FileText,  CheckCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { IIncomeSources } from '@/types/IncomeSources';
 

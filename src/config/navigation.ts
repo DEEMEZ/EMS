@@ -1,21 +1,19 @@
 import {
-  LayoutDashboard,
-  Settings,
-  Building2,
-  UserCircle,
-  Tags,
-  Wallet,
+  ArrowRightLeft,
   BanknoteIcon,
   BookOpen,
-  ArrowRightLeft,
-  ListIcon,
-  PlusCircle,
-  PieChart,
-  FileBarChart,
-  DollarSign,
-  Receipt,
+  Building2,
   CircleDollarSign,
-  CreditCard
+  CreditCard,
+  DollarSign,
+  FileBarChart,
+  LayoutDashboard,
+  PieChart,
+  Receipt,
+  Settings,
+  Tags,
+  UserCircle,
+  Wallet
 } from 'lucide-react';
 
 export interface SubNavItem {
@@ -74,7 +72,7 @@ export const navigationConfig: NavItem[] = [
       },
       {
         title: 'Payment Methods',
-        href: '/PaymentMethods/list',
+        href: '/paymentmethods/list',
         icon: CreditCard,
       },
       {

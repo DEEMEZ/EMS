@@ -13,7 +13,7 @@ const PriceHistogram = () => {
       const products = await fetchProducts();
 
       // Group prices into bins
-      const bins = [0, 50, 100, 200, 300, 500, 1000];
+      const bins = [0, 50, 100, 200, 300, 500, 1000,1500,2000,2500];
       const data = Array(bins.length - 1).fill(0);
 
       products.forEach((product) => {

@@ -4,6 +4,8 @@ import React from "react";
 import StockLevelsChart from "@/components/charts/StockLevelsChart";
 import InventoryValueChart from "@/components/charts/InventoryValueChart";
 import StatsSection from "@/components/StatsSection"; // Import Stats Section
+import PriceHistogram from "@/components/charts/PriceHistogram";
+import ProductsOverTime from "@/components/charts/ProductsOverTime";
 
 const Dashboard = () => {
   return (
@@ -26,6 +28,14 @@ const Dashboard = () => {
         <div className="bg-white shadow-md rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-2">Inventory Value</h2>
           <InventoryValueChart />
+        </div>
+        {/* Price Histogram */}
+        <div className="bg-white shadow-md rounded-lg p-4">
+          <PriceHistogram />
+        </div>
+        {/* Products Over Time */}
+        <div className="bg-white shadow-md rounded-lg p-4">
+          <ProductsOverTime />
         </div>
       </div>
     </div>

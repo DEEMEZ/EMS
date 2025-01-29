@@ -15,13 +15,25 @@ export async function GET() {
       { $group: { _id: null, avgPrice: { $avg: "$price" } } },
     ]);
     const uniqueCategories = await Product.distinct("category");
+    const productsAddedByMonth = await Product.aggregate([
+        {
+          $group: {
+            _id: { $month: "$createdAt" },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]);
+      
 
-    return NextResponse.json({
-      totalProducts,
-      totalInventoryValue: totalInventoryValue[0]?.total || 0,
-      averagePrice: averagePrice[0]?.avgPrice || 0,
-      uniqueCategories: uniqueCategories.length,
-    });
+      return NextResponse.json({
+        totalProducts,
+        totalInventoryValue: totalInventoryValue[0]?.total || 0,
+        averagePrice: averagePrice[0]?.avgPrice || 0,
+        uniqueCategories: uniqueCategories.length,
+        productsAddedByMonth,
+      });
+      
   } catch (error) {
     console.error("Error fetching stats:", error);
     return NextResponse.json({ error: "Error fetching stats" }, { status: 500 });

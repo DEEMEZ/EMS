@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/utils/dbconnect";
-import ExpenseCategory from "@/models/expenseCategory";
+import User from "@/models/user";
 
-// GET: Fetch expense categories with pagination, filtering, and sorting
+// GET: Fetch users with pagination, searching, filtering, and sorting
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
@@ -11,28 +11,28 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
-    const status = searchParams.get("status") || "";
+    const role = searchParams.get("role") || "";
     const sortField = searchParams.get("sortField") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
-    const query: { name?: { $regex: string; $options: string }; status?: string } = {};
+    const query: { fullName?: { $regex: string; $options: string }; role?: string } = {};
     if (search) {
-      query.name = { $regex: search, $options: "i" };
+      query.fullName = { $regex: search, $options: "i" };
     }
-    if (status) {
-      query.status = status;
+    if (role) {
+      query.role = role;
     }
 
     const skip = (page - 1) * limit;
-    const categories = await ExpenseCategory.find(query)
+    const users = await User.find(query)
       .sort({ [sortField]: sortOrder === "asc" ? 1 : -1 })
       .skip(skip)
       .limit(limit)
-      .select("-__v");
-    const total = await ExpenseCategory.countDocuments(query);
+      .select("-password -__v");
+    const total = await User.countDocuments(query);
 
     return NextResponse.json({
-      categories,
+      users,
       pagination: {
         total,
         page,
@@ -41,51 +41,50 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error("Error in GET /api/expensecategories:", error);
+    console.error("Error in GET /api/users:", error);
     return NextResponse.json(
-      { error: (error as Error).message || "Failed to fetch expense categories" },
+      { error: (error as Error).message || "Failed to fetch users" },
       { status: 500 }
     );
   }
 }
 
-// POST: Create a new expense category
+// POST: Create a new user
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
 
-    const category = await ExpenseCategory.create({
+    const user = await User.create({
       ...data,
       modifiedBy: "System",
       modifiedDate: new Date(),
-      status: data.status || "Active",
     });
 
     return NextResponse.json(
       {
-        message: "Expense category created successfully",
-        category,
+        message: "User created successfully",
+        user,
       },
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error("Error in POST /api/expensecategories:", error);
+    console.error("Error in POST /api/users:", error);
     return NextResponse.json(
-      { error: (error as Error).message || "Failed to create expense category" },
+      { error: (error as Error).message || "Failed to create user" },
       { status: 500 }
     );
   }
 }
 
-// PUT: Update an existing expense category
+// PUT: Update an existing user
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
     const { _id, ...updateData } = data;
 
-    const category = await ExpenseCategory.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       _id,
       {
         ...updateData,
@@ -95,27 +94,27 @@ export async function PUT(request: NextRequest) {
       { new: true, runValidators: true }
     );
 
-    if (!category) {
+    if (!user) {
       return NextResponse.json(
-        { error: "Expense category not found" },
+        { error: "User not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: "Expense category updated successfully",
-      category,
+      message: "User updated successfully",
+      user,
     });
   } catch (error: unknown) {
-    console.error("Error in PUT /api/expensecategories:", error);
+    console.error("Error in PUT /api/users:", error);
     return NextResponse.json(
-      { error: (error as Error).message || "Failed to update expense category" },
+      { error: (error as Error).message || "Failed to update user" },
       { status: 500 }
     );
   }
 }
 
-// DELETE: Remove an expense category
+// DELETE: Remove a user
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
@@ -124,28 +123,28 @@ export async function DELETE(request: NextRequest) {
 
     if (!_id) {
       return NextResponse.json(
-        { error: "Expense category ID is required" },
+        { error: "User ID is required" },
         { status: 400 }
       );
     }
 
-    const category = await ExpenseCategory.findByIdAndDelete(_id);
+    const user = await User.findByIdAndDelete(_id);
 
-    if (!category) {
+    if (!user) {
       return NextResponse.json(
-        { error: "Expense category not found" },
+        { error: "User not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: "Expense category deleted successfully",
+      message: "User deleted successfully",
       success: true,
     });
   } catch (error: unknown) {
-    console.error("Error in DELETE /api/expensecategories:", error);
+    console.error("Error in DELETE /api/users:", error);
     return NextResponse.json(
-      { error: (error as Error).message || "Failed to delete expense category" },
+      { error: (error as Error).message || "Failed to delete user" },
       { status: 500 }
     );
   }

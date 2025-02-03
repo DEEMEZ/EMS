@@ -100,7 +100,7 @@ export default function ExpenseCategoryList() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-red-600 to-red-400 rounded-2xl p-6 mb-6"
+        className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl p-6 mb-6"
       >
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Expense Categories</h1>
@@ -108,7 +108,7 @@ export default function ExpenseCategoryList() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => openModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-colors"
           >
             <Plus className="w-5 h-5" />
             New Expense Category

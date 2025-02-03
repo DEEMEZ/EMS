@@ -115,22 +115,21 @@ export default function BankList() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      {/* Header Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-green-600 to-green-400 rounded-2xl p-6 mb-6"
+        className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl p-6 mb-6"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Banks</h1>
-            <p className="text-green-100">Manage your bank listings</p>
+            <p className="text-blue-200">Manage your bank listings</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => openModal()}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-green-600 rounded-xl hover:bg-green-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-colors"
           >
             <Plus className="w-5 h-5" />
             New Bank
@@ -138,13 +137,13 @@ export default function BankList() {
         </div>
 
         <div className="relative mt-6">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-300" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white-300" />
           <input
             type="text"
             placeholder="Search banks..."
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-green-200 focus:outline-none focus:ring-2 focus:ring-white/30"
+              className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/30"
           />
         </div>
       </motion.div>

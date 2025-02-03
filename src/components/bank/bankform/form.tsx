@@ -76,7 +76,7 @@ export default function BankForm({ initialData, onCancel, onSuccess }: BankFormP
       animate={{ opacity: 1, y: 0 }}
       className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-200"
     >
-      <div className="bg-gradient-to-r from-green-600 to-green-400 px-6 py-4 rounded-t-2xl">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl">
         <h2 className="text-xl font-semibold text-white">
           {initialData ? 'Update Bank' : 'Create New Bank'}
         </h2>
@@ -171,7 +171,7 @@ export default function BankForm({ initialData, onCancel, onSuccess }: BankFormP
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (
               <>

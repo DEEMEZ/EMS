@@ -1,5 +1,5 @@
 export interface IExpenseCategories {
-    id?: string;  // Add this line (make it optional if needed)
+   _id?: string;  
     name: string;
     description: string;
   }

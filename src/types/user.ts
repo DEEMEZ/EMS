@@ -1,6 +1,6 @@
 export interface IUser {
     _id: string; // Unique identifier
-    fullName: string; // Full name of the user
+    fullname: string; // Full name of the user
     email: string; // Email address
     phone?: string; // Optional phone number
     role: "Admin" | "User"; // User role in the system

@@ -1,144 +1,122 @@
-// src/config/navigation.ts
 import {
-    Building2,
-    LayoutDashboard,
-    BoxIcon,
-    UserCircle,
-    Hotel,
-    PlusCircle,
-    ListIcon
-  } from 'lucide-react';
-  
-  export interface SubNavItem {
-    title: string;
-    href: string;
-    icon?: React.ComponentType;
+  ArrowRightLeft,
+  BanknoteIcon,
+  BookOpen,
+  Building2,
+  CircleDollarSign,
+  CreditCard,
+  DollarSign,
+  FileBarChart,
+  LayoutDashboard,
+  PieChart,
+  Receipt,
+  Settings,
+  Tags,
+  UserCircle,
+  Wallet
+} from 'lucide-react';
+
+export interface SubNavItem {
+  title: string;
+  href: string;
+  icon?: React.ComponentType;
+}
+
+export interface NavItem {
+  title: string;
+  href?: string;
+  icon?: React.ComponentType;
+  subItems?: SubNavItem[];
+}
+
+export const navigationConfig: NavItem[] = [
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Setup',
+    icon: Settings,
+    subItems: [
+      {
+        title: 'Organization',
+        href: '/organization/list',
+        icon: Building2,
+      },
+      {
+        title: 'Users',
+        href: '/user/list',
+        icon: UserCircle,
+      }
+    ],
+  },
+  {
+    title: 'Master Data',
+    icon: BookOpen,
+    subItems: [
+      {
+        title: 'Expense Categories',
+        href: '/ExpCat/list',
+        icon: Wallet,
+      },
+      {
+        title: 'Income Sources',
+        href: '/incomesources/list',
+        icon: CircleDollarSign,
+      },
+      {
+        title: 'Banks',
+        href: '/banks/list',
+        icon: BanknoteIcon,
+      },
+      {
+        title: 'Payment Methods',
+        href: '/paymentmethods/list',
+        icon: CreditCard,
+      },
+      {
+        title: 'Tags',
+        href: '/tags/list',
+        icon: Tags,
+      }
+    ],
+  },
+  {
+    title: 'Transactions',
+    icon: ArrowRightLeft,
+    subItems: [
+      {
+        title: 'Income',
+        href: '/transactions/income/list',
+        icon: DollarSign,
+      },
+      {
+        title: 'Expenses',
+        href: '/transactions/expenses/list',
+        icon: Receipt,
+      },
+    ],
+  },
+  {
+    title: 'Reports',
+    icon: FileBarChart,
+    subItems: [
+      {
+        title: 'Expense Analysis',
+        href: '/reports/expense-analysis',
+        icon: PieChart,
+      },
+      {
+        title: 'Income Analysis',
+        href: '/reports/income-analysis',
+        icon: FileBarChart,
+      },
+      {
+        title: 'Budget Reports',
+        href: '/reports/budget',
+        icon: DollarSign,
+      }
+    ],
   }
-  
-  export interface NavItem {
-    title: string;
-    href?: string;
-    icon?: React.ComponentType;
-    subItems?: SubNavItem[];
-  }
-  
-  export const navigationConfig: NavItem[] = [
-    {
-      title: 'Dashboard',
-      href: '/dashboard',
-      icon: LayoutDashboard,
-    },
-    {
-      title: 'Organization',
-      icon: Building2,
-      subItems: [
-        {
-          title: 'Organizations List',
-          href: '/organization/list',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Organization',
-          href: '/organization/add',
-          icon: PlusCircle,
-        },
-      ],
-    },
-    {
-      title: 'Users',
-      icon: UserCircle,
-      subItems: [
-        {
-          title: 'Users List',
-          href: '/users/list',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add User',
-          href: '/users/add',
-          icon: PlusCircle,
-        },
-      ],
-    },
-    {
-      title: 'Expense Categories',
-      icon: UserCircle,
-      subItems: [
-        {
-          title: 'Expense Category List',
-          href: '/expensecategories/list',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Expense Category',
-          href: '/expensecategories/add',
-          icon: PlusCircle,
-        },
-      ],
-    },
-    {
-      title: 'Income Sources',
-      icon: UserCircle,
-      subItems: [
-        {
-          title: 'Income Sources List',
-          href: '/incomesources/list',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Income Sources',
-          href: '/incomesources/add',
-          icon: PlusCircle,
-        },
-      ],
-    },
-    {
-      title: 'Banks',
-      icon: UserCircle,
-      subItems: [
-        {
-          title: 'Banks List',
-          href: '/banks/list',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Banks',
-          href: '/banks/add',
-          icon: PlusCircle,
-        },
-      ],
-    },
-    {
-      title: 'Tags',
-      icon: UserCircle,
-      subItems: [
-        {
-          title: 'Tags List',
-          href: '/tags/list',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Tags',
-          href: '/tags/add',
-          icon: PlusCircle,
-        },
-      ],
-    },
-    {
-      title: 'Payment Methods',
-      icon: UserCircle,
-      subItems: [
-        {
-          title: 'Payment Methods List',
-          href: '/paymentmethods/list',
-          icon: ListIcon,
-        },
-        {
-          title: 'Add Payment Methods',
-          href: '/paymentmethods/add',
-          icon: PlusCircle,
-        },
-      ],
-    },
-    
-  ];
+];

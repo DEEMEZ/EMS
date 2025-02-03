@@ -1,19 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, Save, X, FileText,  CheckCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/loadiingspinner';
-import { IIncomeSources } from '@/types/IncomeSources';
+import { IPaymentmethods } from '@/types/paymentmethods';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CheckCircle, Save, X } from 'lucide-react';
+import { useState } from 'react';
 
-interface IncomeSourcesFormProps {
-  initialData?: IIncomeSources;
+interface PaymentmethodsFormProps {
+  initialData?: IPaymentmethods;
   onCancel?: () => void;
   onSuccess?: () => void;
 }
 
-export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: IncomeSourcesFormProps) {
-  const [formData, setFormData] = useState<IIncomeSources>({
+export default function PaymentmethodsForm({
+  initialData,
+  onCancel,
+  onSuccess,
+}: PaymentmethodsFormProps) {
+  const [formData, setFormData] = useState<IPaymentmethods>({
     name: initialData?.name || '',
     description: initialData?.description || '',
   });
@@ -29,7 +33,7 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
     setSuccessMessage('');
 
     try {
-      const response = await fetch('/api/IncomeSources', {
+      const response = await fetch('/api/paymentmethods', {
         method: initialData ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -38,37 +42,30 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
       });
 
       if (response.ok) {
-        const successMsg = initialData 
-          ? 'IncomeSources updated successfully!' 
-          : 'IncomeSources created successfully!';
+        const successMsg = initialData
+          ? 'Payment methods updated successfully!'
+          : 'Payment methods created successfully!';
         setSuccessMessage(successMsg);
-        
-        // Clear success message after 3 seconds
+
         setTimeout(() => setSuccessMessage(''), 3000);
 
-        // Call onSuccess callback
         if (onSuccess) {
           setTimeout(() => {
             onSuccess();
-          }, 1000); // Short delay to show success message
+          }, 1000);
         }
 
-        if (initialData) {
-          setFormData((prevData) => ({
-            ...prevData,
-            _id: initialData._id,
-          }));
-        } else {
+        if (!initialData) {
           setFormData({
             name: '',
             description: '',
           });
         }
       } else {
-        setError('Failed to save IncomeSources');
+        setError('Failed to save payment methods');
       }
     } catch {
-      setError('Failed to save IncomeSources');
+      setError('Failed to save payment methods');
     } finally {
       setIsSubmitting(false);
     }
@@ -82,7 +79,7 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
     >
       <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl">
         <h2 className="text-xl font-semibold text-white">
-          {initialData ? 'Update IncomeSources' : 'Create New IncomeSources'}
+          {initialData ? 'Update Payment methods' : 'Create New Payment methods'}
         </h2>
       </div>
 
@@ -98,7 +95,7 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
               <p className="text-red-700">{error}</p>
             </motion.div>
           )}
-          
+
           {successMessage && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -115,9 +112,8 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
         <div className="space-y-4">
           {/* Name Field */}
           <div>
-            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
-              <Building2 className="w-4 h-4" />
-              Income Sources Name
+            <label className="text-sm font-medium text-gray-700">
+              Name
             </label>
             <input
               type="text"
@@ -125,25 +121,24 @@ export default function IncomeSourcesForm({ initialData, onCancel, onSuccess }: 
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter IncomeSources name"
+              placeholder="Enter income source name"
             />
           </div>
 
           {/* Description Field */}
           <div>
-            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
-              <FileText className="w-4 h-4" />
+            <label className="text-sm font-medium text-gray-700">
               Description
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter IncomeSources description"
+              placeholder="Enter Payment methods description (optional)"
             />
           </div>
-
         </div>
 
         {/* Form Actions */}

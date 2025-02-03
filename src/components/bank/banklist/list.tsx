@@ -137,7 +137,6 @@ export default function BankList() {
           </motion.button>
         </div>
 
-        {/* Search Section */}
         <div className="relative mt-6">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-300" />
           <input
@@ -150,7 +149,6 @@ export default function BankList() {
         </div>
       </motion.div>
 
-      {/* Error Message */}
       {error && (
         <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-400" />
@@ -158,7 +156,6 @@ export default function BankList() {
         </div>
       )}
 
-      {/* Banks Table */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -212,7 +209,6 @@ export default function BankList() {
           </table>
         </div>
 
-        {/* Pagination */}
         {banks.length > 0 && (
           <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
             <div className="text-sm text-gray-500">
@@ -241,7 +237,6 @@ export default function BankList() {
         )}
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <motion.div

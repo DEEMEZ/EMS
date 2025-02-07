@@ -45,7 +45,7 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
         if (onSuccess) setTimeout(onSuccess, 1000);
         if (!initialData) setFormData({ userId: '', type: 'Income', transactionDate: new Date(), description: '' });
       } else {
-        setError('Failed to save transaction');
+        setError('Invalid User Id. User does not exists.');
       }
     } catch {
       setError('Failed to save transaction');
@@ -103,14 +103,14 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-gray-700">User ID</label>
-              <input
-                type="text"
-                required
-                value={formData.userId}
-                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter user ID"
-              />
+            <input
+              type="text"
+              required
+              value={typeof formData.userId === 'object' ? formData.userId._id : formData.userId || ''}
+              onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+              className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              placeholder="Enter user ID"
+            />
             </div>
 
             <div>

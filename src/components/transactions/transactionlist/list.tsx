@@ -5,13 +5,7 @@ import TransactionForm from '@/components/transactions/transactionform/form';
 import { ITransaction } from '@/types/transaction';
 import { AnimatePresence, motion } from 'framer-motion';
 import _ from 'lodash';
-import {
-    AlertCircle,
-    Edit,
-    Plus,
-    Search,
-    Trash2
-} from 'lucide-react';
+import { AlertCircle, Edit, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function TransactionList() {
@@ -159,7 +153,7 @@ export default function TransactionList() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User ID</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Type</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Date</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Description</th>
@@ -177,7 +171,16 @@ export default function TransactionList() {
                     transition={{ delay: index * 0.1 }}
                     className="border-b border-gray-100 hover:bg-gray-50"
                   >
-                    <td className="px-6 py-4">{transaction.userId}</td>
+                    <td className="px-6 py-4">
+                      {transaction.userId && typeof transaction.userId === 'object' ? (
+                        <div>
+                          <p className="font-semibold">{transaction.userId.fullname}</p>
+                          <p className="text-sm text-gray-500">{transaction.userId.email}</p>
+                        </div>
+                      ) : (
+                        'Unknown User'
+                      )}
+                    </td>
                     <td className="px-6 py-4">{transaction.type}</td>
                     <td className="px-6 py-4">{new Date(transaction.transactionDate).toLocaleDateString()}</td>
                     <td className="px-6 py-4">{transaction.description}</td>

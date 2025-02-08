@@ -1,17 +1,7 @@
-<<<<<<< HEAD
-
-import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/utils/dbconnect";
 import ExpenseCategory from "@/models/expenseCategory";
+import dbConnect from "@/utils/dbconnect";
+import { NextRequest, NextResponse } from "next/server";
 
-
-// GET: Fetch expense categories with pagination, filtering, and sorting
-=======
-import ExpenseCategory from '@/models/expenseCategory';
-import dbConnect from '@/utils/dbconnect';
-import { NextRequest, NextResponse } from 'next/server';
-
->>>>>>> 69387249bd0e3eb68a4107451e23f87d45434aee
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();

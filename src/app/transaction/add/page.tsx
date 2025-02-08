@@ -1,14 +1,14 @@
 'use client';
 
-import ExpenseCategoryForm from "@/components/expensecategories/expensecategoriesform/form";
 import NavbarComponent from "@/components/navbar/navbar";
+import TransactionForm from "@/components/transactions/transactionform/form";
 
-export default function ExpenseCategoryPage() { 
+export default function AddTransaction() {
     return (
         <div>
             <NavbarComponent />
             <div className="container mx-auto px-4 py-8">
-                <ExpenseCategoryForm />
+                <TransactionForm />
             </div>
         </div>
     );

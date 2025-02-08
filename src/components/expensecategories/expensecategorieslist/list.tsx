@@ -1,32 +1,19 @@
 'use client';
 
 import ExpenseCategoryForm from '@/components/expensecategories/expensecategoriesform/form';
-import { LoadingSpinner } from '@/components/loadiingspinner';
 import { IExpenseCategories } from '@/types/expensecategories';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import _ from 'lodash';
-import {
-    AlertCircle,
-    ChevronLeft,
-    ChevronRight,
-    Edit,
-    Plus,
-    Search,
-    Trash2,
-    X,
-} from 'lucide-react';
+import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function ExpenseCategoryList() {
   const [expenseCategories, setExpenseCategories] = useState<IExpenseCategories[]>([]);
   const [, setIsLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
+  const [, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<IExpenseCategories | null>(null);
 
@@ -38,11 +25,6 @@ export default function ExpenseCategoryList() {
       }, 500),
     []
   );
-
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    debouncedSearch(value);
-  };
 
   const fetchExpenseCategories = async () => {
     try {
@@ -61,34 +43,23 @@ export default function ExpenseCategoryList() {
       const data = await response.json();
       setExpenseCategories(data.categories);
       setTotalPages(data.pagination.totalPages);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setError('Failed to fetch expense categories');
-      console.error('Error:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDelete = async (categoryId: string) => {
-    try {
-      setIsDeleting(categoryId);
-      const response = await fetch(`/api/expensecategories`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ _id: categoryId }),
-      });
+  useEffect(() => {
+    fetchExpenseCategories();
+  }, [debouncedSearchTerm, page]);
 
-      if (!response.ok) throw new Error('Failed to delete expense category');
-
-      await fetchExpenseCategories();
-    } catch {
-      setError('Failed to delete expense category');
-    } finally {
-      setIsDeleting(null);
-    }
-  };
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   const openModal = (category?: IExpenseCategories) => {
     setEditingCategory(category || null);
@@ -105,15 +76,24 @@ export default function ExpenseCategoryList() {
     fetchExpenseCategories();
   };
 
-  useEffect(() => {
-    fetchExpenseCategories();
-  }, [debouncedSearchTerm, page]);
-
-  useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this category?')) {
+      try {
+        const response = await fetch('/api/expensecategories', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ _id: id }),
+        });
+        if (response.ok) {
+          fetchExpenseCategories();
+        } else {
+          setError('Failed to delete expense category');
+        }
+      } catch {
+        setError('Failed to delete expense category');
+      }
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -122,40 +102,21 @@ export default function ExpenseCategoryList() {
         animate={{ opacity: 1, y: 0 }}
         className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl p-6 mb-6"
       >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Expense Categories</h1>
-            <p className="text-blue-100">Manage your expense category listings</p>
-          </div>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-white">Expense Categories</h1>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => openModal()}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-colors"
           >
             <Plus className="w-5 h-5" />
             New Expense Category
           </motion.button>
         </div>
-
-        <div className="relative mt-6">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300" />
-          <input
-            type="text"
-            placeholder="Search expense categories..."
-            value={searchTerm}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/30"
-          />
-        </div>
       </motion.div>
 
-      {error && (
-        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400" />
-          <p className="text-red-700">{error}</p>
-        </div>
-      )}
+      {error && <p className="text-red-600">{error}</p>}
 
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -168,78 +129,56 @@ export default function ExpenseCategoryList() {
               </tr>
             </thead>
             <tbody>
-              <AnimatePresence>
-                {expenseCategories.map((category, index) => (
-                  <motion.tr
-                    key={category.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="border-b border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4">{category.name}</td>
-                    <td className="px-6 py-4">{category.description}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => openModal(category)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(category.id!)}
-                          disabled={isDeleting === category.id}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          {isDeleting === category.id ? (
-                            <LoadingSpinner size="sm" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
+              {expenseCategories.map((category) => (
+                <tr key={category._id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="px-6 py-4">{category.name}</td>
+                  <td className="px-6 py-4">{category.description}</td>
+                  <td className="px-6 py-4 text-right flex gap-2 justify-end">
+                    <button
+                      onClick={() => openModal(category)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(category._id!)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-
-        {expenseCategories.length > 0 && (
-          <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-            <div className="text-sm text-gray-500">Showing {expenseCategories.length} expense categories</div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                disabled={page === 1}
-                className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                disabled={page === totalPages}
-                className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {isModalOpen && (
-        <ExpenseCategoryForm
-          category={editingCategory}
-          onCancel={closeModal}
-          onSuccess={handleSuccess}
-        />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden"
+          >
+            <div className="flex justify-between items-center px-6 py-4 border-b">
+              <h2 className="text-xl font-semibold">
+                {editingCategory ? 'Edit Expense Category' : 'New Expense Category'}
+              </h2>
+              <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ExpenseCategoryForm
+                initialData={editingCategory || undefined}
+                onCancel={closeModal}
+                onSuccess={handleSuccess}
+              />
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );

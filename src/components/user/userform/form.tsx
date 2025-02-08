@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from "react";
 import { IUser } from "@/types/user";
+import { useEffect, useState } from "react";
 
 export default function UserForm({ user, onSuccess }: { user?: IUser; onSuccess: () => void }) {
   const [formData, setFormData] = useState<IUser>({
     _id: "",
-    fullName: "",
+    fullname: "",
     email: "",
     phone: "",
     role: "User",
@@ -39,9 +39,9 @@ export default function UserForm({ user, onSuccess }: { user?: IUser; onSuccess:
       <h2 className="text-xl font-bold mb-4">{user ? "Edit User" : "Add User"}</h2>
       <input
         type="text"
-        name="fullName"
+        name="fullname"
         placeholder="Full Name"
-        value={formData.fullName}
+        value={formData.fullname}
         onChange={handleChange}
         className="border p-2 w-full mb-4"
         required

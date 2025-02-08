@@ -3,7 +3,7 @@
 import ExpenseCategoryList from "@/components/expensecategories/expensecategorieslist/list";
 import NavbarComponent from "@/components/navbar/navbar";
 
-export default function ExpenseCategoriesListPage() {
+export default function ExpenseCategoriesList() {
     return (
         <div>
             <NavbarComponent />

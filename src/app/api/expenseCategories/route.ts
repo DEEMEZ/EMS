@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/utils/dbconnect";
@@ -5,119 +6,85 @@ import ExpenseCategory from "@/models/expenseCategory";
 
 
 // GET: Fetch expense categories with pagination, filtering, and sorting
+=======
+import ExpenseCategory from '@/models/expenseCategory';
+import dbConnect from '@/utils/dbconnect';
+import { NextRequest, NextResponse } from 'next/server';
+
+>>>>>>> 69387249bd0e3eb68a4107451e23f87d45434aee
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
-    const search = searchParams.get("search") || "";
-    const status = searchParams.get("status") || "";
-    const sortField = searchParams.get("sortField") || "createdAt";
-    const sortOrder = searchParams.get("sortOrder") || "desc";
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
 
-    const query: { name?: { $regex: string; $options: string }; status?: string } = {};
-    if (search) {
-      query.name = { $regex: search, $options: "i" };
-    }
-    if (status) {
-      query.status = status;
-    }
+    const query = search
+      ? { name: { $regex: search, $options: 'i' } }
+      : {};
 
     const skip = (page - 1) * limit;
-    const categories = await ExpenseCategory.find(query)
-      .sort({ [sortField]: sortOrder === "asc" ? 1 : -1 })
+
+    const expenseCategories = await ExpenseCategory.find(query)
+      .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit)
-      .select("-__v");
+      .limit(limit);
+
     const total = await ExpenseCategory.countDocuments(query);
 
     return NextResponse.json({
-      categories,
+      categories: expenseCategories,
       pagination: {
         total,
         page,
-        limit,
         totalPages: Math.ceil(total / limit),
       },
     });
-  } catch (error: unknown) {
-    console.error("Error in GET /api/expensecategories:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Failed to fetch expense categories" },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error('Error in GET /api/expensecategories:', error);
+    return NextResponse.json({ error: 'Failed to fetch expense categories' }, { status: 500 });
   }
 }
 
-// POST: Create a new expense category
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
 
-    const category = await ExpenseCategory.create({
-      ...data,
-      modifiedBy: "System",
-      modifiedDate: new Date(),
-      status: data.status || "Active",
-    });
+    const newExpenseCategory = await ExpenseCategory.create(data);
 
-    return NextResponse.json(
-      {
-        message: "Expense category created successfully",
-        category,
-      },
-      { status: 201 }
-    );
-  } catch (error: unknown) {
-    console.error("Error in POST /api/expensecategories:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Failed to create expense category" },
-      { status: 500 }
-    );
+    return NextResponse.json(newExpenseCategory, { status: 201 });
+  } catch (error) {
+    console.error('Error in POST /api/expensecategories:', error);
+    return NextResponse.json({ error: 'Failed to create expense category' }, { status: 500 });
   }
 }
 
-// PUT: Update an existing expense category
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
     const { _id, ...updateData } = data;
 
-    const category = await ExpenseCategory.findByIdAndUpdate(
+    const updatedExpenseCategory = await ExpenseCategory.findByIdAndUpdate(
       _id,
-      {
-        ...updateData,
-        modifiedBy: "System",
-        modifiedDate: new Date(),
-      },
+      updateData,
       { new: true, runValidators: true }
     );
 
-    if (!category) {
-      return NextResponse.json(
-        { error: "Expense category not found" },
-        { status: 404 }
-      );
+    if (!updatedExpenseCategory) {
+      return NextResponse.json({ error: 'Expense category not found' }, { status: 404 });
     }
 
-    return NextResponse.json({
-      message: "Expense category updated successfully",
-      category,
-    });
-  } catch (error: unknown) {
-    console.error("Error in PUT /api/expensecategories:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Failed to update expense category" },
-      { status: 500 }
-    );
+    return NextResponse.json(updatedExpenseCategory);
+  } catch (error) {
+    console.error('Error in PUT /api/expensecategories:', error);
+    return NextResponse.json({ error: 'Failed to update expense category' }, { status: 500 });
   }
 }
 
-// DELETE: Remove an expense category
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
@@ -125,30 +92,18 @@ export async function DELETE(request: NextRequest) {
     const { _id } = data;
 
     if (!_id) {
-      return NextResponse.json(
-        { error: "Expense category ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Expense category ID is required' }, { status: 400 });
     }
 
-    const category = await ExpenseCategory.findByIdAndDelete(_id);
+    const deletedExpenseCategory = await ExpenseCategory.findByIdAndDelete(_id);
 
-    if (!category) {
-      return NextResponse.json(
-        { error: "Expense category not found" },
-        { status: 404 }
-      );
+    if (!deletedExpenseCategory) {
+      return NextResponse.json({ error: 'Expense category not found' }, { status: 404 });
     }
 
-    return NextResponse.json({
-      message: "Expense category deleted successfully",
-      success: true,
-    });
-  } catch (error: unknown) {
-    console.error("Error in DELETE /api/expensecategories:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Failed to delete expense category" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: 'Expense category deleted successfully' });
+  } catch (error) {
+    console.error('Error in DELETE /api/expensecategories:', error);
+    return NextResponse.json({ error: 'Failed to delete expense category' }, { status: 500 });
   }
 }

@@ -1,12 +1,12 @@
 
 
 // Define the User interface
-import mongoose, { Schema, Document } from "mongoose";
 import { IUser } from "@/types/user";
+import mongoose, { Document, Schema } from "mongoose";
 
 const UserSchema = new Schema<IUser & Document>(
   {
-    fullName: { type: String, required: true },
+    fullname: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     phone: { type: String },
     role: { type: String, enum: ["Admin", "User"], default: "User" },

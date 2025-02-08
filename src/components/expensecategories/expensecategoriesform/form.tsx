@@ -7,22 +7,20 @@ import { CheckCircle, Save, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface ExpenseCategoryFormProps {
-  category?: IExpenseCategories | null;
+  initialData?: IExpenseCategories;
   onCancel?: () => void;
   onSuccess?: () => void;
 }
 
 export default function ExpenseCategoryForm({
-  category,
+  initialData,
   onCancel,
   onSuccess,
 }: ExpenseCategoryFormProps) {
-    const [formData, setFormData] = useState<IExpenseCategories>({
-        id: category?.id || '',  // Ensure id is handled properly
-        name: category?.name || '',
-        description: category?.description || '',
-      });
-      
+  const [formData, setFormData] = useState<IExpenseCategories>({
+    name: initialData?.name || '',
+    description: initialData?.description || '',
+  });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -36,15 +34,15 @@ export default function ExpenseCategoryForm({
 
     try {
       const response = await fetch('/api/expensecategories', {
-        method: category ? 'PUT' : 'POST',
+        method: initialData ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...formData, _id: category?.id }),
+        body: JSON.stringify({ ...formData, _id: initialData?._id }),
       });
 
       if (response.ok) {
-        const successMsg = category
+        const successMsg = initialData
           ? 'Expense category updated successfully!'
           : 'Expense category created successfully!';
         setSuccessMessage(successMsg);
@@ -57,7 +55,7 @@ export default function ExpenseCategoryForm({
           }, 1000);
         }
 
-        if (!category) {
+        if (!initialData) {
           setFormData({
             name: '',
             description: '',
@@ -79,9 +77,9 @@ export default function ExpenseCategoryForm({
       animate={{ opacity: 1, y: 0 }}
       className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-200"
     >
-      <div className="bg-gradient-to-r from-purple-600 to-purple-400 px-6 py-4 rounded-t-2xl">
+      <div className="bg-gradient-to-r from-red-600 to-red-400 px-6 py-4 rounded-t-2xl">
         <h2 className="text-xl font-semibold text-white">
-          {category ? 'Update Expense Category' : 'Create New Expense Category'}
+          {initialData ? 'Update Expense Category' : 'Create New Expense Category'}
         </h2>
       </div>
 
@@ -112,38 +110,31 @@ export default function ExpenseCategoryForm({
         </AnimatePresence>
 
         <div className="space-y-4">
-          {/* Name Field */}
           <div>
-            <label className="text-sm font-medium text-gray-700">
-              Name
-            </label>
+            <label className="text-sm font-medium text-gray-700">Name</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
               placeholder="Enter expense category name"
             />
           </div>
 
-          {/* Description Field */}
           <div>
-            <label className="text-sm font-medium text-gray-700">
-              Description
-            </label>
+            <label className="text-sm font-medium text-gray-700">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
               placeholder="Enter expense category description (optional)"
             />
           </div>
         </div>
 
-        {/* Form Actions */}
         <div className="flex justify-end items-center gap-3 pt-6 border-t">
           {onCancel && (
             <button
@@ -158,7 +149,7 @@ export default function ExpenseCategoryForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
@@ -168,7 +159,7 @@ export default function ExpenseCategoryForm({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                {category ? 'Update' : 'Create'}
+                {initialData ? 'Update' : 'Create'}
               </>
             )}
           </button>

@@ -1,6 +1,8 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/utils/dbconnect";
 import ExpenseCategory from "@/models/expenseCategory";
+
 
 // GET: Fetch expense categories with pagination, filtering, and sorting
 export async function GET(request: NextRequest) {

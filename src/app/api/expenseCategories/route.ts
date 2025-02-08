@@ -1,6 +1,6 @@
-import ExpenseCategory from '@/models/expenseCategory';
-import dbConnect from '@/utils/dbconnect';
-import { NextRequest, NextResponse } from 'next/server';
+import ExpenseCategory from "@/models/expenseCategory";
+import dbConnect from "@/utils/dbconnect";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {

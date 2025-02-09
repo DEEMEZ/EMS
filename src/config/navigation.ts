@@ -98,7 +98,7 @@ export const navigationConfig: NavItem[] = [
       },
       {
         title: 'Expenses',
-        href: '/transactions/expenses/list',
+        href: '/transactions/expense/list',
         icon: Receipt,
       },
     ],

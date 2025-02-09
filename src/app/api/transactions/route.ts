@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
     const transactions = await Transaction.find(query)
-      .populate('userId', 'fullname email') // 🌟 Add this line to fetch user details
+      .populate('userId', 'fullname email') 
       .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)

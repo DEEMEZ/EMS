@@ -2,144 +2,167 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbconnect';
 import Expense from '@/models/expense';
 
+/**
+ * GET: Fetch Expenses with Pagination, Search, and Sorting
+ */
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
     const search = searchParams.get('search') || '';
     const sortField = searchParams.get('sortField') || 'createdAt';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const sortOrder = searchParams.get('sortOrder') === 'asc' ? 1 : -1;
 
-    // Build query
-    const query: { paymentMethod?: { $regex: string, $options: string } } = {};
+    // Query Construction
+    const query: Record<string, any> = {};
     if (search) {
       query.paymentMethod = { $regex: search, $options: 'i' };
     }
 
-    // Execute query with pagination
+    // Pagination Logic
     const skip = (page - 1) * limit;
+
     const expenses = await Expense.find(query)
-      .populate('expCatId') // Fetch related expense category details
-      .populate('orgId') // Fetch related organization details
-      .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
+      .populate('expCatId')  // Ensure that this reference is set up in your Expense model
+      .populate('orgId')  // Ensure that this reference is set up in your Expense model
+      .sort({ [sortField]: sortOrder })
       .skip(skip)
       .limit(limit)
-      .select('-__v'); // Exclude version key
+      .select('-__v');
 
     const total = await Expense.countDocuments(query);
 
     return NextResponse.json({
-      expenses,
+      success: true,
+      data: expenses,
       pagination: {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     });
 
   } catch (error: unknown) {
-    console.error('Error in GET /api/expenses:', error);
+    console.error('GET /api/expenses Error:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to fetch expenses' },
+      { success: false, error: (error as Error).message || 'Failed to fetch expenses' },
       { status: 500 }
     );
   }
 }
 
+/**
+ * POST: Create a New Expense
+ */
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Validate JSON Request
+    if (!request.headers.get('content-type')?.includes('application/json')) {
+      return NextResponse.json({ success: false, error: 'Invalid Content-Type' }, { status: 400 });
+    }
+
     const data = await request.json();
+
+    // Ensure required fields exist
+    if (!data.amount || !data.expCatId || !data.orgId || !data.paymentMethod) {
+      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+    }
 
     const expense = await Expense.create({
       ...data,
-      modifiedBy: 'System', // Replace with actual user when auth is implemented
-      modifiedDate: new Date()
+      modifiedBy: 'System',
+      modifiedDate: new Date(),
     });
 
     return NextResponse.json({
+      success: true,
       message: 'Expense created successfully',
-      expense
+      data: expense,
     }, { status: 201 });
+
   } catch (error: unknown) {
-    console.error('Error in POST /api/expenses:', error);
+    console.error('POST /api/expenses Error:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to create expense' },
+      { success: false, error: (error as Error).message || 'Failed to create expense' },
       { status: 500 }
     );
   }
 }
 
+/**
+ * PUT: Update an Expense
+ */
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { _id, ...updateData } = data;
+    
+    if (!data._id) {
+      return NextResponse.json({ success: false, error: 'Expense ID is required' }, { status: 400 });
+    }
 
-    const expense = await Expense.findByIdAndUpdate(
-      _id,
-      {
-        ...updateData,
-        modifiedBy: 'System', // Replace with actual user when auth is implemented
-        modifiedDate: new Date()
+    const updatedExpense = await Expense.findByIdAndUpdate(
+      data._id,
+      { 
+        ...data, 
+        modifiedBy: 'System', 
+        modifiedDate: new Date() 
       },
       { new: true, runValidators: true }
     );
 
-    if (!expense) {
-      return NextResponse.json(
-        { error: 'Expense not found' },
-        { status: 404 }
-      );
+    if (!updatedExpense) {
+      return NextResponse.json({ success: false, error: 'Expense not found' }, { status: 404 });
     }
 
     return NextResponse.json({
+      success: true,
       message: 'Expense updated successfully',
-      expense
+      data: updatedExpense,
     });
+
   } catch (error: unknown) {
-    console.error('Error in PUT /api/expenses:', error);
+    console.error('PUT /api/expenses Error:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to update expense' },
+      { success: false, error: (error as Error).message || 'Failed to update expense' },
       { status: 500 }
     );
   }
 }
 
+/**
+ * DELETE: Remove an Expense
+ */
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { _id } = data;
 
-    if (!_id) {
-      return NextResponse.json(
-        { error: 'Expense ID is required' },
-        { status: 400 }
-      );
+    if (!data._id) {
+      return NextResponse.json({ success: false, error: 'Expense ID is required' }, { status: 400 });
     }
 
-    const expense = await Expense.findByIdAndDelete(_id);
-    
-    if (!expense) {
-      return NextResponse.json(
-        { error: 'Expense not found' },
-        { status: 404 }
-      );
+    const deletedExpense = await Expense.findByIdAndDelete(data._id);
+
+    if (!deletedExpense) {
+      return NextResponse.json({ success: false, error: 'Expense not found' }, { status: 404 });
     }
 
     return NextResponse.json({
+      success: true,
       message: 'Expense deleted successfully',
-      success: true
     });
+
   } catch (error: unknown) {
-    console.error('Error in DELETE /api/expenses:', error);
+    console.error('DELETE /api/expenses Error:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to delete expense' },
+      { success: false, error: (error as Error).message || 'Failed to delete expense' },
       { status: 500 }
     );
   }

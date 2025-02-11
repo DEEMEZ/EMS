@@ -1,27 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/utils/dbconnect';
-import Expense from '@/models/expense';
+'use client';
 
-export async function POST(request: NextRequest) {
-  try {
-    await dbConnect();
-    const data = await request.json();
+import ExpenseForm from "@/components/expense/expenseform/form";
+import NavbarComponent from "@/components/navbar/navbar";
 
-    const expense = await Expense.create({
-      ...data,
-      modifiedBy: 'System', // Replace with actual user when authentication is implemented
-      modifiedDate: new Date()
-    });
-
-    return NextResponse.json({
-      message: 'Expense added successfully',
-      expense
-    }, { status: 201 });
-  } catch (error: unknown) {
-    console.error('Error in POST /api/expenses/add:', error);
-    return NextResponse.json(
-      { error: (error as Error).message || 'Failed to add expense' },
-      { status: 500 }
+export default function ExpensePage() { 
+    return (
+        <div>
+            <NavbarComponent />
+            <div className="container mx-auto px-4 py-8">
+                <ExpenseForm />
+            </div>
+        </div>
     );
-  }
 }

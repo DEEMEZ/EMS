@@ -88,18 +88,23 @@ export const navigationConfig: NavItem[] = [
     subItems: [
        {
         title: 'Transactions',
-        href: '/transaction/list',
+        href: '/transactions/transaction/list',
         icon: ArrowRightLeft,
       },
       {
         title: 'Income',
-        href: '/transactions/income/list',
+        href: '/transactions/incomes/list',
         icon: DollarSign,
       },
       {
         title: 'Expenses',
-        href: '/expense/list',
+        href: '/transactions/expense/list',
         icon: Receipt,
+      },
+       {
+        title: 'Budgets',
+        href: '/transactions/budgets/list',
+        icon: Wallet,
       },
     ],
   },

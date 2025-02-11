@@ -1,15 +1,15 @@
 'use client';
 
-import { LoadingSpinner } from '@/components/loadiingspinner';
 import BudgetForm from '@/components/budgets/budgetform/form';
-import { IBudgets } from '@/types/budgets';
+import { LoadingSpinner } from '@/components/loadiingspinner';
 import { AnimatePresence, motion } from 'framer-motion';
 import _ from 'lodash';
 import { AlertCircle, Edit, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function BudgetList() {
-  const [budgets, setBudgets] = useState<IBudgets[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [budgets, setBudgets] = useState<any[]>([]);
   const [, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -19,7 +19,8 @@ export default function BudgetList() {
   const [, setTotalPages] = useState(1);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<IBudgets | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [editingBudget, setEditingBudget] = useState<any | null>(null);
 
   const debouncedSearch = useMemo(
     () =>
@@ -81,7 +82,8 @@ export default function BudgetList() {
     }
   };
 
-  const openModal = (budget?: IBudgets) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const openModal = (budget?: any) => {
     setEditingBudget(budget || null);
     setIsModalOpen(true);
   };
@@ -154,10 +156,11 @@ export default function BudgetList() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Type</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">monthly Limit</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">expensecategoriesid</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Monthly Limit</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Start Date</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">End Date</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -171,18 +174,11 @@ export default function BudgetList() {
                     transition={{ delay: index * 0.1 }}
                     className="border-b border-gray-100 hover:bg-gray-50"
                   >
-                    <td className="px-6 py-4">
-                      {budget.userId && typeof budget.userId === 'object' ? (
-                        <div>
-                          <p className="font-semibold">{budget.userId.fullname}</p>
-                          <p className="text-sm text-gray-500">{budget.userId.email}</p>
-                        </div>
-                      ) : (
-                        'Unknown User'
-                      )}
-                    </td>
-                    <td className="px-6 py-4">{budget.type}</td>
-                    <td className="px-6 py-4">{new Date(budget.budget).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">{budget.userId?.fullname || 'Unknown User'}</td>
+                    <td className="px-6 py-4">{budget.expensecategoriesId?.name || 'Unknown Category'}</td>
+                    <td className="px-6 py-4">{budget.monthlyLimit}</td>
+                    <td className="px-6 py-4">{new Date(budget.startDate).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">{new Date(budget.endDate).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
                       <div className="flex justify-end gap-2">
                         <button
@@ -192,7 +188,7 @@ export default function BudgetList() {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(budget._id!)}
+                          onClick={() => handleDelete(budget._id)}
                           disabled={isDeleting === budget._id}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                         >
@@ -208,9 +204,7 @@ export default function BudgetList() {
         </div>
       </div>
 
-      {isModalOpen && (
-        <BudgetForm initialData={editingBudget || undefined} onCancel={closeModal} onSuccess={handleSuccess} />
-      )}
+      {isModalOpen && <BudgetForm initialData={editingBudget || undefined} onCancel={closeModal} onSuccess={handleSuccess} />}
     </div>
   );
 }

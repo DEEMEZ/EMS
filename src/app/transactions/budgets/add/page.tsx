@@ -1,14 +1,14 @@
 'use client';
 
-import ExpenseForm from "@/components/expense/expenseform/form";
+import BudgetForm from "@/components/budgets/budgetform/form";
 import NavbarComponent from "@/components/navbar/navbar";
 
-export default function ExpensePage() { 
+export default function AddBudget() {
     return (
         <div>
             <NavbarComponent />
             <div className="container mx-auto px-4 py-8">
-                <ExpenseForm />
+                <BudgetForm />
             </div>
         </div>
     );

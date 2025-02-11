@@ -2,32 +2,32 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import ExpenseForm from '@/components/expense/expenseform/form';
+import IncomeForm from '@/components/income/incomeform/form';
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { AnimatePresence, motion } from 'framer-motion';
 import _ from 'lodash';
 import { AlertCircle, Edit, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-export default function ExpenseList() {
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export default function IncomeList() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [incomes, setIncomes] = useState<any[]>([]);
+  const [, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [, setTotalPages] = useState(1);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<any | null>(null);
+  const [editingIncome, setEditingIncome] = useState<any | null>(null);
 
   const debouncedSearch = useMemo(
-    () =>
-      _.debounce((value: string) => {
-        setDebouncedSearchTerm(value);
-        setPage(1);
-      }, 500),
+    () => _.debounce((value: string) => {
+      setDebouncedSearchTerm(value);
+      setPage(1);
+    }, 500),
     []
   );
 
@@ -36,7 +36,7 @@ export default function ExpenseList() {
     debouncedSearch(value);
   };
 
-  const fetchExpenses = async () => {
+  const fetchIncomes = async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -47,56 +47,56 @@ export default function ExpenseList() {
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
       });
 
-      const response = await fetch(`/api/expenses?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch expenses');
+      const response = await fetch(`/api/incomes?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch incomes');
 
       const data = await response.json();
-      setExpenses(data.expenses);
+      setIncomes(data.incomes);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
-      setError('Failed to fetch expenses');
+      setError('Failed to fetch incomes');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDelete = async (expenseId: string) => {
+  const handleDelete = async (incomeId: string) => {
     try {
-      setIsDeleting(expenseId);
-      const response = await fetch(`/api/expenses`, {
+      setIsDeleting(incomeId);
+      const response = await fetch(`/api/incomes`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ _id: expenseId }),
+        body: JSON.stringify({ _id: incomeId }),
       });
 
-      if (!response.ok) throw new Error('Failed to delete expense');
-      await fetchExpenses();
+      if (!response.ok) throw new Error('Failed to delete income');
+      await fetchIncomes();
     } catch {
-      setError('Failed to delete expense');
+      setError('Failed to delete income');
     } finally {
       setIsDeleting(null);
     }
   };
 
-  const openModal = (expense?: any) => {
-    setEditingExpense(expense || null);
+  const openModal = (income?: any) => {
+    setEditingIncome(income || null);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
-    setEditingExpense(null);
+    setEditingIncome(null);
     setIsModalOpen(false);
   };
 
   const handleSuccess = () => {
     closeModal();
-    fetchExpenses();
+    fetchIncomes();
   };
 
   useEffect(() => {
-    fetchExpenses();
+    fetchIncomes();
   }, [debouncedSearchTerm, page]);
 
   useEffect(() => {
@@ -110,21 +110,21 @@ export default function ExpenseList() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-red-600 to-red-400 rounded-2xl p-6 mb-6"
+        className="bg-gradient-to-r from-green-600 to-green-400 rounded-2xl p-6 mb-6"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">Expenses</h1>
-            <p className="text-red-200">Manage your expenses</p>
+            <h1 className="text-2xl font-bold text-white">Incomes</h1>
+            <p className="text-green-200">Manage your incomes</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => openModal()}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-green-600 rounded-xl hover:bg-green-50 transition-colors"
           >
             <Plus className="w-5 h-5" />
-            New Expense
+            New Income
           </motion.button>
         </div>
       </motion.div>
@@ -142,37 +142,33 @@ export default function ExpenseList() {
             <tr>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Type</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Income Source</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Payment Method</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Bank</th>
               <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody>
             <AnimatePresence>
-              {expenses.map((expense, index) => (
+              {incomes.map((income, index) => (
                 <motion.tr
-                  key={expense._id}
+                  key={income._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.1 }}
                   className="border-b border-gray-100 hover:bg-gray-50"
                 >
-                  <td className="px-6 py-4">{expense.transactionId?.type || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.transactionId?.transactionDate || 'Unknown'}</td>                  
-                  <td className="px-6 py-4">{expense.expensecategoriesId?.name || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.orgId?.name || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.paymentMethod || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.bankId?.name || 'N/A'}</td>
+                  <td className="px-6 py-4">{income.transactionId?.type || 'Unknown'}</td>
+                  <td className="px-6 py-4">{income.transactionId?.transactionDate || 'Unknown'}</td>                  
+                  <td className="px-6 py-4">{income.incomeSourceId?.name || 'Unknown'}</td>
+                  <td className="px-6 py-4">{income.orgId?.name || 'Unknown'}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => openModal(expense)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                      <button onClick={() => openModal(income)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg">
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(expense._id)} disabled={isDeleting === expense._id} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
-                        {isDeleting === expense._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                      <button onClick={() => handleDelete(income._id)} disabled={isDeleting === income._id} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        {isDeleting === income._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
                       </button>
                     </div>
                   </td>
@@ -183,7 +179,7 @@ export default function ExpenseList() {
         </table>
       </div>
 
-      {isModalOpen && <ExpenseForm initialData={editingExpense || undefined} onCancel={closeModal} onSuccess={handleSuccess} />}
+      {isModalOpen && <IncomeForm initialData={editingIncome || undefined} onCancel={closeModal} onSuccess={handleSuccess} />}
     </div>
   );
 }

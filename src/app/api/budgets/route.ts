@@ -1,4 +1,5 @@
-import Budget from '@/models/budgets';
+import Budget from '@/models/budget';
+import ExpenseCategory from '@/models/expenseCategory';
 import User from '@/models/user';
 import dbConnect from '@/utils/dbconnect';
 import { NextRequest, NextResponse } from 'next/server';
@@ -6,26 +7,31 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+     if (!ExpenseCategory) {
+      throw new Error("ExpenseCategory model is not registered.");
+    }
 
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const userId = searchParams.get('userId') || '';
-    const type = searchParams.get('type') || '';
-    const sortField = searchParams.get('sortField') || 'budgetDate';
+    const expensecategoriesId = searchParams.get('expensecategoriesId') || '';
+    const sortField = searchParams.get('sortField') || 'startDate';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    const query: { userId?: string; type?: string } = {};
+    const query: { userId?: string; expensecategoriesId?: string } = {};
     if (userId) query.userId = userId;
-    if (type) query.type = type;
+    if (expensecategoriesId) query.expensecategoriesId = expensecategoriesId;
 
     const skip = (page - 1) * limit;
     const budgets = await Budget.find(query)
-      .populate('userId', 'fullname email') // 🌟 Add this line to fetch user details
+      .populate('userId', 'fullname email')
+      .populate('expensecategoriesId', 'name')
       .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)
       .select('-__v');
+console.log("Fetched Budgets:", JSON.stringify(budgets, null, 2));
 
     const total = await Budget.countDocuments(query);
 
@@ -47,12 +53,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { userId, id, expensecategoriesid, montlyLimit, startDate, endDate } = data;
+    const { userId, expensecategoriesId, monthlyLimit, startDate, endDate } = data;
 
     const userExists = await User.findById(userId);
     if (!userExists) {
@@ -62,15 +67,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const budget = await Budget.create({ userId, id, expensecategoriesid, monthlyLimit,  startDate, endDate });
+    const expenseCategoryExists = await ExpenseCategory.findById(expensecategoriesId);
+    if (!expenseCategoryExists) {
+      return NextResponse.json(
+        { error: 'Invalid Expense Category ID. No such category exists.' },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json(
-      {
-        message: 'Budget created successfully',
-        budget,
-      },
-      { status: 201 }
-    );
+    const budget = await Budget.create({
+      userId,
+      expensecategoriesId,
+      monthlyLimit,
+      startDate,
+      endDate,
+    });
+
+    return NextResponse.json({
+      message: 'Budget created successfully',
+      budget,
+    });
   } catch (error: unknown) {
     console.error('Error in POST /api/budgets:', error);
     return NextResponse.json(
@@ -84,7 +100,7 @@ export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { _id, userId, ...updateData } = data;
+    const { _id, userId, expensecategoriesId, monthlyLimit, startDate, endDate } = data;
 
     const userExists = await User.findById(userId);
     if (!userExists) {
@@ -94,9 +110,17 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const expenseCategoryExists = await ExpenseCategory.findById(expensecategoriesId);
+    if (!expenseCategoryExists) {
+      return NextResponse.json(
+        { error: 'Invalid Expense Category ID. No such category exists.' },
+        { status: 400 }
+      );
+    }
+
     const budget = await Budget.findByIdAndUpdate(
       _id,
-      { userId, ...updateData },
+      { userId, expensecategoriesId, monthlyLimit, startDate, endDate },
       { new: true, runValidators: true }
     );
 

@@ -5,20 +5,18 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Save, X } from 'lucide-react';
 import { useState } from 'react';
 
-interface BudgetFormProps {
+interface IncomeFormProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any;
   onCancel?: () => void;
   onSuccess?: () => void;
 }
 
-export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetFormProps) {
+export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeFormProps) {
   const [formData, setFormData] = useState({
-    userId: initialData?.userId || '',
-    expensecategoriesId: initialData?.expensecategoriesId || '',
-    monthlyLimit: initialData?.monthlyLimit || '',
-    startDate: initialData?.startDate || '',
-    endDate: initialData?.endDate || '',
+    transactionId: initialData?.transactionId || '',
+    incomeSourceId: initialData?.incomeSourceId || '',
+    orgId: initialData?.orgId || '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +30,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
     setSuccessMessage('');
 
     try {
-      const response = await fetch('/api/budgets', {
+      const response = await fetch('/api/incomes', {
         method: initialData ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,22 +39,20 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
       });
 
       if (response.ok) {
-        setSuccessMessage(initialData ? 'Budget updated successfully!' : 'Budget created successfully!');
+        setSuccessMessage(initialData ? 'Income updated successfully!' : 'Income created successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
         if (onSuccess) setTimeout(onSuccess, 1000);
         if (!initialData)
           setFormData({
-            userId: '',
-            expensecategoriesId: '',
-            monthlyLimit: '',
-            startDate: '',
-            endDate: '',
+            transactionId: '',
+            incomeSourceId: '',
+            orgId: '',
           });
       } else {
-        setError('Error saving budget. Please check the input data.');
+        setError('Error saving income. Please check the input data.');
       }
     } catch {
-      setError('Failed to save budget');
+      setError('Failed to save income');
     } finally {
       setIsSubmitting(false);
     }
@@ -70,9 +66,9 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
         exit={{ opacity: 0, y: -20 }}
         className="max-w-4xl w-full bg-white rounded-2xl shadow-xl border border-gray-200"
       >
-        <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl flex justify-between items-center">
+        <div className="bg-gradient-to-r from-green-600 to-green-400 px-6 py-4 rounded-t-2xl flex justify-between items-center">
           <h2 className="text-xl font-semibold text-white">
-            {initialData ? 'Update Budget' : 'Create New Budget'}
+            {initialData ? 'Update Income' : 'Create New Income'}
           </h2>
           {onCancel && (
             <button onClick={onCancel} className="text-white hover:text-gray-200 transition-colors">
@@ -109,60 +105,38 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
           {/* Form Fields */}
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">User ID</label>
+              <label className="text-sm font-medium text-gray-700">Transaction ID</label>
               <input
                 type="text"
                 required
-                value={formData.userId}
-                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter user ID"
+                value={formData.transactionId}
+                onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
+                placeholder="Enter transaction ID"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Expense Category ID</label>
+              <label className="text-sm font-medium text-gray-700">Income Source ID</label>
               <input
                 type="text"
                 required
-                value={formData.expensecategoriesId}
-                onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter expense category ID"
+                value={formData.incomeSourceId}
+                onChange={(e) => setFormData({ ...formData, incomeSourceId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
+                placeholder="Enter income source ID"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Monthly Limit</label>
+              <label className="text-sm font-medium text-gray-700">Organization ID</label>
               <input
-                type="number"
+                type="text"
                 required
-                value={formData.monthlyLimit}
-                onChange={(e) => setFormData({ ...formData, monthlyLimit: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter monthly limit"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700">Start Date</label>
-              <input
-                type="date"
-                required
-                value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700">End Date</label>
-              <input
-                type="date"
-                required
-                value={formData.endDate}
-                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={formData.orgId}
+                onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
+                placeholder="Enter organization ID"
               />
             </div>
           </div>
@@ -182,7 +156,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

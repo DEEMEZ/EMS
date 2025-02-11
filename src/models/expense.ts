@@ -1,46 +1,43 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose from 'mongoose';
 
-export interface IExpense extends Document {
-    transactionId: mongoose.Types.ObjectId;
-    expCatId: mongoose.Types.ObjectId;
-    orgId: mongoose.Types.ObjectId;
-    paymentMethod: string;
-    amount: number;
-    createdAt: Date;
-}
-
-const ExpenseSchema = new Schema<IExpense>({
+const expenseSchema = new mongoose.Schema(
+  {
     transactionId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Transaction', // Reference to Transaction model
-        required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Transaction',
+      required: true
     },
-    expCatId: {
-        type: Schema.Types.ObjectId,
-        ref: 'ExpenseCategory', // Reference to ExpenseCategory model
-        required: true,
+    expensecategoriesId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ExpenseCategory',
+      required: true
     },
     orgId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Organization', // Reference to Organization model
-        required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: true
     },
     paymentMethod: {
-        type: String,
-        enum: ['Cash', 'Card', 'Bank Transfer'],
-        required: true,
+      type: String,
+      enum: ['Cash', 'Transfer'],
+      required: true
     },
-    amount: {
-        type: Number,
-        required: true,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
+    bankId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Bank',
+      default: null 
+    }
+  },
+  {
+    timestamps: true
+  }
+);
+
+expenseSchema.pre('save', function (next) {
+  if (this.paymentMethod === 'Transfer' && !this.bankId) {
+    return next(new Error('bankId is required when paymentMethod is Transfer.'));
+  }
+  next();
 });
 
-// Export the model
-const Expense = mongoose.models.Expense || mongoose.model<IExpense>('Expense', ExpenseSchema);
-
-export default Expense;
+export default mongoose.models.Expense || mongoose.model('Expense', expenseSchema);

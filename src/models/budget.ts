@@ -1,27 +1,28 @@
 import mongoose from 'mongoose';
 
-const budgetsSchema = new mongoose.Schema(
+const budgetSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true
     },
-    expensecategoriesid: {
-      type: String,
+    expensecategoriesId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ExpenseCategory',
       required: true
     },
     monthlyLimit: {
-      type: Date,
+      type: Number,
       required: true
     },
     startDate: {
       type: Date,
-      default: Date.now
+      required: true
     },
     endDate: {
       type: Date,
-      default: Date.now
+      required: true
     }
   },
   {
@@ -29,4 +30,4 @@ const budgetsSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.models.Budgets || mongoose.model('Budgets', budgetsSchema);
+export default mongoose.models.Budget || mongoose.model('Budget', budgetSchema);

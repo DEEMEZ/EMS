@@ -1,14 +1,13 @@
-import { IUser } from "@/types/user";
+import { IBank } from "@/types/bank";
 import { IExpenseCategories } from "@/types/expensecategories";
 import { IOrganization } from "@/types/organization";
+import { ITransaction } from "@/types/transaction";
 
-// Updated IExpense interface
 export interface IExpense {
-  id: string;
-  transactionId: string;  // Foreign key reference to ITransaction
-  expCatId: string;       // Foreign key reference to IExpenseCategory
-  orgId: string;          // Foreign key reference to IOrganization
-  paymentMethod: string;
-  amount: number;
-  createdAt: Date;
+  _id?: string;
+  transactionId: string | ITransaction;
+  expenseCategoryId: string | IExpenseCategories;
+  orgId: string | IOrganization;
+  paymentMethod: 'Cash' | 'Transfer';
+  bankId: string | IBank; 
 }

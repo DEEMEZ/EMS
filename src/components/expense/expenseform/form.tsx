@@ -1,56 +1,29 @@
 'use client';
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
-import { IExpense } from '@/types/expense';  // Using IExpense type
-import { IExpenseCategories } from '@/types/expensecategories';  // Expense Categories type
-import { IOrganization } from '@/types/organization';  // Organization type
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Save, X } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface ExpenseFormProps {
-  initialData?: IExpense;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialData?: any;
   onCancel?: () => void;
   onSuccess?: () => void;
 }
 
 export default function ExpenseForm({ initialData, onCancel, onSuccess }: ExpenseFormProps) {
-  const [formData, setFormData] = useState<IExpense>({
-    id: initialData?.id || '',
+  const [formData, setFormData] = useState({
     transactionId: initialData?.transactionId || '',
-    expCatId: initialData?.expCatId || '',
+    expensecategoriesId: initialData?.expensecategoriesId || '',
     orgId: initialData?.orgId || '',
-    paymentMethod: initialData?.paymentMethod || 'Cash',
-    amount: initialData?.amount || 0,
-    createdAt: initialData?.createdAt || new Date(),
+    paymentMethod: initialData?.paymentMethod || '',
+    bankId: initialData?.bankId || '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [categories, setCategories] = useState<IExpenseCategories[]>([]);
-  const [organizations, setOrganizations] = useState<IOrganization[]>([]);
-
-  useEffect(() => {
-    // Fetch categories and organizations
-    const fetchCategoriesAndOrganizations = async () => {
-      try {
-        const [categoriesResponse, organizationsResponse] = await Promise.all([
-          fetch('/api/expensecategories'),
-          fetch('/api/organizations'),
-        ]);
-        const categoriesData = await categoriesResponse.json();
-        const organizationsData = await organizationsResponse.json();
-        setCategories(categoriesData);
-        setOrganizations(organizationsData);
-      } catch (err) {
-        setError('Failed to fetch categories and organizations');
-        console.error('Error:', err);
-      }
-    };
-
-    fetchCategoriesAndOrganizations();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,30 +31,36 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     setIsSubmitting(true);
     setSuccessMessage('');
 
+    if (formData.paymentMethod === 'Transfer' && !formData.bankId) {
+      setError('Bank ID is required for Transfer payment method.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/expenses', {
         method: initialData ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...formData, _id: initialData?.id }),
+        body: JSON.stringify({ ...formData, _id: initialData?._id }),
       });
 
       if (response.ok) {
         setSuccessMessage(initialData ? 'Expense updated successfully!' : 'Expense created successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
         if (onSuccess) setTimeout(onSuccess, 1000);
-        if (!initialData) setFormData({
-          id: '',
-          transactionId: '',
-          expCatId: '',
-          orgId: '',
-          paymentMethod: 'Cash',
-          amount: 0,
-          createdAt: new Date(),
-        });
+        if (!initialData) {
+          setFormData({
+            transactionId: '',
+            expensecategoriesId: '',
+            orgId: '',
+            paymentMethod: '',
+            bankId: '',
+          });
+        }
       } else {
-        setError('Failed to save expense');
+        setError('Error saving expense. Please check the input data.');
       }
     } catch {
       setError('Failed to save expense');
@@ -98,8 +77,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
         exit={{ opacity: 0, y: -20 }}
         className="max-w-4xl w-full bg-white rounded-2xl shadow-xl border border-gray-200"
       >
-        {/* Header with Close Button */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl flex justify-between items-center">
+        <div className="bg-gradient-to-r from-red-600 to-red-400 px-6 py-4 rounded-t-2xl flex justify-between items-center">
           <h2 className="text-xl font-semibold text-white">
             {initialData ? 'Update Expense' : 'Create New Expense'}
           </h2>
@@ -142,83 +120,64 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
               <input
                 type="text"
                 required
-                value={formData.transactionId || ''}
+                value={formData.transactionId}
                 onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter Transaction ID"
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                placeholder="Enter transaction ID"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Expense Category</label>
-              <select
+              <label className="text-sm font-medium text-gray-700">Expense Category ID</label>
+              <input
+                type="text"
                 required
-                value={formData.expCatId}
-                onChange={(e) => setFormData({ ...formData, expCatId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Select Category</option>
-                {categories.map((category) => (
-                  <option key={category._id} value={category._id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+                value={formData.expensecategoriesId}
+                onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                placeholder="Enter expense category ID"
+              />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Organization</label>
-              <select
+              <label className="text-sm font-medium text-gray-700">Organization ID</label>
+              <input
+                type="text"
                 required
                 value={formData.orgId}
                 onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Select Organization</option>
-                {organizations.map((organization) => (
-                  <option key={organization._id} value={organization._id}>
-                    {organization.name}
-                  </option>
-                ))}
-              </select>
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                placeholder="Enter organization ID"
+              />
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700">Payment Method</label>
               <select
+                required
                 value={formData.paymentMethod}
                 onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
               >
+                <option value="">Select Payment Method</option>
                 <option value="Cash">Cash</option>
-                <option value="Credit Card">Credit Card</option>
-                <option value="Debit Card">Debit Card</option>
-                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Transfer">Transfer</option>
               </select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700">Amount</label>
-              <input
-                type="number"
-                required
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter amount"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700">Created At</label>
-              <input
-                type="date"
-                required
-                value={new Date(formData.createdAt).toISOString().split('T')[0]}
-                onChange={(e) => setFormData({ ...formData, createdAt: new Date(e.target.value) })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
+            {formData.paymentMethod === 'Transfer' && (
+              <div>
+                <label className="text-sm font-medium text-gray-700">Bank ID</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.bankId}
+                  onChange={(e) => setFormData({ ...formData, bankId: e.target.value })}
+                  className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                  placeholder="Enter bank ID"
+                />
+              </div>
+            )}
           </div>
 
           {/* Buttons */}
@@ -236,7 +195,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

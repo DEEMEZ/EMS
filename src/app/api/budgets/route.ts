@@ -1,4 +1,4 @@
-import Transaction from '@/models/transaction';
+import Budget from '@/models/budgets';
 import User from '@/models/user';
 import dbConnect from '@/utils/dbconnect';
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const userId = searchParams.get('userId') || '';
     const type = searchParams.get('type') || '';
-    const sortField = searchParams.get('sortField') || 'transactionDate';
+    const sortField = searchParams.get('sortField') || 'budgetDate';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     const query: { userId?: string; type?: string } = {};
@@ -20,17 +20,17 @@ export async function GET(request: NextRequest) {
     if (type) query.type = type;
 
     const skip = (page - 1) * limit;
-    const transactions = await Transaction.find(query)
-      .populate('userId', 'fullname email') 
+    const budgets = await Budget.find(query)
+      .populate('userId', 'fullname email') // 🌟 Add this line to fetch user details
       .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)
       .select('-__v');
 
-    const total = await Transaction.countDocuments(query);
+    const total = await Budget.countDocuments(query);
 
     return NextResponse.json({
-      transactions,
+      budgets,
       pagination: {
         total,
         page,
@@ -39,9 +39,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error('Error in GET /api/transactions:', error);
+    console.error('Error in GET /api/budgets:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to fetch transactions' },
+      { error: (error as Error).message || 'Failed to fetch budgets' },
       { status: 500 }
     );
   }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { userId, type, transactionDate, description } = data;
+    const { userId, id, expensecategoriesid, montlyLimit, startDate, endDate } = data;
 
     const userExists = await User.findById(userId);
     if (!userExists) {
@@ -62,19 +62,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const transaction = await Transaction.create({ userId, type, transactionDate, description });
+    const budget = await Budget.create({ userId, id, expensecategoriesid, monthlyLimit,  startDate, endDate });
 
     return NextResponse.json(
       {
-        message: 'Transaction created successfully',
-        transaction,
+        message: 'Budget created successfully',
+        budget,
       },
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error('Error in POST /api/transactions:', error);
+    console.error('Error in POST /api/budgets:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to create transaction' },
+      { error: (error as Error).message || 'Failed to create budget' },
       { status: 500 }
     );
   }
@@ -94,27 +94,27 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const transaction = await Transaction.findByIdAndUpdate(
+    const budget = await Budget.findByIdAndUpdate(
       _id,
       { userId, ...updateData },
       { new: true, runValidators: true }
     );
 
-    if (!transaction) {
+    if (!budget) {
       return NextResponse.json(
-        { error: 'Transaction not found' },
+        { error: 'Budget not found' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: 'Transaction updated successfully',
-      transaction,
+      message: 'Budget updated successfully',
+      budget,
     });
   } catch (error: unknown) {
-    console.error('Error in PUT /api/transactions:', error);
+    console.error('Error in PUT /api/budgets:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to update transaction' },
+      { error: (error as Error).message || 'Failed to update budget' },
       { status: 500 }
     );
   }
@@ -128,28 +128,28 @@ export async function DELETE(request: NextRequest) {
 
     if (!_id) {
       return NextResponse.json(
-        { error: 'Transaction ID is required' },
+        { error: 'Budget ID is required' },
         { status: 400 }
       );
     }
 
-    const transaction = await Transaction.findByIdAndDelete(_id);
+    const budget = await Budget.findByIdAndDelete(_id);
 
-    if (!transaction) {
+    if (!budget) {
       return NextResponse.json(
-        { error: 'Transaction not found' },
+        { error: 'Budget not found' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: 'Transaction deleted successfully',
+      message: 'Budget deleted successfully',
       success: true,
     });
   } catch (error: unknown) {
-    console.error('Error in DELETE /api/transactions:', error);
+    console.error('Error in DELETE /api/budgets:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to delete transaction' },
+      { error: (error as Error).message || 'Failed to delete budget' },
       { status: 500 }
     );
   }

@@ -57,7 +57,7 @@ export const navigationConfig: NavItem[] = [
     subItems: [
       {
         title: 'Expense Categories',
-        href: '/expensecategories/list',
+        href: '/ExpCat/list',
         icon: Wallet,
       },
       {

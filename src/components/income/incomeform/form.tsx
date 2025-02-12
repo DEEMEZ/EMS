@@ -66,7 +66,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
         exit={{ opacity: 0, y: -20 }}
         className="max-w-4xl w-full bg-white rounded-2xl shadow-xl border border-gray-200"
       >
-        <div className="bg-gradient-to-r from-green-600 to-green-400 px-6 py-4 rounded-t-2xl flex justify-between items-center">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl flex justify-between items-center">
           <h2 className="text-xl font-semibold text-white">
             {initialData ? 'Update Income' : 'Create New Income'}
           </h2>
@@ -94,10 +94,10 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2"
+                className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-2"
               >
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <p className="text-green-700">{successMessage}</p>
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                <p className="text-blue-700">{successMessage}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -111,7 +111,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
                 required
                 value={formData.transactionId}
                 onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter transaction ID"
               />
             </div>
@@ -123,7 +123,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
                 required
                 value={formData.incomeSourceId}
                 onChange={(e) => setFormData({ ...formData, incomeSourceId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter income source ID"
               />
             </div>
@@ -135,7 +135,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
                 required
                 value={formData.orgId}
                 onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter organization ID"
               />
             </div>
@@ -156,7 +156,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

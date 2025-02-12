@@ -220,9 +220,9 @@ export default function TagsList() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Id</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Name</th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Description</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>
             <tbody>

@@ -122,7 +122,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!_id) {
       return NextResponse.json(
-        { error: 'IncomeSource ID is required' },
+        { error: 'tags ID is required' },
         { status: 400 }
       );
     }

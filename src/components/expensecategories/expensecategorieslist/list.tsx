@@ -116,7 +116,7 @@ export default function ExpenseCategoryList() {
         </div>
       </motion.div>
 
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p className="text-blue-600">{error}</p>}
 
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -142,7 +142,7 @@ export default function ExpenseCategoryList() {
                     </button>
                     <button
                       onClick={() => handleDelete(category._id!)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

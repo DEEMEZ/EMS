@@ -57,7 +57,7 @@ export const navigationConfig: NavItem[] = [
     subItems: [
       {
         title: 'Expense Categories',
-        href: '/ExpCat/list',
+        href: '/expensecategories/list',
         icon: Wallet,
       },
       {
@@ -76,8 +76,8 @@ export const navigationConfig: NavItem[] = [
         icon: CreditCard,
       },
       {
-        title: 'Tags',
-        href: '/tags/list',
+        title: 'taggs',
+        href: '/taggs/list',
         icon: Tags,
       }
     ],

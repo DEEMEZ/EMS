@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
     const incomes = await Income.find(query)
-      .populate('transactionId', 'type transactionDate')
+      .populate('transactionId', 'type transactionDate amount') // ✅ Added 'amount'
       .populate('incomeSourceId', 'name')
       .populate('orgId', 'name')
       .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { transactionId, incomeSourceId, orgId } = data;
+    const { transactionId, incomeSourceId, orgId, amount } = data; // ✅ Include 'amount'
 
     const transactionExists = await Transaction.findById(transactionId);
     if (!transactionExists) {
@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
       transactionId,
       incomeSourceId,
       orgId,
+      amount, // ✅ Ensure 'amount' is saved
     });
 
     return NextResponse.json(
@@ -110,7 +111,7 @@ export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { _id, transactionId, incomeSourceId, orgId } = data;
+    const { _id, transactionId, incomeSourceId, orgId, amount } = data; // ✅ Include 'amount'
 
     const income = await Income.findById(_id);
     if (!income) {
@@ -122,7 +123,7 @@ export async function PUT(request: NextRequest) {
 
     const updatedIncome = await Income.findByIdAndUpdate(
       _id,
-      { transactionId, incomeSourceId, orgId },
+      { transactionId, incomeSourceId, orgId, amount }, // ✅ Ensure 'amount' can be updated
       { new: true, runValidators: true }
     );
 

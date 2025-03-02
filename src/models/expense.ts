@@ -26,6 +26,10 @@ const expenseSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Bank',
       default: null 
+    },
+    amount: {
+      type: Number,
+      required: true
     }
   },
   {

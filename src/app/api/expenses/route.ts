@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
     const expenses = await Expense.find(query)
-      .populate('transactionId', 'type transactionDate')
+      .populate('transactionId', 'type transactionDate amount') // ✅ Include 'amount'
       .populate('expensecategoriesId', 'name')
       .populate('orgId', 'name')
       .populate('bankId', 'name')
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
+    const { transactionId, expensecategoriesId, orgId, paymentMethod, bankId, amount } = data; // ✅ Include 'amount'
 
     const transactionExists = await Transaction.findById(transactionId);
     if (!transactionExists) {
@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
       orgId,
       paymentMethod,
       bankId: paymentMethod === 'Transfer' ? bankId : null,
+      amount, // ✅ Ensure 'amount' is stored
     });
 
     return NextResponse.json({
@@ -130,7 +131,7 @@ export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { _id, transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
+    const { _id, transactionId, expensecategoriesId, orgId, paymentMethod, bankId, amount } = data; // ✅ Include 'amount'
 
     const expense = await Expense.findById(_id);
     if (!expense) {
@@ -155,6 +156,7 @@ export async function PUT(request: NextRequest) {
         orgId,
         paymentMethod,
         bankId: paymentMethod === 'Transfer' ? bankId : null,
+        amount, // ✅ Ensure 'amount' can be updated
       },
       { new: true, runValidators: true }
     );

@@ -146,6 +146,7 @@ export default function ExpenseList() {
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Payment Method</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Bank</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
               <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
             </tr>
           </thead>
@@ -166,6 +167,7 @@ export default function ExpenseList() {
                   <td className="px-6 py-4">{expense.orgId?.name || 'Unknown'}</td>
                   <td className="px-6 py-4">{expense.paymentMethod || 'Unknown'}</td>
                   <td className="px-6 py-4">{expense.bankId?.name || 'N/A'}</td>
+                  <td className="px-6 py-4">{expense.amount || 'N/A'}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
                       <button onClick={() => openModal(expense)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">

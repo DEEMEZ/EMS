@@ -144,6 +144,7 @@ export default function IncomeList() {
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Income Source</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
               <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
             </tr>
           </thead>
@@ -159,9 +160,10 @@ export default function IncomeList() {
                   className="border-b border-gray-100 hover:bg-gray-50"
                 >
                   <td className="px-6 py-4">{income.transactionId?.type || 'Unknown'}</td>
-                  <td className="px-6 py-4">{income.transactionId?.transactionDate || 'Unknown'}</td>                  
+                  <td className="px-6 py-4">{income.transactionId?.transactionDate || 'Unknown'}</td>
                   <td className="px-6 py-4">{income.incomeSourceId?.name || 'Unknown'}</td>
                   <td className="px-6 py-4">{income.orgId?.name || 'Unknown'}</td>
+                  <td className="px-6 py-4">{income.amount || 'Unknown'}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
                       <button onClick={() => openModal(income)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg">

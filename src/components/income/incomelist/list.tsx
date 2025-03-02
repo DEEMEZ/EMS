@@ -110,18 +110,18 @@ export default function IncomeList() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-green-600 to-green-400 rounded-2xl p-6 mb-6"
+        className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl p-6 mb-6"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Incomes</h1>
-            <p className="text-green-200">Manage your incomes</p>
+            <p className="text-blue-200">Manage your incomes</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => openModal()}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-green-600 rounded-xl hover:bg-green-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-colors"
           >
             <Plus className="w-5 h-5" />
             New Income
@@ -166,7 +166,7 @@ export default function IncomeList() {
                   <td className="px-6 py-4">{income.amount || 'Unknown'}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => openModal(income)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg">
+                      <button onClick={() => openModal(income)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit className="w-4 h-4" />
                       </button>
                       <button onClick={() => handleDelete(income._id)} disabled={isDeleting === income._id} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">

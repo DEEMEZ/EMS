@@ -85,7 +85,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
         exit={{ opacity: 0, y: -20 }}
         className="max-w-4xl w-full bg-white rounded-2xl shadow-xl border border-gray-200"
       >
-        <div className="bg-gradient-to-r from-red-600 to-red-400 px-6 py-4 rounded-t-2xl flex justify-between items-center">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl flex justify-between items-center">
           <h2 className="text-xl font-semibold text-white">
             {initialData ? 'Update Expense' : 'Create New Expense'}
           </h2>
@@ -103,7 +103,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md text-red-700"
+                className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md text-blue-700"
               >
                 {error}
               </motion.div>
@@ -130,7 +130,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 required
                 value={formData.transactionId}
                 onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter transaction ID"
               />
             </div>
@@ -142,7 +142,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 required
                 value={formData.expensecategoriesId}
                 onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter expense category ID"
               />
             </div>
@@ -154,7 +154,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 required
                 value={formData.orgId}
                 onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter organization ID"
               />
             </div>
@@ -165,7 +165,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 required
                 value={formData.paymentMethod}
                 onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">Select Payment Method</option>
                 <option value="Cash">Cash</option>
@@ -181,7 +181,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                   required
                   value={formData.bankId}
                   onChange={(e) => setFormData({ ...formData, bankId: e.target.value })}
-                  className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                  className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="Enter bank ID"
                 />
               </div>
@@ -209,9 +209,22 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 Cancel
               </button>
             )}
-            <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50">
-              {isSubmitting ? <LoadingSpinner size="sm" /> : <Save className="w-4 h-4" />}
-              {initialData ? 'Update' : 'Create'}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  {initialData ? 'Update' : 'Create'}
+                </>
+              )}
             </button>
           </div>
         </form>

@@ -80,7 +80,7 @@ export default function TagsList() {
   const handleDelete = async (orgId: string) => {
     try {
       setIsDeleting(orgId);
-      const response = await fetch(`/api/tag`, {
+      const response = await fetch(`/api/tags`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -220,9 +220,8 @@ export default function TagsList() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Tags</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Modified Date</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Name</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Description</th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>

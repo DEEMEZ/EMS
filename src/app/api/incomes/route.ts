@@ -26,13 +26,19 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
     const incomes = await Income.find(query)
-      .populate('transactionId', 'amount type transactionDate')
-      .populate('incomeSourceId', 'name')
-      .populate('orgId', 'name')
-      .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
-      .skip(skip)
-      .limit(limit)
-      .select('-__v');
+  .populate({
+    path: 'transactionId',
+    select: 'amount type transactionDate',
+  })
+  .populate('incomeSourceId', 'name')
+  .populate('orgId', 'name')
+  .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
+  .skip(skip)
+  .limit(limit)
+  .select('-__v');
+
+console.log("Populated incomes:", JSON.stringify(incomes, null, 2)); // Debugging
+
 
     const incomesWithAmount = incomes.map(income => ({
       ...income.toObject(),

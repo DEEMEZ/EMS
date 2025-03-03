@@ -28,15 +28,21 @@ export async function GET(request: NextRequest) {
     if (paymentMethod) query.paymentMethod = paymentMethod;
 
     const skip = (page - 1) * limit;
-    const expenses = await Expense.find(query)
-      .populate('transactionId', 'amount type transactionDate') 
-      .populate('expensecategoriesId', 'name')
-      .populate('orgId', 'name')
-      .populate('bankId', 'name')
-      .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
-      .skip(skip)
-      .limit(limit)
-      .select('-__v');
+   const expenses = await Expense.find(query)
+  .populate({
+    path: 'transactionId',
+    select: 'amount type transactionDate'
+  })
+  .populate('expensecategoriesId', 'name')
+  .populate('orgId', 'name')
+  .populate('bankId', 'name')
+  .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
+  .skip(skip)
+  .limit(limit)
+  .select('-__v');
+
+console.log("Populated expenses:", JSON.stringify(expenses, null, 2)); // Debugging
+
 
     const expensesWithAmount = expenses.map(expense => ({
       ...expense.toObject(),

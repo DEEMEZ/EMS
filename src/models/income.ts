@@ -27,13 +27,8 @@ const incomeSchema = new mongoose.Schema(
   }
 );
 
-incomeSchema.pre('find', function (next) {
-  this.populate('transactionId', 'amount');
-  next();
-});
-
-incomeSchema.pre('findOne', function (next) {
-  this.populate('transactionId', 'amount');
+incomeSchema.pre(['find', 'findOne'], function (next) {
+  this.populate('transactionId', 'amount type transactionDate');
   next();
 });
 

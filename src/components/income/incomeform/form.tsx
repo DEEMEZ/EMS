@@ -17,6 +17,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
     transactionId: initialData?.transactionId || '',
     incomeSourceId: initialData?.incomeSourceId || '',
     orgId: initialData?.orgId || '',
+    amount: initialData?.amount || '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,6 +48,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
             transactionId: '',
             incomeSourceId: '',
             orgId: '',
+            amount: '',
           });
       } else {
         setError('Error saving income. Please check the input data.');
@@ -137,6 +139,18 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
                 onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter organization ID"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700">Amount</label>
+              <input
+                type="number"
+                required
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
+                placeholder="Enter amount"
               />
             </div>
           </div>

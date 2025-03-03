@@ -29,7 +29,11 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
     const expenses = await Expense.find(query)
+<<<<<<< HEAD
       .populate('transactionId', 'amount type transactionDate') 
+=======
+      .populate('transactionId', 'type transactionDate amount') // ✅ Include 'amount'
+>>>>>>> 0d3f764e2fe628951247675006f660fead32f8c3
       .populate('expensecategoriesId', 'name')
       .populate('orgId', 'name')
       .populate('bankId', 'name')
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
+    const { transactionId, expensecategoriesId, orgId, paymentMethod, bankId, amount } = data; // ✅ Include 'amount'
 
     const transactionExists = await Transaction.findById(transactionId);
     if (!transactionExists) {
@@ -103,7 +107,11 @@ export async function POST(request: NextRequest) {
       orgId,
       paymentMethod,
       bankId: paymentMethod === 'Transfer' ? bankId : null,
+<<<<<<< HEAD
       transactionAmount, 
+=======
+      amount, // ✅ Ensure 'amount' is stored
+>>>>>>> 0d3f764e2fe628951247675006f660fead32f8c3
     });
 
     return NextResponse.json({ message: 'Expense created successfully', expense });
@@ -120,7 +128,7 @@ export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { _id, transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
+    const { _id, transactionId, expensecategoriesId, orgId, paymentMethod, bankId, amount } = data; // ✅ Include 'amount'
 
     const expense = await Expense.findById(_id);
     if (!expense) {
@@ -145,7 +153,11 @@ export async function PUT(request: NextRequest) {
         orgId,
         paymentMethod,
         bankId: paymentMethod === 'Transfer' ? bankId : null,
+<<<<<<< HEAD
         transactionAmount, 
+=======
+        amount, // ✅ Ensure 'amount' can be updated
+>>>>>>> 0d3f764e2fe628951247675006f660fead32f8c3
       },
       { new: true, runValidators: true }
     );

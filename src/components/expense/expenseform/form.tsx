@@ -19,6 +19,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     orgId: initialData?.orgId || '',
     paymentMethod: initialData?.paymentMethod || '',
     bankId: initialData?.bankId || '',
+    amount: initialData?.amount || '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,13 +38,19 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
       return;
     }
 
+    if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
+      setError('Amount must be a valid positive number.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/expenses', {
         method: initialData ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...formData, _id: initialData?._id }),
+        body: JSON.stringify({ ...formData, _id: initialData?._id, amount: Number(formData.amount) }),
       });
 
       if (response.ok) {
@@ -57,6 +64,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
             orgId: '',
             paymentMethod: '',
             bankId: '',
+            amount: '',
           });
         }
       } else {
@@ -178,16 +186,25 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 />
               </div>
             )}
+
+            <div>
+              <label className="text-sm font-medium text-gray-700">Amount</label>
+              <input
+                type="number"
+                required
+                min="0"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-red-500 focus:ring-red-500"
+                placeholder="Enter amount"
+              />
+            </div>
           </div>
 
           {/* Buttons */}
           <div className="flex justify-end items-center gap-3 pt-6 border-t">
             {onCancel && (
-              <button
-                type="button"
-                onClick={onCancel}
-                className="flex items-center gap-2 px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-              >
+              <button type="button" onClick={onCancel} className="flex items-center gap-2 px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
                 <X className="w-4 h-4" />
                 Cancel
               </button>

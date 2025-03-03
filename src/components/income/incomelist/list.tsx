@@ -144,11 +144,13 @@ export default function IncomeList() {
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Amount</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Income Source</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
               <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody>
             <AnimatePresence>
+<<<<<<< HEAD
               {incomes.length > 0 ? (
                 incomes.map((income, index) => (
                   <motion.tr
@@ -185,6 +187,34 @@ export default function IncomeList() {
                   <td colSpan={6} className="px-6 py-4 text-center text-gray-500">No incomes found.</td>
                 </tr>
               )}
+=======
+              {incomes.map((income, index) => (
+                <motion.tr
+                  key={income._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="border-b border-gray-100 hover:bg-gray-50"
+                >
+                  <td className="px-6 py-4">{income.transactionId?.type || 'Unknown'}</td>
+                  <td className="px-6 py-4">{income.transactionId?.transactionDate || 'Unknown'}</td>
+                  <td className="px-6 py-4">{income.incomeSourceId?.name || 'Unknown'}</td>
+                  <td className="px-6 py-4">{income.orgId?.name || 'Unknown'}</td>
+                  <td className="px-6 py-4">{income.amount || 'Unknown'}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => openModal(income)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(income._id)} disabled={isDeleting === income._id} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        {isDeleting === income._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </td>
+                </motion.tr>
+              ))}
+>>>>>>> 0d3f764e2fe628951247675006f660fead32f8c3
             </AnimatePresence>
           </tbody>
         </table>

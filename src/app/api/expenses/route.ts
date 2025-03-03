@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Bank from '@/models/bank';
 import Expense from '@/models/expense';
 import ExpenseCategories from '@/models/expenseCategory';
@@ -20,7 +21,6 @@ export async function GET(request: NextRequest) {
     const sortField = searchParams.get('sortField') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
     if (transactionId) query.transactionId = transactionId;
     if (expensecategoriesId) query.expensecategoriesId = expensecategoriesId;
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
     const expenses = await Expense.find(query)
-      .populate('transactionId', 'type transactionDate')
+      .populate('transactionId', 'amount type transactionDate') 
       .populate('expensecategoriesId', 'name')
       .populate('orgId', 'name')
       .populate('bankId', 'name')
@@ -38,10 +38,15 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .select('-__v');
 
+    const expensesWithAmount = expenses.map(expense => ({
+      ...expense.toObject(),
+      transactionAmount: expense.transactionId?.amount || 0 
+    }));
+
     const total = await Expense.countDocuments(query);
 
     return NextResponse.json({
-      expenses,
+      expenses: expensesWithAmount,
       pagination: {
         total,
         page,
@@ -49,7 +54,7 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit),
       },
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error in GET /api/expenses:', error);
     return NextResponse.json(
       { error: (error as Error).message || 'Failed to fetch expenses' },
@@ -66,44 +71,31 @@ export async function POST(request: NextRequest) {
 
     const transactionExists = await Transaction.findById(transactionId);
     if (!transactionExists) {
-      return NextResponse.json(
-        { error: 'Invalid Transaction ID. No such transaction exists.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid Transaction ID.' }, { status: 400 });
     }
 
     const expenseCategoryExists = await ExpenseCategories.findById(expensecategoriesId);
     if (!expenseCategoryExists) {
-      return NextResponse.json(
-        { error: 'Invalid Expense Category ID. No such category exists.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid Expense Category ID.' }, { status: 400 });
     }
 
     const orgExists = await Organization.findById(orgId);
     if (!orgExists) {
-      return NextResponse.json(
-        { error: 'Invalid Organization ID. No such organization exists.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid Organization ID.' }, { status: 400 });
     }
 
     if (paymentMethod === 'Transfer' && !bankId) {
-      return NextResponse.json(
-        { error: 'bankId is required when paymentMethod is Transfer.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'bankId is required for Transfer.' }, { status: 400 });
     }
 
     if (bankId) {
       const bankExists = await Bank.findById(bankId);
       if (!bankExists) {
-        return NextResponse.json(
-          { error: 'Invalid Bank ID. No such bank exists.' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid Bank ID.' }, { status: 400 });
       }
     }
+
+    const transactionAmount = transactionExists.amount;
 
     const expense = await Expense.create({
       transactionId,
@@ -111,13 +103,11 @@ export async function POST(request: NextRequest) {
       orgId,
       paymentMethod,
       bankId: paymentMethod === 'Transfer' ? bankId : null,
+      transactionAmount, 
     });
 
-    return NextResponse.json({
-      message: 'Expense created successfully',
-      expense,
-    });
-  } catch (error: unknown) {
+    return NextResponse.json({ message: 'Expense created successfully', expense });
+  } catch (error) {
     console.error('Error in POST /api/expenses:', error);
     return NextResponse.json(
       { error: (error as Error).message || 'Failed to create expense' },
@@ -134,18 +124,18 @@ export async function PUT(request: NextRequest) {
 
     const expense = await Expense.findById(_id);
     if (!expense) {
-      return NextResponse.json(
-        { error: 'Expense not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
 
     if (paymentMethod === 'Transfer' && !bankId) {
-      return NextResponse.json(
-        { error: 'bankId is required when paymentMethod is Transfer.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'bankId is required for Transfer.' }, { status: 400 });
     }
+
+    const transaction = await Transaction.findById(transactionId);
+    if (!transaction) {
+      return NextResponse.json({ error: 'Invalid Transaction ID.' }, { status: 400 });
+    }
+    const transactionAmount = transaction.amount;
 
     const updatedExpense = await Expense.findByIdAndUpdate(
       _id,
@@ -155,6 +145,7 @@ export async function PUT(request: NextRequest) {
         orgId,
         paymentMethod,
         bankId: paymentMethod === 'Transfer' ? bankId : null,
+        transactionAmount, 
       },
       { new: true, runValidators: true }
     );
@@ -163,7 +154,7 @@ export async function PUT(request: NextRequest) {
       message: 'Expense updated successfully',
       updatedExpense,
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error in PUT /api/expenses:', error);
     return NextResponse.json(
       { error: (error as Error).message || 'Failed to update expense' },
@@ -179,26 +170,20 @@ export async function DELETE(request: NextRequest) {
     const { _id } = data;
 
     if (!_id) {
-      return NextResponse.json(
-        { error: 'Expense ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Expense ID is required' }, { status: 400 });
     }
 
     const expense = await Expense.findByIdAndDelete(_id);
 
     if (!expense) {
-      return NextResponse.json(
-        { error: 'Expense not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
 
     return NextResponse.json({
       message: 'Expense deleted successfully',
       success: true,
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error in DELETE /api/expenses:', error);
     return NextResponse.json(
       { error: (error as Error).message || 'Failed to delete expense' },

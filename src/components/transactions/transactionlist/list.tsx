@@ -1,7 +1,7 @@
 'use client';
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
-import TransactionForm from '@/components/transactions/transactionform/form';
+import TransactionForm from '@/components/transactions/transactionform/form'; // Import the TransactionForm component
 import { ITransaction } from '@/types/transaction';
 import { AnimatePresence, motion } from 'framer-motion';
 import _ from 'lodash';
@@ -10,13 +10,13 @@ import { useEffect, useMemo, useState } from 'react';
 
 export default function TransactionList() {
   const [transactions, setTransactions] = useState<ITransaction[]>([]);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [page, setPage] = useState(1);
-  const [, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<ITransaction | null>(null);
@@ -53,7 +53,7 @@ export default function TransactionList() {
       setTransactions(data.transactions);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
-      setError('Failed to fetch transactions');
+      setError('Failed to fetch transactions. Please try again.');
       console.error('Error:', err);
     } finally {
       setIsLoading(false);
@@ -145,73 +145,119 @@ export default function TransactionList() {
         <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-400" />
           <p className="text-red-700">{error}</p>
+          <button
+            onClick={fetchTransactions}
+            className="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Type</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Description</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <AnimatePresence>
-                {transactions.map((transaction, index) => (
-                  <motion.tr
-                    key={transaction._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="border-b border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4">
-                      {transaction.userId && typeof transaction.userId === 'object' ? (
-                        <div>
-                          <p className="font-semibold">{transaction.userId.fullname}</p>
-                          <p className="text-sm text-gray-500">{transaction.userId.email}</p>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner size="lg" />
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Description</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {transactions.map((transaction, index) => (
+                    <motion.tr
+                      key={transaction._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4">
+                        {transaction.userId && typeof transaction.userId === 'object' ? (
+                          <div>
+                            <p className="font-semibold">{transaction.userId.fullname || 'Unknown User'}</p>
+                            <p className="text-sm text-gray-500">{transaction.userId.email || 'No email'}</p>
+                          </div>
+                        ) : (
+                          'Unknown User'
+                        )}
+                      </td>
+                      <td className="px-6 py-4">{transaction.type}</td>
+                      <td className="px-6 py-4">{new Date(transaction.transactionDate).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">{transaction.description}</td>
+                      <td className="px-6 py-4 font-semibold">
+                        ${typeof transaction.amount === 'number' ? transaction.amount.toFixed(2) : '0.00'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => openModal(transaction)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            aria-label="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(transaction._id!)}
+                            disabled={isDeleting === transaction._id}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            aria-label="Delete"
+                          >
+                            {isDeleting === transaction._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                          </button>
                         </div>
-                      ) : (
-                        'Unknown User'
-                      )}
-                    </td>
-                    <td className="px-6 py-4">{transaction.type}</td>
-                    <td className="px-6 py-4">{new Date(transaction.transactionDate).toLocaleDateString()}</td>
-                    <td className="px-6 py-4">{transaction.description}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => openModal(transaction)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(transaction._id!)}
-                          disabled={isDeleting === transaction._id}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          {isDeleting === transaction._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
 
-      {isModalOpen && (
-        <TransactionForm initialData={editingTransaction || undefined} onCancel={closeModal} onSuccess={handleSuccess} />
+          {/* Pagination */}
+          <div className="flex justify-between items-center p-4 border-t border-gray-100">
+            <button
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+              className="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-600">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((prev) => prev + 1)}
+              disabled={page === totalPages}
+              className="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
+
+      {/* Transaction Form Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+         <TransactionForm
+  initialData={editingTransaction ?? undefined} // Convert null to undefined
+  onSuccess={handleSuccess}
+  onCancel={closeModal}
+/>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

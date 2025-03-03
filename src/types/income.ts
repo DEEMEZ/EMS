@@ -7,4 +7,5 @@ export interface IIncome {
   transactionId: string | ITransaction;
   incomeSourceId: string | IIncomeSources;
   orgId: string | IOrganization;
+  transactionAmount?: number; 
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
@@ -15,6 +16,7 @@ interface TransactionFormProps {
 export default function TransactionForm({ initialData, onCancel, onSuccess }: TransactionFormProps) {
   const [formData, setFormData] = useState<ITransaction>({
     userId: initialData?.userId || '',
+    amount: initialData?.amount || 0,
     type: initialData?.type || 'Income',
     transactionDate: initialData?.transactionDate || new Date(),
     description: initialData?.description || '',
@@ -23,12 +25,38 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.userId) {
+      errors.userId = 'User ID is required.';
+    }
+
+    if (typeof formData.amount !== 'number' || formData.amount < 0) {
+      errors.amount = 'Amount must be a positive number.';
+    }
+
+    if (!formData.transactionDate) {
+      errors.transactionDate = 'Transaction date is required.';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsSubmitting(true);
     setSuccessMessage('');
+    setValidationErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch('/api/transactions', {
@@ -43,12 +71,15 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
         setSuccessMessage(initialData ? 'Transaction updated successfully!' : 'Transaction created successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
         if (onSuccess) setTimeout(onSuccess, 1000);
-        if (!initialData) setFormData({ userId: '', type: 'Income', transactionDate: new Date(), description: '' });
+        if (!initialData) {
+          setFormData({ userId: '', amount: 0, type: 'Income', transactionDate: new Date(), description: '' });
+        }
       } else {
-        setError('Invalid User Id. User does not exists.');
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to save transaction.');
       }
-    } catch {
-      setError('Failed to save transaction');
+    } catch (err) {
+      setError('Failed to save transaction. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -68,7 +99,11 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
             {initialData ? 'Update Transaction' : 'Create New Transaction'}
           </h2>
           {onCancel && (
-            <button onClick={onCancel} className="text-white hover:text-gray-200 transition-colors">
+            <button
+              onClick={onCancel}
+              className="text-white hover:text-gray-200 transition-colors"
+              aria-label="Close"
+            >
               <X className="w-5 h-5" />
             </button>
           )}
@@ -103,14 +138,40 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-gray-700">User ID</label>
-            <input
-              type="text"
-              required
-              value={typeof formData.userId === 'object' ? formData.userId._id : formData.userId || ''}
-              onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-              className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter user ID"
-            />
+              <input
+                type="text"
+                required
+                value={typeof formData.userId === 'object' ? formData.userId._id : formData.userId || ''}
+                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter user ID"
+                aria-describedby="userIdError"
+              />
+              {validationErrors.userId && (
+                <p id="userIdError" className="text-sm text-red-600 mt-1">
+                  {validationErrors.userId}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700">Amount</label>
+              <input
+                type="number"
+                required
+                min="0"
+                step="0.01"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter transaction amount"
+                aria-describedby="amountError"
+              />
+              {validationErrors.amount && (
+                <p id="amountError" className="text-sm text-red-600 mt-1">
+                  {validationErrors.amount}
+                </p>
+              )}
             </div>
 
             <div>
@@ -133,7 +194,13 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
                 value={new Date(formData.transactionDate).toISOString().split('T')[0]}
                 onChange={(e) => setFormData({ ...formData, transactionDate: new Date(e.target.value) })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                aria-describedby="transactionDateError"
               />
+              {validationErrors.transactionDate && (
+                <p id="transactionDateError" className="text-sm text-red-600 mt-1">
+                  {validationErrors.transactionDate}
+                </p>
+              )}
             </div>
 
             <div>

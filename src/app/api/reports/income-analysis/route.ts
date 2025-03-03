@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Expense from "@/models/expense";
+import Income from "@/models/income";
 import Transaction from "@/models/transaction";
 import dbConnect from "@/utils/dbconnect";
 import { NextRequest, NextResponse } from "next/server";
@@ -11,9 +11,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const expensecategoriesId = searchParams.get("expensecategoriesId") || "";
-    const paymentMethod = searchParams.get("paymentMethod") || "";
-    const bankId = searchParams.get("bankId") || "";
+    const incomeSourceId = searchParams.get("incomeSourceId") || "";
+    const orgId = searchParams.get("orgId") || "";
 
     if (!startDate || !endDate) {
       return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
-      type: "Expense", 
+      type: "Income",
     }).select("_id amount");
 
     if (transactions.length === 0) {
@@ -37,15 +36,14 @@ export async function GET(request: NextRequest) {
     const transactionIds = transactions.map((txn) => txn._id);
     const transactionAmounts = new Map(transactions.map((txn) => [txn._id.toString(), txn.amount]));
 
-    console.log("✅ Found", transactions.length, "transactions. Fetching expenses...");
+    console.log("✅ Found", transactions.length, "transactions. Fetching incomes...");
 
-    const expenses = await Expense.aggregate([
+    const incomes = await Income.aggregate([
       {
         $match: {
           transactionId: { $in: transactionIds },
-          ...(expensecategoriesId && { expensecategoriesId }),
-          ...(paymentMethod && { paymentMethod }),
-          ...(bankId && { bankId }),
+          ...(incomeSourceId && { incomeSourceId }),
+          ...(orgId && { orgId }),
         },
       },
       {
@@ -59,29 +57,28 @@ export async function GET(request: NextRequest) {
       { $unwind: "$transaction" },
       {
         $lookup: {
-          from: "expensecategories",
-          localField: "expensecategoriesId",
+          from: "incomesources",
+          localField: "incomeSourceId",
           foreignField: "_id",
-          as: "category",
+          as: "incomeSource",
         },
       },
-      { $unwind: "$category" }, 
+      { $unwind: "$incomeSource" },
       {
         $lookup: {
-          from: "banks",
-          localField: "bankId",
+          from: "organizations",
+          localField: "orgId",
           foreignField: "_id",
-          as: "bank",
+          as: "organization",
         },
       },
-      { $unwind: { path: "$bank", preserveNullAndEmptyArrays: true } },
+      { $unwind: "$organization" },
       {
         $group: {
-          _id: "$expensecategoriesId", 
-          category: { $first: "$category.name" },
+          _id: "$incomeSourceId",
+          incomeSource: { $first: "$incomeSource.name" },
           totalAmount: { $sum: "$transaction.amount" },
-          paymentMethods: { $addToSet: "$paymentMethod" },
-          banksUsed: { $addToSet: "$bank.name" },
+          organizations: { $addToSet: "$organization.name" },
           transactions: { 
             $push: { transactionId: "$transaction._id", amount: "$transaction.amount" } 
           },
@@ -90,23 +87,26 @@ export async function GET(request: NextRequest) {
       { $sort: { totalAmount: -1 } },
     ]);
 
-    const updatedExpenses = expenses.map((expense) => ({
-      _id: expense._id, 
-      category: expense.category, 
-      totalAmount: expense.totalAmount,
-      paymentMethods: expense.paymentMethods,
-      banksUsed: expense.banksUsed,
-      transactions: expense.transactions.map((txn: { transactionId: { toString: () => any } }) => ({
+    if (incomes.length === 0) {
+      console.log("❌ No incomes found matching transactions.");
+    }
+
+    const updatedIncomes = incomes.map((income) => ({
+      _id: income._id,
+      incomeSource: income.incomeSource,
+      totalAmount: income.totalAmount,
+      organizations: income.organizations,
+      transactions: income.transactions.map((txn: { transactionId: { toString: () => any } }) => ({
         transactionId: txn.transactionId,
         amount: transactionAmounts.get(txn.transactionId.toString()) || 0,
       })),
     }));
 
-    console.log("✅ Expense Analysis Data:", updatedExpenses);
-    return NextResponse.json(updatedExpenses);
+    console.log("✅ Income Analysis Data:", updatedIncomes);
+    return NextResponse.json(updatedIncomes);
 
   } catch (error: unknown) {
-    console.error("❌ Error fetching expense analysis:", error);
-    return NextResponse.json({ error: "Failed to fetch expense analysis" }, { status: 500 });
+    console.error("❌ Error fetching income analysis:", error);
+    return NextResponse.json({ error: "Failed to fetch income analysis" }, { status: 500 });
   }
 }

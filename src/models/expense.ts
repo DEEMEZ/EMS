@@ -26,12 +26,26 @@ const expenseSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Bank',
       default: null 
+    },
+    transactionAmount: { 
+      type: Number, 
+      required: false 
     }
   },
   {
     timestamps: true
   }
 );
+
+expenseSchema.pre('find', function (next) {
+  this.populate('transactionId', 'amount');
+  next();
+});
+
+expenseSchema.pre('findOne', function (next) {
+  this.populate('transactionId', 'amount');
+  next();
+});
 
 expenseSchema.pre('save', function (next) {
   if (this.paymentMethod === 'Transfer' && !this.bankId) {

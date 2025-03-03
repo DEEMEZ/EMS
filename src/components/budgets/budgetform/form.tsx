@@ -17,6 +17,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
     userId: initialData?.userId || '',
     expensecategoriesId: initialData?.expensecategoriesId || '',
     monthlyLimit: initialData?.monthlyLimit || '',
+    amount: initialData?.amount || '', // Add amount field
     startDate: initialData?.startDate || '',
     endDate: initialData?.endDate || '',
   });
@@ -37,7 +38,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...formData, _id: initialData?._id }),
+        body: JSON.stringify({ ...formData, _id: initialData?._id }), // Include amount in the payload
       });
 
       if (response.ok) {
@@ -49,6 +50,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
             userId: '',
             expensecategoriesId: '',
             monthlyLimit: '',
+            amount: '', // Reset amount field
             startDate: '',
             endDate: '',
           });
@@ -141,6 +143,18 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
                 onChange={(e) => setFormData({ ...formData, monthlyLimit: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter monthly limit"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700">Amount</label>
+              <input
+                type="number"
+                required
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter amount"
               />
             </div>
 

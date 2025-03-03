@@ -5,28 +5,32 @@ const budgetSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true
+      required: true,
     },
     expensecategoriesId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'ExpenseCategory',
-      required: true
+      required: true,
     },
     monthlyLimit: {
       type: Number,
-      required: true
+      required: true,
+    },
+    amount: {
+      type: Number,
+      required: true, 
     },
     startDate: {
       type: Date,
-      required: true
+      required: true,
     },
     endDate: {
       type: Date,
-      required: true
-    }
+      required: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 

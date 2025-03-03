@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
     const transactions = await Transaction.find(query)
-      .populate('userId', 'fullname email') 
+      .populate('userId', 'fullname email')
       .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)
-      .select('-__v');
+      .select('-__v'); // Exclude __v field
 
     const total = await Transaction.countDocuments(query);
 
@@ -47,13 +47,21 @@ export async function GET(request: NextRequest) {
   }
 }
 
-
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { userId, type, transactionDate, description } = data;
+    const { userId, type, transactionDate, description, amount } = data;
 
+    // Validate required fields
+    if (!userId || !type || !transactionDate || typeof amount !== 'number' || isNaN(amount)) {
+      return NextResponse.json(
+        { error: 'Missing or invalid required fields (userId, type, transactionDate, amount)' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists
     const userExists = await User.findById(userId);
     if (!userExists) {
       return NextResponse.json(
@@ -62,7 +70,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const transaction = await Transaction.create({ userId, type, transactionDate, description });
+    // Create transaction
+    const transaction = await Transaction.create({
+      userId,
+      type,
+      transactionDate,
+      description,
+      amount,
+    });
 
     return NextResponse.json(
       {
@@ -86,6 +101,15 @@ export async function PUT(request: NextRequest) {
     const data = await request.json();
     const { _id, userId, ...updateData } = data;
 
+    // Validate required fields
+    if (!_id || !userId) {
+      return NextResponse.json(
+        { error: 'Transaction ID and User ID are required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists
     const userExists = await User.findById(userId);
     if (!userExists) {
       return NextResponse.json(
@@ -94,12 +118,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const transaction = await Transaction.findByIdAndUpdate(
-      _id,
-      { userId, ...updateData },
-      { new: true, runValidators: true }
-    );
-
+    // Check if transaction exists
+    const transaction = await Transaction.findById(_id);
     if (!transaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
@@ -107,9 +127,16 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Update transaction
+    const updatedTransaction = await Transaction.findByIdAndUpdate(
+      _id,
+      { userId, ...updateData },
+      { new: true, runValidators: true }
+    );
+
     return NextResponse.json({
       message: 'Transaction updated successfully',
-      transaction,
+      transaction: updatedTransaction,
     });
   } catch (error: unknown) {
     console.error('Error in PUT /api/transactions:', error);
@@ -126,6 +153,7 @@ export async function DELETE(request: NextRequest) {
     const data = await request.json();
     const { _id } = data;
 
+    // Validate required fields
     if (!_id) {
       return NextResponse.json(
         { error: 'Transaction ID is required' },
@@ -133,6 +161,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // Delete transaction
     const transaction = await Transaction.findByIdAndDelete(_id);
 
     if (!transaction) {

@@ -3,7 +3,6 @@
 'use client';
 
 import ExpenseForm from '@/components/expense/expenseform/form';
-import { LoadingSpinner } from '@/components/loadiingspinner';
 import { AnimatePresence, motion } from 'framer-motion';
 import _ from 'lodash';
 import { AlertCircle, Edit, Plus, Trash2 } from 'lucide-react';
@@ -18,10 +17,10 @@ export default function ExpenseList() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any | null>(null);
 
+  // Debounced search input
   const debouncedSearch = useMemo(
     () =>
       _.debounce((value: string) => {
@@ -36,6 +35,7 @@ export default function ExpenseList() {
     debouncedSearch(value);
   };
 
+  // Fetch expenses from the API
   const fetchExpenses = async () => {
     try {
       setIsLoading(true);
@@ -60,6 +60,7 @@ export default function ExpenseList() {
     }
   };
 
+  // Delete an expense
   const handleDelete = async (expenseId: string) => {
     try {
       setIsDeleting(expenseId);
@@ -80,16 +81,19 @@ export default function ExpenseList() {
     }
   };
 
+  // Open modal for adding/editing expenses
   const openModal = (expense?: any) => {
     setEditingExpense(expense || null);
     setIsModalOpen(true);
   };
 
+  // Close modal
   const closeModal = () => {
     setEditingExpense(null);
     setIsModalOpen(false);
   };
 
+  // Handle form submission success
   const handleSuccess = () => {
     closeModal();
     fetchExpenses();
@@ -107,6 +111,7 @@ export default function ExpenseList() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
+      {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -129,19 +134,22 @@ export default function ExpenseList() {
         </div>
       </motion.div>
 
+      {/* Error Message */}
       {error && (
-        <div className="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-400" />
-          <p className="text-blue-700">{error}</p>
+        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-400" />
+          <p className="text-red-700">{error}</p>
         </div>
       )}
 
+      {/* Expense Table */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Type</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Amount</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Payment Method</th>
@@ -151,39 +159,46 @@ export default function ExpenseList() {
           </thead>
           <tbody>
             <AnimatePresence>
-              {expenses.map((expense, index) => (
-                <motion.tr
-                  key={expense._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4">{expense.transactionId?.type || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.transactionId?.transactionDate || 'Unknown'}</td>                  
-                  <td className="px-6 py-4">{expense.expensecategoriesId?.name || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.orgId?.name || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.paymentMethod || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.bankId?.name || 'N/A'}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end gap-2">
+              {expenses.length > 0 ? (
+                expenses.map((expense, index) => (
+                  <motion.tr
+                    key={expense._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4">{expense.transactionId?.type || 'Unknown'}</td>
+                    <td className="px-6 py-4">
+                      {expense.transactionId?.transactionDate
+                        ? new Date(expense.transactionId.transactionDate).toLocaleDateString()
+                        : 'Unknown'}
+                    </td>
+                    <td className="px-6 py-4">{expense.transactionId?.amount ?? 'N/A'}</td>
+                    <td className="px-6 py-4">{expense.expensecategoriesId?.name || 'Unknown'}</td>
+                    <td className="px-6 py-4">{expense.orgId?.name || 'Unknown'}</td>
+                    <td className="px-6 py-4">{expense.paymentMethod || 'Unknown'}</td>
+                    <td className="px-6 py-4">{expense.bankId?.name || 'N/A'}</td>
+                    <td className="px-6 py-4 flex justify-end gap-2">
                       <button onClick={() => openModal(expense)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(expense._id)} disabled={isDeleting === expense._id} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
-                        {isDeleting === expense._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                      <button onClick={() => handleDelete(expense._id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
+                    </td>
+                  </motion.tr>
+                ))
+              ) : (
+                <tr><td colSpan={8} className="px-6 py-4 text-center text-gray-500">No expenses found.</td></tr>
+              )}
             </AnimatePresence>
           </tbody>
         </table>
       </div>
 
-      {isModalOpen && <ExpenseForm initialData={editingExpense || undefined} onCancel={closeModal} onSuccess={handleSuccess} />}
+      {isModalOpen && <ExpenseForm initialData={editingExpense} onCancel={closeModal} onSuccess={handleSuccess} />}
     </div>
   );
 }

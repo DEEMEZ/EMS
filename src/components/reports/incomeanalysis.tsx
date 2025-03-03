@@ -9,129 +9,112 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Bar, BarChart, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-interface ExpenseAnalysis {
+interface IncomeAnalysis {
   _id: string;
-  category: string;
+  incomeSource: string;
   totalAmount: number;
-  paymentMethods: string[];
-  banksUsed: string[];
+  organizations: string[];
 }
 
-const ExpenseAnalysisTable = () => {
-  const [data, setData] = useState<ExpenseAnalysis[]>([]);
+const IncomeAnalysisTable = () => {
+  const [data, setData] = useState<IncomeAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
-  const [endDate, setEndDate] = useState<Date | null>(new Date());
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
 
-  const fetchExpenses = async () => {
+  const fetchIncomes = async () => {
     setLoading(true);
     try {
       const start = startDate ? format(startDate, "yyyy-MM-dd") : "";
       const end = endDate ? format(endDate, "yyyy-MM-dd") : "";
 
-      const response = await fetch(`/api/reports/expense-analysis?startDate=${start}&endDate=${end}`);
+      const response = await fetch(`/api/reports/income-analysis?startDate=${start}&endDate=${end}`);
       const result = await response.json();
-
-      if (!Array.isArray(result)) {
-        console.error("Invalid API response:", result);
-        setData([]);
-      } else {
-        setData(result);
-      }
+      setData(result);
     } catch (error) {
-      console.error("Error fetching expenses:", error);
-      setData([]);
+      console.error("Error fetching incomes:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchExpenses();
+    fetchIncomes();
   }, []);
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-semibold mb-6 text-center">Expense Analysis</h2>
-
+      <h2 className="text-2xl font-semibold mb-6 text-center">Income Analysis</h2>
+      
       <div className="flex flex-wrap gap-4 justify-center mb-6">
         <DatePicker selected={startDate} onChange={setStartDate} placeholderText="Start Date" />
         <DatePicker selected={endDate} onChange={setEndDate} placeholderText="End Date" />
-        <Button onClick={fetchExpenses} disabled={loading}>
-          {loading ? "Loading..." : "Filter"}
-        </Button>
+        <Button onClick={fetchIncomes} disabled={loading}>Filter</Button>
       </div>
 
       <div className="overflow-x-auto mb-6">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Category</TableHead>
+              <TableHead>Income Source</TableHead>
               <TableHead>Total Amount</TableHead>
-              <TableHead>Payment Methods</TableHead>
-              <TableHead>Banks Used</TableHead>
+              <TableHead>Organizations</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-  {loading ? (
-    <TableRow>
-      <TableCell colSpan={4} className="text-center">Loading...</TableCell>
-    </TableRow>
-  ) : data.length > 0 ? (
-    data.map((expense, index) => (
-      <TableRow key={`${expense._id}-${index}`}>
-        <TableCell>{expense.category}</TableCell>
-        <TableCell>${expense.totalAmount.toFixed(2)}</TableCell>
-        <TableCell>{expense.paymentMethods.join(", ")}</TableCell>
-        <TableCell>{expense.banksUsed.length > 0 ? expense.banksUsed.join(", ") : "N/A"}</TableCell>
-      </TableRow>
-    ))
-  ) : (
-    <TableRow>
-      <TableCell colSpan={4} className="text-center">No data available</TableCell>
-    </TableRow>
-  )}
-</TableBody>
-
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center">Loading...</TableCell>
+              </TableRow>
+            ) : data.length > 0 ? (
+              data.map((income) => (
+                <TableRow key={income._id}>
+                  <TableCell>{income.incomeSource}</TableCell>
+                  <TableCell>${income.totalAmount.toFixed(2)}</TableCell>
+                  <TableCell>{income.organizations.length > 0 ? income.organizations.join(", ") : "N/A"}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center">No data available</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
         </Table>
       </div>
 
       {data.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-gray-100 p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-center mb-2">Expense Breakdown (Bar Chart)</h3>
+            <h3 className="text-lg font-semibold text-center mb-2">Income Breakdown (Bar Chart)</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={data}>
-                <XAxis dataKey="category" />
+                <XAxis dataKey="incomeSource" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="totalAmount" fill="#8884d8">
-                  {data.map((entry, index) => (
-                    <Cell key={`bar-${index}`} fill={colors[index % colors.length]} />
-                  ))}
-                </Bar>
+                <Bar dataKey="totalAmount" fill="#8884d8" />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           <div className="bg-gray-100 p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-center mb-2">Expense Distribution (Pie Chart)</h3>
+            <h3 className="text-lg font-semibold text-center mb-2">Income Distribution (Pie Chart)</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
                   data={data}
                   dataKey="totalAmount"
-                  nameKey="category"
+                  nameKey="incomeSource"
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
                   fill="#82ca9d"
                   label
                 >
-                  {data.map((entry, index) => (
+                  {data.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                   ))}
                 </Pie>
@@ -145,4 +128,4 @@ const ExpenseAnalysisTable = () => {
   );
 };
 
-export default ExpenseAnalysisTable;
+export default IncomeAnalysisTable;

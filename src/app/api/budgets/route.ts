@@ -7,8 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
-     if (!ExpenseCategory) {
-      throw new Error("ExpenseCategory model is not registered.");
+    if (!ExpenseCategory) {
+      throw new Error('ExpenseCategory model is not registered.');
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
       .skip(skip)
       .limit(limit)
       .select('-__v');
-console.log("Fetched Budgets:", JSON.stringify(budgets, null, 2));
+
+    console.log('Fetched Budgets:', JSON.stringify(budgets, null, 2));
 
     const total = await Budget.countDocuments(query);
 
@@ -57,7 +58,14 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { userId, expensecategoriesId, monthlyLimit, startDate, endDate } = data;
+    const { userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate } = data;
+
+    if (!userId || !expensecategoriesId || !monthlyLimit || !amount || !startDate || !endDate) {
+      return NextResponse.json(
+        { error: 'All fields are required (userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate)' },
+        { status: 400 }
+      );
+    }
 
     const userExists = await User.findById(userId);
     if (!userExists) {
@@ -79,6 +87,7 @@ export async function POST(request: NextRequest) {
       userId,
       expensecategoriesId,
       monthlyLimit,
+      amount, 
       startDate,
       endDate,
     });
@@ -100,7 +109,14 @@ export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { _id, userId, expensecategoriesId, monthlyLimit, startDate, endDate } = data;
+    const { _id, userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate } = data;
+
+    if (!_id || !userId || !expensecategoriesId || !monthlyLimit || !amount || !startDate || !endDate) {
+      return NextResponse.json(
+        { error: 'All fields are required (_id, userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate)' },
+        { status: 400 }
+      );
+    }
 
     const userExists = await User.findById(userId);
     if (!userExists) {
@@ -120,7 +136,7 @@ export async function PUT(request: NextRequest) {
 
     const budget = await Budget.findByIdAndUpdate(
       _id,
-      { userId, expensecategoriesId, monthlyLimit, startDate, endDate },
+      { userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate }, // Include the amount field
       { new: true, runValidators: true }
     );
 

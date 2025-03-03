@@ -1,33 +1,32 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-'use client';
+"use client";
 
-import IncomeForm from '@/components/income/incomeform/form';
-import { LoadingSpinner } from '@/components/loadiingspinner';
-import { AnimatePresence, motion } from 'framer-motion';
-import _ from 'lodash';
-import { AlertCircle, Edit, Plus, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import IncomeForm from "@/components/income/incomeform/form"; // ✅ Import the missing IncomeForm
+import { LoadingSpinner } from "@/components/loadiingspinner";
+import { AnimatePresence, motion } from "framer-motion";
+import _ from "lodash";
+import { AlertCircle, Edit, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function IncomeList() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [incomes, setIncomes] = useState<any[]>([]);
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [error, setError] = useState('');
-  const [, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [page, setPage] = useState(1);
-  const [, setTotalPages] = useState(1);
-
+  const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<any | null>(null);
 
   const debouncedSearch = useMemo(
-    () => _.debounce((value: string) => {
-      setDebouncedSearchTerm(value);
-      setPage(1);
-    }, 500),
+    () =>
+      _.debounce((value: string) => {
+        setDebouncedSearchTerm(value);
+        setPage(1);
+      }, 500),
     []
   );
 
@@ -39,22 +38,22 @@ export default function IncomeList() {
   const fetchIncomes = async () => {
     try {
       setIsLoading(true);
-      setError('');
+      setError("");
 
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '10',
+        limit: "10",
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
       });
 
       const response = await fetch(`/api/incomes?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch incomes');
+      if (!response.ok) throw new Error("Failed to fetch incomes");
 
       const data = await response.json();
       setIncomes(data.incomes);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
-      setError('Failed to fetch incomes');
+      setError("Failed to fetch incomes");
     } finally {
       setIsLoading(false);
     }
@@ -64,17 +63,17 @@ export default function IncomeList() {
     try {
       setIsDeleting(incomeId);
       const response = await fetch(`/api/incomes`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ _id: incomeId }),
       });
 
-      if (!response.ok) throw new Error('Failed to delete income');
+      if (!response.ok) throw new Error("Failed to delete income");
       await fetchIncomes();
     } catch {
-      setError('Failed to delete income');
+      setError("Failed to delete income");
     } finally {
       setIsDeleting(null);
     }
@@ -142,6 +141,7 @@ export default function IncomeList() {
             <tr>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Type</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Amount</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Income Source</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
               <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
@@ -149,37 +149,48 @@ export default function IncomeList() {
           </thead>
           <tbody>
             <AnimatePresence>
-              {incomes.map((income, index) => (
-                <motion.tr
-                  key={income._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4">{income.transactionId?.type || 'Unknown'}</td>
-                  <td className="px-6 py-4">{income.transactionId?.transactionDate || 'Unknown'}</td>                  
-                  <td className="px-6 py-4">{income.incomeSourceId?.name || 'Unknown'}</td>
-                  <td className="px-6 py-4">{income.orgId?.name || 'Unknown'}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => openModal(income)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleDelete(income._id)} disabled={isDeleting === income._id} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
-                        {isDeleting === income._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
+              {incomes.length > 0 ? (
+                incomes.map((income, index) => (
+                  <motion.tr
+                    key={income._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4">{income.transactionId?.type || "Unknown"}</td>
+                    <td className="px-6 py-4">
+                      {income.transactionId?.transactionDate
+                        ? new Date(income.transactionId.transactionDate).toLocaleDateString()
+                        : "Unknown"}
+                    </td>
+                    <td className="px-6 py-4">{income.transactionAmount ?? "N/A"}</td>
+                    <td className="px-6 py-4">{income.incomeSourceId?.name || "Unknown"}</td>
+                    <td className="px-6 py-4">{income.orgId?.name || "Unknown"}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => openModal(income)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDelete(income._id)} disabled={isDeleting === income._id} className="p-2 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50">
+                          {isDeleting === income._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">No incomes found.</td>
+                </tr>
+              )}
             </AnimatePresence>
           </tbody>
         </table>
       </div>
 
-      {isModalOpen && <IncomeForm initialData={editingIncome || undefined} onCancel={closeModal} onSuccess={handleSuccess} />}
+      {isModalOpen && <IncomeForm initialData={editingIncome} onCancel={closeModal} onSuccess={handleSuccess} />}
     </div>
   );
 }

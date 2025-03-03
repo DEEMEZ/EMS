@@ -154,13 +154,11 @@ export default function ExpenseList() {
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Payment Method</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Bank</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
               <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody>
             <AnimatePresence>
-<<<<<<< HEAD
               {expenses.length > 0 ? (
                 expenses.map((expense, index) => (
                   <motion.tr
@@ -183,26 +181,6 @@ export default function ExpenseList() {
                     <td className="px-6 py-4">{expense.paymentMethod || 'Unknown'}</td>
                     <td className="px-6 py-4">{expense.bankId?.name || 'N/A'}</td>
                     <td className="px-6 py-4 flex justify-end gap-2">
-=======
-              {expenses.map((expense, index) => (
-                <motion.tr
-                  key={expense._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4">{expense.transactionId?.type || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.transactionId?.transactionDate || 'Unknown'}</td>                  
-                  <td className="px-6 py-4">{expense.expensecategoriesId?.name || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.orgId?.name || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.paymentMethod || 'Unknown'}</td>
-                  <td className="px-6 py-4">{expense.bankId?.name || 'N/A'}</td>
-                  <td className="px-6 py-4">{expense.amount || 'N/A'}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end gap-2">
->>>>>>> 0d3f764e2fe628951247675006f660fead32f8c3
                       <button onClick={() => openModal(expense)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit className="w-4 h-4" />
                       </button>

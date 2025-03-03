@@ -16,6 +16,10 @@ const incomeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Organization',
       required: true
+    },
+    transactionAmount: { 
+      type: Number, 
+      required: false 
     }
   },
   {

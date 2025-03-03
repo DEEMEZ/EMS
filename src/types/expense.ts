@@ -10,10 +10,5 @@ export interface IExpense {
   orgId: string | IOrganization;
   paymentMethod: 'Cash' | 'Transfer';
   bankId: string | IBank; 
-<<<<<<< HEAD
   transactionAmount?: number; 
 }
-=======
-  amount: number;
-}
->>>>>>> 0d3f764e2fe628951247675006f660fead32f8c3

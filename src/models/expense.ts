@@ -27,15 +27,9 @@ const expenseSchema = new mongoose.Schema(
       ref: 'Bank',
       default: null 
     },
-<<<<<<< HEAD
     transactionAmount: { 
       type: Number, 
       required: false 
-=======
-    amount: {
-      type: Number,
-      required: true
->>>>>>> 0d3f764e2fe628951247675006f660fead32f8c3
     }
   },
   {

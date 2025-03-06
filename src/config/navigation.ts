@@ -126,6 +126,11 @@ export const navigationConfig: NavItem[] = [
         title: 'Budget Reports',
         href: '/reports/budget',
         icon: DollarSign,
+      },
+      {
+        title: 'Transaction Reports',
+        href: '/reports/transaction',
+        icon: ArrowRightLeft,
       }
     ],
   }

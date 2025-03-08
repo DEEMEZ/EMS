@@ -149,7 +149,7 @@ export default function ExpenseList() {
             <tr>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Type</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Amount</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Payment Method</th>

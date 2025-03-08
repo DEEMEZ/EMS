@@ -37,15 +37,11 @@ const expenseSchema = new mongoose.Schema(
   }
 );
 
-expenseSchema.pre('find', function (next) {
-  this.populate('transactionId', 'amount');
+expenseSchema.pre(['find', 'findOne'], function (next) {
+  this.populate('transactionId', 'amount type transactionDate');
   next();
 });
 
-expenseSchema.pre('findOne', function (next) {
-  this.populate('transactionId', 'amount');
-  next();
-});
 
 expenseSchema.pre('save', function (next) {
   if (this.paymentMethod === 'Transfer' && !this.bankId) {

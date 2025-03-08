@@ -141,7 +141,7 @@ export default function IncomeList() {
             <tr>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Type</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Amount</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Income Source</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
               <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
@@ -159,12 +159,12 @@ export default function IncomeList() {
                     transition={{ delay: index * 0.1 }}
                     className="border-b border-gray-100 hover:bg-gray-50"
                   >
-                    <td className="px-6 py-4">{income.transactionId?.type || "Unknown"}</td>
-                    <td className="px-6 py-4">
-                      {income.transactionId?.transactionDate
-                        ? new Date(income.transactionId.transactionDate).toLocaleDateString()
-                        : "Unknown"}
-                    </td>
+                   <td className="px-6 py-4">{income.transactionId?.type ?? "Unknown"}</td>
+<td className="px-6 py-4">
+  {income.transactionId?.transactionDate 
+    ? new Date(income.transactionId.transactionDate).toLocaleDateString() 
+    : "Unknown"}
+</td>
                     <td className="px-6 py-4">{income.transactionAmount ?? "N/A"}</td>
                     <td className="px-6 py-4">{income.incomeSourceId?.name || "Unknown"}</td>
                     <td className="px-6 py-4">{income.orgId?.name || "Unknown"}</td>

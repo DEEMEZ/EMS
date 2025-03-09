@@ -37,7 +37,7 @@ export default function ExpenseCategoryList() {
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
       });
 
-      const response = await fetch(`/api/expensecategories?${params.toString()}`);
+      const response = await fetch(`/api/expenseCategories?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch expense categories');
 
       const data = await response.json();
@@ -79,7 +79,7 @@ export default function ExpenseCategoryList() {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this category?')) {
       try {
-        const response = await fetch('/api/expensecategories', {
+        const response = await fetch('/api/expenseCategories', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ _id: id }),

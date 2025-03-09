@@ -33,7 +33,7 @@ export default function ExpenseCategoryForm({
     setSuccessMessage('');
 
     try {
-      const response = await fetch('/api/expensecategories', {
+      const response = await fetch('/api/expenseCategories', {
         method: initialData ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',

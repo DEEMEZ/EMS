@@ -1,13 +1,13 @@
 import NavbarComponent from "@/components/navbar/navbar";
-import TransactionTable from "@/components/reports/transaction";
+import TransactionAnalysisTable from "@/components/reports/transaction";
 
 export default function TransactionReportPage() {
   return (
-    <div>
+    <div className="min-h-screen bg-gray-100">
       <NavbarComponent /> 
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-semibold mb-4">Transaction Report</h1>
-        <TransactionTable />
+      <div className="max-w-7xl mx-auto p-8">
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Transaction Report</h1>
+        <TransactionAnalysisTable /> 
       </div>
     </div>
   );

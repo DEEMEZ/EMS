@@ -1,12 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Budget from "@/models/budget";
 import Expense from "@/models/expense";
+import ExpenseCategory from "@/models/expenseCategory";
 import dbConnect from "@/utils/dbconnect";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Debugging: Ensure ExpenseCategory is registered
+    console.log("📌 Registered Mongoose Models:", JSON.stringify(Budget.modelName), JSON.stringify(ExpenseCategory.modelName));
 
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
@@ -52,7 +56,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const expenseMap = new Map(
-      expenses.map((expense) => [expense._id.toString(), expense.totalExpense])
+      expenses.map((expense) => [expense._id?.toString(), expense.totalExpense])
     );
 
     const budgetAnalysis = budgets.map((budget) => ({
@@ -60,9 +64,9 @@ export async function GET(request: NextRequest) {
       category: budget.expensecategoriesId?.name || "Unknown",
       monthlyLimit: budget.monthlyLimit,
       totalBudgeted: budget.amount,
-      totalSpent: expenseMap.get(budget.expensecategoriesId?._id.toString()) || 0,
+      totalSpent: expenseMap.get(budget.expensecategoriesId?._id?.toString()) || 0,
       remainingBudget:
-        budget.amount - (expenseMap.get(budget.expensecategoriesId?._id.toString()) || 0),
+        budget.amount - (expenseMap.get(budget.expensecategoriesId?._id?.toString()) || 0),
     }));
 
     console.log("✅ Budget Analysis Data:", budgetAnalysis);

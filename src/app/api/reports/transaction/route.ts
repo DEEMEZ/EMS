@@ -1,71 +1,54 @@
-import Transaction from '@/models/transaction';
-import dbConnect from '@/utils/dbconnect';
-import { NextRequest, NextResponse } from 'next/server';
-
-interface TransactionQuery {
-  userId?: string;
-  type?: string;
-  transactionDate?: {
-    $gte?: Date;
-    $lte?: Date;
-  };
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import Transaction from "@/models/transaction";
+import dbConnect from "@/utils/dbconnect";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
-    const fromDate = searchParams.get('fromDate') || '';
-    const toDate = searchParams.get('toDate') || '';
-    const userId = searchParams.get('userId') || '';
-    const type = searchParams.get('type') || '';
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const userId = searchParams.get("userId") || "";
+    const type = searchParams.get("type") || "";
 
-    const query: TransactionQuery = {};
-    
-    if (userId) query.userId = userId;
-    
-    if (type) query.type = type;
-    
-    if (fromDate || toDate) {
-      query.transactionDate = {};
-      if (fromDate) query.transactionDate.$gte = new Date(fromDate);
-      if (toDate) {
-        const endDate = new Date(toDate);
-        endDate.setHours(23, 59, 59, 999); 
-        query.transactionDate.$lte = endDate;
-      }
+    if (!startDate || !endDate) {
+      return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
     }
 
-    // Get transactions based on filters
-    const transactions = await Transaction.find(query)
-      .populate('userId', 'fullname email')
-      .sort({ transactionDate: -1 })
-      .select('-__v');
+    console.log("🔎 Fetching transactions from", startDate, "to", endDate);
 
-    // Calculate totals
-    const totalAmount = transactions.reduce(
-      (sum, transaction) => sum + transaction.amount, 
-      0
-    );
-
-    return NextResponse.json({
-      success: true,
-      filters: {
-        fromDate,
-        toDate,
-        userId,
-        type
+    const query: any = {
+      transactionDate: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
       },
-      count: transactions.length,
-      totalAmount,
-      transactions
-    });
+    };
+
+    if (userId) query.userId = userId;
+    if (type) query.type = type;
+
+    const transactions = await Transaction.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: "$type",
+          totalAmount: { $sum: "$amount" },
+          count: { $sum: 1 },
+          transactions: { 
+            $push: { _id: "$_id", amount: "$amount", transactionDate: "$transactionDate" } 
+          }
+        }
+      },
+      { $sort: { totalAmount: -1 } }
+    ]);
+
+    console.log("✅ Transaction Analysis Data:", transactions);
+    return NextResponse.json(transactions);
+
   } catch (error: unknown) {
-    console.error('Error in GET /api/reports:', error);
-    return NextResponse.json(
-      { error: (error as Error).message || 'Failed to generate report' },
-      { status: 500 }
-    );
+    console.error("❌ Error fetching transaction analysis:", error);
+    return NextResponse.json({ error: "Failed to fetch transaction analysis" }, { status: 500 });
   }
 }

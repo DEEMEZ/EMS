@@ -1,7 +1,7 @@
 'use client';
 
-import TagsList from "@/components/tags/tagslist/list";
 import NavbarComponent from "@/components/navbar/navbar";
+import TagsList from "@/components/tags/tagslist/list";
 
 export default function UserListPage() {
   return (

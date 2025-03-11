@@ -39,7 +39,7 @@ const ExpenseAnalysisTable = () => {
         setData(result);
       }
     } catch (error) {
-      console.error("Error fetching expenses:", error);
+      console.error("Error Fetching Expenses:", error);
       setData([]);
     } finally {
       setLoading(false);
@@ -90,7 +90,7 @@ const ExpenseAnalysisTable = () => {
     ))
   ) : (
     <TableRow>
-      <TableCell colSpan={4} className="text-center">No data available</TableCell>
+      <TableCell colSpan={4} className="text-center">No Data Available</TableCell>
     </TableRow>
   )}
 </TableBody>

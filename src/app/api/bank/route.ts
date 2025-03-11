@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error('Error in GET /api/banks:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to fetch banks' },
+      { error: (error as Error).message || 'Failed To Fetch Banks' },
       { status: 500 }
     );
   }
@@ -62,13 +62,13 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      message: 'Bank created successfully',
+      message: 'Bank Created Successfully',
       bank
     }, { status: 201 });
   } catch (error: unknown) {
     console.error('Error in POST /api/banks:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to create bank' },
+      { error: (error as Error).message || 'Failed To Create Bank' },
       { status: 500 }
     );
   }
@@ -92,19 +92,19 @@ export async function PUT(request: NextRequest) {
 
     if (!bank) {
       return NextResponse.json(
-        { error: 'Bank not found' },
+        { error: 'Bank Not Found' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: 'Bank updated successfully',
+      message: 'Bank Updated Successfully',
       bank
     });
   } catch (error: unknown) {
     console.error('Error in PUT /api/banks:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to update bank' },
+      { error: (error as Error).message || 'Failed To Update Bank' },
       { status: 500 }
     );
   }
@@ -118,7 +118,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!_id) {
       return NextResponse.json(
-        { error: 'Bank ID is required' },
+        { error: 'Bank ID Is Required' },
         { status: 400 }
       );
     }
@@ -127,19 +127,19 @@ export async function DELETE(request: NextRequest) {
 
     if (!bank) {
       return NextResponse.json(
-        { error: 'Bank not found' },
+        { error: 'Bank Not Found' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: 'Bank deleted successfully',
+      message: 'Bank Deleted Successfully',
       success: true
     });
   } catch (error: unknown) {
     console.error('Error in DELETE /api/banks:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to delete bank' },
+      { error: (error as Error).message || 'Failed To Delete Bank' },
       { status: 500 }
     );
   }

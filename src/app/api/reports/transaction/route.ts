@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
     }
 
-    console.log("🔎 Fetching transactions from", startDate, "to", endDate);
+    console.log("🔎 Fetching Transactions From", startDate, "To", endDate);
 
     const query: any = {
       transactionDate: {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(transactions);
 
   } catch (error: unknown) {
-    console.error("❌ Error fetching transaction analysis:", error);
-    return NextResponse.json({ error: "Failed to fetch transaction analysis" }, { status: 500 });
+    console.error("❌ Error Fetching Transaction Analysis:", error);
+    return NextResponse.json({ error: "Failed To Fetch Transaction Analysis" }, { status: 500 });
   }
 }

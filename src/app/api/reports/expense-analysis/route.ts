@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
     }
 
-    console.log("🔎 Fetching transactions from", startDate, "to", endDate);
+    console.log("🔎 Fetching Transactions From", startDate, "To", endDate);
 
     const transactions = await Transaction.find({
       transactionDate: {
@@ -30,14 +30,14 @@ export async function GET(request: NextRequest) {
     }).select("_id amount");
 
     if (transactions.length === 0) {
-      console.log("❌ No transactions found in the given date range.");
+      console.log("❌ No transactions Found In The Given Date Range.");
       return NextResponse.json([]);
     }
 
     const transactionIds = transactions.map((txn) => txn._id);
     const transactionAmounts = new Map(transactions.map((txn) => [txn._id.toString(), txn.amount]));
 
-    console.log("✅ Found", transactions.length, "transactions. Fetching expenses...");
+    console.log("✅ Found", transactions.length, "Transactions. Fetching Expenses...");
 
     const expenses = await Expense.aggregate([
       {
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(updatedExpenses);
 
   } catch (error: unknown) {
-    console.error("❌ Error fetching expense analysis:", error);
-    return NextResponse.json({ error: "Failed to fetch expense analysis" }, { status: 500 });
+    console.error("❌ Error Fetching Expense Analysis:", error);
+    return NextResponse.json({ error: "Failed To Fetch Expense Analysis" }, { status: 500 });
   }
 }

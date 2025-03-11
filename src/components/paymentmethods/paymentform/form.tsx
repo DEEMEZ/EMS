@@ -43,8 +43,8 @@ export default function PaymentmethodsForm({
 
       if (response.ok) {
         const successMsg = initialData
-          ? 'Payment methods updated successfully!'
-          : 'Payment methods created successfully!';
+          ? 'Payment Methods Updated Successfully!'
+          : 'Payment Methods Created Successfully!';
         setSuccessMessage(successMsg);
 
         setTimeout(() => setSuccessMessage(''), 3000);
@@ -62,10 +62,10 @@ export default function PaymentmethodsForm({
           });
         }
       } else {
-        setError('Failed to save payment methods');
+        setError('Failed To Save Payment Methods');
       }
     } catch {
-      setError('Failed to save payment methods');
+      setError('Failed To Save Payment Methods');
     } finally {
       setIsSubmitting(false);
     }
@@ -121,7 +121,7 @@ export default function PaymentmethodsForm({
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter income source name"
+              placeholder="Enter Income Source Name"
             />
           </div>
 
@@ -136,7 +136,7 @@ export default function PaymentmethodsForm({
                 setFormData({ ...formData, description: e.target.value })
               }
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Payment methods description (optional)"
+              placeholder="Enter Payment Methods Description (Optional)"
             />
           </div>
         </div>

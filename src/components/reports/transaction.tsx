@@ -38,7 +38,7 @@ const TransactionAnalysisTable = () => {
         setData(result);
       }
     } catch (error) {
-      console.error("Error fetching transactions:", error);
+      console.error("Error Fetching Transactions:", error);
       setData([]);
     } finally {
       setLoading(false);
@@ -87,7 +87,7 @@ const TransactionAnalysisTable = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="text-center">No data available</TableCell>
+                <TableCell colSpan={3} className="text-center">No Data Available</TableCell>
               </TableRow>
             )}
           </TableBody>

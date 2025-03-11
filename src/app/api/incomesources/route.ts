@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in GET /api/incomesources:', error);
-    return NextResponse.json({ error: 'Failed to fetch income sources' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed To Fetch Income Sources' }, { status: 500 });
   }
 }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newIncomeSource, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/incomesources:', error);
-    return NextResponse.json({ error: 'Failed to create income source' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed To Create Income Source' }, { status: 500 });
   }
 }
 
@@ -65,13 +65,13 @@ export async function PUT(request: NextRequest) {
     );
 
     if (!updatedIncomeSource) {
-      return NextResponse.json({ error: 'Income source not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Income Source Not Found' }, { status: 404 });
     }
 
     return NextResponse.json(updatedIncomeSource);
   } catch (error) {
     console.error('Error in PUT /api/incomesources:', error);
-    return NextResponse.json({ error: 'Failed to update income source' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed To Update Income Source' }, { status: 500 });
   }
 }
 
@@ -82,18 +82,18 @@ export async function DELETE(request: NextRequest) {
     const { _id } = data;
 
     if (!_id) {
-      return NextResponse.json({ error: 'Income source ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Income Source ID Is Required' }, { status: 400 });
     }
 
     const deletedIncomeSource = await IncomeSource.findByIdAndDelete(_id);
 
     if (!deletedIncomeSource) {
-      return NextResponse.json({ error: 'Income source not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Income Source Not Found' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Income source deleted successfully' });
+    return NextResponse.json({ message: 'Income Source Deleted Successfully' });
   } catch (error) {
     console.error('Error in DELETE /api/incomesources:', error);
-    return NextResponse.json({ error: 'Failed to delete income source' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed To Delete Income Source' }, { status: 500 });
   }
 }

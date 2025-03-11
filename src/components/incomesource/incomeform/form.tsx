@@ -43,8 +43,8 @@ export default function IncomeSourceForm({
 
       if (response.ok) {
         const successMsg = initialData
-          ? 'Income source updated successfully!'
-          : 'Income source created successfully!';
+          ? 'Income Source Updated Successfully!'
+          : 'Income Source Created Successfully!';
         setSuccessMessage(successMsg);
 
         setTimeout(() => setSuccessMessage(''), 3000);
@@ -62,10 +62,10 @@ export default function IncomeSourceForm({
           });
         }
       } else {
-        setError('Failed to save income source');
+        setError('Failed To Save Income Source');
       }
     } catch {
-      setError('Failed to save income source');
+      setError('Failed To Save Income Source');
     } finally {
       setIsSubmitting(false);
     }
@@ -121,7 +121,7 @@ export default function IncomeSourceForm({
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter income source name"
+              placeholder="Enter Income Source Name"
             />
           </div>
 
@@ -136,7 +136,7 @@ export default function IncomeSourceForm({
                 setFormData({ ...formData, description: e.target.value })
               }
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter income source description (optional)"
+              placeholder="Enter Income Source Description (Optional)"
             />
           </div>
         </div>

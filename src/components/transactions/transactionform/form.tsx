@@ -31,15 +31,15 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
     const errors: Record<string, string> = {};
 
     if (!formData.userId) {
-      errors.userId = 'User ID is required.';
+      errors.userId = 'User ID Is Required.';
     }
 
     if (typeof formData.amount !== 'number' || formData.amount < 0) {
-      errors.amount = 'Amount must be a positive number.';
+      errors.amount = 'Amount Must Be A Positive Number.';
     }
 
     if (!formData.transactionDate) {
-      errors.transactionDate = 'Transaction date is required.';
+      errors.transactionDate = 'Transaction Date Is Required.';
     }
 
     setValidationErrors(errors);
@@ -68,7 +68,7 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
       });
 
       if (response.ok) {
-        setSuccessMessage(initialData ? 'Transaction updated successfully!' : 'Transaction created successfully!');
+        setSuccessMessage(initialData ? 'Transaction Updated Successfully!' : 'Transaction Created Successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
         if (onSuccess) setTimeout(onSuccess, 1000);
         if (!initialData) {
@@ -76,10 +76,10 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
         }
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Failed to save transaction.');
+        setError(errorData.error || 'Failed To Save Transaction.');
       }
     } catch (err) {
-      setError('Failed to save transaction. Please try again.');
+      setError('Failed To Save Transaction. Please Try Again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +144,7 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
                 value={typeof formData.userId === 'object' ? formData.userId._id : formData.userId || ''}
                 onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter user ID"
+                placeholder="Enter User ID"
                 aria-describedby="userIdError"
               />
               {validationErrors.userId && (
@@ -164,7 +164,7 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter transaction amount"
+                placeholder="Enter Transaction Amount"
                 aria-describedby="amountError"
               />
               {validationErrors.amount && (
@@ -209,7 +209,7 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter description"
+                placeholder="Enter Description"
               />
             </div>
           </div>

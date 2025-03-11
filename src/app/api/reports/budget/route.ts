@@ -35,11 +35,11 @@ export async function GET(request: NextRequest) {
     }).populate("expensecategoriesId", "name");
 
     if (budgets.length === 0) {
-      console.log("❌ No budgets found in the given date range.");
+      console.log("❌ No Budgets Found In The Given Date Range.");
       return NextResponse.json([]);
     }
 
-    console.log("✅ Found", budgets.length, "budgets. Fetching expenses...");
+    console.log("✅ Found", budgets.length, "Budgets. Fetching Expenses...");
 
     const expenses = await Expense.aggregate([
       {
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(budgetAnalysis);
   } catch (error: unknown) {
-    console.error("❌ Error fetching budget analysis:", error);
-    return NextResponse.json({ error: "Failed to fetch budget analysis" }, { status: 500 });
+    console.error("❌ Error Fetching Budget Analysis:", error);
+    return NextResponse.json({ error: "Failed To Fetch Budget Analysis" }, { status: 500 });
   }
 }

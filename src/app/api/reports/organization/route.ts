@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
     }
 
-    console.log("🔎 Fetching organization analysis from", startDate, "to", endDate);
+    console.log("🔎 Fetching Organization Analysis From", startDate, "To", endDate);
 
     // 🔹 Fetch Expenses and Link to Transactions & Organizations
     const expenses = await Expense.aggregate([
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(organizationAnalysis);
 
   } catch (error: unknown) {
-    console.error("❌ Error fetching organization analysis:", error);
-    return NextResponse.json({ error: "Failed to fetch organization analysis" }, { status: 500 });
+    console.error("❌ Error Fetching Organization Analysis:", error);
+    return NextResponse.json({ error: "Failed To Fetch Organization Analysis" }, { status: 500 });
   }
 }

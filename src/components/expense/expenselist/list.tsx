@@ -48,13 +48,13 @@ export default function ExpenseList() {
       });
 
       const response = await fetch(`/api/expenses?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch expenses');
+      if (!response.ok) throw new Error('Failed To Fetch Expenses');
 
       const data = await response.json();
       setExpenses(data.expenses);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
-      setError('Failed to fetch expenses');
+      setError('Failed To Fetch Expenses');
     } finally {
       setIsLoading(false);
     }
@@ -72,10 +72,10 @@ export default function ExpenseList() {
         body: JSON.stringify({ _id: expenseId }),
       });
 
-      if (!response.ok) throw new Error('Failed to delete expense');
+      if (!response.ok) throw new Error('Failed To Delete Expense');
       await fetchExpenses();
     } catch {
-      setError('Failed to delete expense');
+      setError('Failed To Delete Expense');
     } finally {
       setIsDeleting(null);
     }
@@ -120,7 +120,7 @@ export default function ExpenseList() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Expenses</h1>
-            <p className="text-blue-200">Manage your expenses</p>
+            <p className="text-blue-200">Manage Your Expenses</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -191,7 +191,7 @@ export default function ExpenseList() {
                   </motion.tr>
                 ))
               ) : (
-                <tr><td colSpan={8} className="px-6 py-4 text-center text-gray-500">No expenses found.</td></tr>
+                <tr><td colSpan={8} className="px-6 py-4 text-center text-gray-500">No Expenses Found.</td></tr>
               )}
             </AnimatePresence>
           </tbody>

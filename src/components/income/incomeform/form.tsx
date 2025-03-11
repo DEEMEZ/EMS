@@ -39,7 +39,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
       });
 
       if (response.ok) {
-        setSuccessMessage(initialData ? 'Income updated successfully!' : 'Income created successfully!');
+        setSuccessMessage(initialData ? 'Income Updated Successfully!' : 'Income Created Successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
         if (onSuccess) setTimeout(onSuccess, 1000);
         if (!initialData)
@@ -49,10 +49,10 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
             orgId: '',
           });
       } else {
-        setError('Error saving income. Please check the input data.');
+        setError('Error Saving Income. Please Check The Input Data.');
       }
     } catch {
-      setError('Failed to save income');
+      setError('Failed To Save Income');
     } finally {
       setIsSubmitting(false);
     }
@@ -112,7 +112,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
                 value={formData.transactionId}
                 onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter transaction ID"
+                placeholder="Enter Transaction ID"
               />
             </div>
 
@@ -124,7 +124,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
                 value={formData.incomeSourceId}
                 onChange={(e) => setFormData({ ...formData, incomeSourceId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter income source ID"
+                placeholder="Enter Income Source ID"
               />
             </div>
 
@@ -136,7 +136,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
                 value={formData.orgId}
                 onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter organization ID"
+                placeholder="Enter Organization ID"
               />
             </div>
           </div>

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error('❌ Error in GET /api/tags:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch tags' },
+      { error: 'Failed To Fetch Tags' },
       { status: 500 }
     );
   }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('❌ Error in POST /api/tags:', error);
     return NextResponse.json(
-      { error: 'Failed to create tag' },
+      { error: 'Failed To Create Tag' },
       { status: 500 }
     );
   }
@@ -73,7 +73,7 @@ export async function PUT(request: NextRequest) {
 
     if (!updatedTag) {
       return NextResponse.json(
-        { error: 'Tag not found' },
+        { error: 'Tag Not Found' },
         { status: 404 }
       );
     }
@@ -82,7 +82,7 @@ export async function PUT(request: NextRequest) {
   } catch (error: unknown) {
     console.error('❌ Error in PUT /api/tags:', error);
     return NextResponse.json(
-      { error: 'Failed to update tag' },
+      { error: 'Failed To Update Tag' },
       { status: 500 }
     );
   }
@@ -97,7 +97,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!_id) {
       return NextResponse.json(
-        { error: 'Tag ID is required' },
+        { error: 'Tag ID Is Required' },
         { status: 400 }
       );
     }
@@ -106,16 +106,16 @@ export async function DELETE(request: NextRequest) {
 
     if (!deletedTag) {
       return NextResponse.json(
-        { error: 'Tag not found' },
+        { error: 'Tag Not Found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ message: 'Tag deleted successfully' });
+    return NextResponse.json({ message: 'Tag Deleted Successfully' });
   } catch (error: unknown) {
     console.error('❌ Error in DELETE /api/tags:', error);
     return NextResponse.json(
-      { error: 'Failed to delete tag' },
+      { error: 'Failed To Delete Tag' },
       { status: 500 }
     );
   }

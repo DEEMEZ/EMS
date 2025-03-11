@@ -46,13 +46,13 @@ export default function TagsList() {
       });
 
       const response = await fetch(`/api/tags?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch tags');
+      if (!response.ok) throw new Error('Failed To Fetch Tags');
 
       const data = await response.json();
       setTags(data.tags);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
-      setError('Failed to fetch tags');
+      setError('Failed To Fetch Tags');
     } finally {
       setIsLoading(false);
     }
@@ -66,11 +66,11 @@ export default function TagsList() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ _id: tagId }),
       });
-      if (!response.ok) throw new Error('Failed to delete tag');
+      if (!response.ok) throw new Error('Failed To Delete Tag');
 
       await fetchTags();
     } catch {
-      setError('Failed to delete tag');
+      setError('Failed To Delete Tag');
     } finally {
       setIsDeleting(null);
     }
@@ -109,7 +109,7 @@ export default function TagsList() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Tags</h1>
-            <p className="text-blue-100">Manage your tags</p>
+            <p className="text-blue-100">Manage Your Tags</p>
           </div>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={() => openModal()}

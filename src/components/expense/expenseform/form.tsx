@@ -32,7 +32,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     setSuccessMessage('');
 
     if (formData.paymentMethod === 'Transfer' && !formData.bankId) {
-      setError('Bank ID is required for Transfer payment method.');
+      setError('Bank ID Is Required For Transfer Payment Method.');
       setIsSubmitting(false);
       return;
     }
@@ -47,7 +47,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
       });
 
       if (response.ok) {
-        setSuccessMessage(initialData ? 'Expense updated successfully!' : 'Expense created successfully!');
+        setSuccessMessage(initialData ? 'Expense Updated Successfully!' : 'Expense Created Successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
         if (onSuccess) setTimeout(onSuccess, 1000);
         if (!initialData) {
@@ -60,10 +60,10 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
           });
         }
       } else {
-        setError('Error saving expense. Please check the input data.');
+        setError('Error Saving Expense. Please Check The Input Data.');
       }
     } catch {
-      setError('Failed to save expense');
+      setError('Failed To Save Expense');
     } finally {
       setIsSubmitting(false);
     }
@@ -123,7 +123,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 value={formData.transactionId}
                 onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter transaction ID"
+                placeholder="Enter Transaction ID"
               />
             </div>
 
@@ -135,7 +135,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 value={formData.expensecategoriesId}
                 onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter expense category ID"
+                placeholder="Enter Expense Category ID"
               />
             </div>
 
@@ -147,7 +147,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                 value={formData.orgId}
                 onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter organization ID"
+                placeholder="Enter Organization ID"
               />
             </div>
 
@@ -174,7 +174,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
                   value={formData.bankId}
                   onChange={(e) => setFormData({ ...formData, bankId: e.target.value })}
                   className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Enter bank ID"
+                  placeholder="Enter Bank ID"
                 />
               </div>
             )}

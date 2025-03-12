@@ -1,16 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Budget from "@/models/budget";
-import Expense from "@/models/expense";
-import ExpenseCategory from "@/models/expenseCategory";
 import dbConnect from "@/utils/dbconnect";
+import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
-
-    // Debugging: Ensure ExpenseCategory is registered
-    console.log("📌 Registered Mongoose Models:", JSON.stringify(Budget.modelName), JSON.stringify(ExpenseCategory.modelName));
 
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
@@ -25,48 +21,52 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { error: "Invalid User ID" },
+        { status: 400 }
+      );
+    }
+
+    if (expensecategoriesId && !mongoose.Types.ObjectId.isValid(expensecategoriesId)) {
+      return NextResponse.json(
+        { error: "Invalid Expense Category ID" },
+        { status: 400 }
+      );
+    }
+
     console.log("🔎 Fetching budgets from", startDate, "to", endDate);
 
-    const budgets = await Budget.find({
+    const query: { startDate: any; endDate: any; expensecategoriesId?: string; userId?: string } = {
       startDate: { $lte: new Date(endDate) },
       endDate: { $gte: new Date(startDate) },
-      ...(expensecategoriesId && { expensecategoriesId }),
-      ...(userId && { userId }),
-    }).populate("expensecategoriesId", "name");
+    };
+
+    if (expensecategoriesId) {
+      query.expensecategoriesId = expensecategoriesId;
+    }
+
+    if (userId) {
+      query.userId = userId;
+    }
+
+    const budgets = await Budget.find(query)
+      .populate("expensecategoriesId", "name")
+      .populate("userId", "fullname email");
 
     if (budgets.length === 0) {
       console.log("❌ No budgets found in the given date range.");
       return NextResponse.json([]);
     }
 
-    console.log("✅ Found", budgets.length, "budgets. Fetching expenses...");
-
-    const expenses = await Expense.aggregate([
-      {
-        $match: {
-          transactionDate: { $gte: new Date(startDate), $lte: new Date(endDate) },
-        },
-      },
-      {
-        $group: {
-          _id: "$expensecategoriesId",
-          totalExpense: { $sum: "$transactionAmount" },
-        },
-      },
-    ]);
-
-    const expenseMap = new Map(
-      expenses.map((expense) => [expense._id?.toString(), expense.totalExpense])
-    );
+    console.log("✅ Found", budgets.length, "budgets.");
 
     const budgetAnalysis = budgets.map((budget) => ({
       _id: budget._id,
       category: budget.expensecategoriesId?.name || "Unknown",
       monthlyLimit: budget.monthlyLimit,
-      totalBudgeted: budget.amount,
-      totalSpent: expenseMap.get(budget.expensecategoriesId?._id?.toString()) || 0,
-      remainingBudget:
-        budget.amount - (expenseMap.get(budget.expensecategoriesId?._id?.toString()) || 0),
+      totalSpent: budget.spentAmount || 0, 
+      remainingBudget: budget.remainingBudget || 0, 
     }));
 
     console.log("✅ Budget Analysis Data:", budgetAnalysis);
@@ -74,6 +74,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(budgetAnalysis);
   } catch (error: unknown) {
     console.error("❌ Error fetching budget analysis:", error);
-    return NextResponse.json({ error: "Failed to fetch budget analysis" }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message || "Failed to fetch budget analysis" },
+      { status: 500 }
+    );
   }
 }

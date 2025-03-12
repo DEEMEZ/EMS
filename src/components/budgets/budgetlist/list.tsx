@@ -153,65 +153,66 @@ export default function BudgetList() {
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-          <thead className="bg-gray-50">
-  <tr>
-    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
-    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
-    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Monthly Limit</th>
-    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
-    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Start Date</th>
-    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">End Date</th>
-    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-  </tr>
-</thead>
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Monthly Limit</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Spent Amount</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Remaining Budget</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Start Date</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">End Date</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
+              </tr>
+            </thead>
 
             <tbody>
-  <AnimatePresence>
-    {budgets.length > 0 ? (
-      budgets.map((budget, index) => (
-        <motion.tr
-          key={budget._id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ delay: index * 0.1 }}
-          className="border-b border-gray-100 hover:bg-gray-50"
-        >
-          <td className="px-6 py-4">{budget.userId?.fullname || 'Unknown User'}</td>
-          <td className="px-6 py-4">{budget.expensecategoriesId?.name || 'Unknown Category'}</td>
-          <td className="px-6 py-4">{budget.monthlyLimit}</td>
-          <td className="px-6 py-4">{budget.amount}</td>
-          <td className="px-6 py-4">{new Date(budget.startDate).toLocaleDateString()}</td>
-          <td className="px-6 py-4">{new Date(budget.endDate).toLocaleDateString()}</td>
-          <td className="px-6 py-4">
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => openModal(budget)}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleDelete(budget._id)}
-                disabled={isDeleting === budget._id}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {isDeleting === budget._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
-              </button>
-            </div>
-          </td>
-        </motion.tr>
-      ))
-    ) : (
-      <tr>
-        <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-          No budgets found.
-        </td>
-      </tr>
-    )}
-  </AnimatePresence>
-</tbody>
-
+              <AnimatePresence>
+                {budgets.length > 0 ? (
+                  budgets.map((budget, index) => (
+                    <motion.tr
+                      key={budget._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4">{budget.userId?.fullname || 'Unknown User'}</td>
+                      <td className="px-6 py-4">{budget.expensecategoriesId?.name || 'Unknown Category'}</td>
+                      <td className="px-6 py-4">{budget.monthlyLimit}</td>
+                      <td className="px-6 py-4">{budget.spentAmount}</td>
+                      <td className="px-6 py-4">{budget.remainingBudget}</td>
+                      <td className="px-6 py-4">{new Date(budget.startDate).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">{new Date(budget.endDate).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => openModal(budget)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(budget._id)}
+                            disabled={isDeleting === budget._id}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {isDeleting === budget._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                      No budgets found.
+                    </td>
+                  </tr>
+                )}
+              </AnimatePresence>
+            </tbody>
           </table>
         </div>
       </div>

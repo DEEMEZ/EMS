@@ -17,7 +17,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
     userId: initialData?.userId || '',
     expensecategoriesId: initialData?.expensecategoriesId || '',
     monthlyLimit: initialData?.monthlyLimit || '',
-    amount: initialData?.amount || '', // Add amount field
+    spentAmount: initialData?.spentAmount || 0, 
     startDate: initialData?.startDate || '',
     endDate: initialData?.endDate || '',
   });
@@ -33,12 +33,18 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
     setSuccessMessage('');
 
     try {
+      const remainingBudget = formData.monthlyLimit - formData.spentAmount; 
+
       const response = await fetch('/api/budgets', {
         method: initialData ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...formData, _id: initialData?._id }), // Include amount in the payload
+        body: JSON.stringify({
+          ...formData,
+          remainingBudget, 
+          _id: initialData?._id,
+        }),
       });
 
       if (response.ok) {
@@ -50,7 +56,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
             userId: '',
             expensecategoriesId: '',
             monthlyLimit: '',
-            amount: '', // Reset amount field
+            spentAmount: 0, 
             startDate: '',
             endDate: '',
           });
@@ -136,26 +142,30 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
 
             <div>
               <label className="text-sm font-medium text-gray-700">Monthly Limit</label>
-              <input
-                type="number"
-                required
-                value={formData.monthlyLimit}
-                onChange={(e) => setFormData({ ...formData, monthlyLimit: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter monthly limit"
-              />
+             <input
+  type="number"
+  required
+  value={formData.monthlyLimit}
+  onChange={(e) =>
+    setFormData({ ...formData, monthlyLimit: e.target.value ? parseFloat(e.target.value) : 0 })
+  }
+  className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+  placeholder="Enter monthly limit"
+/>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Amount</label>
+              <label className="text-sm font-medium text-gray-700">Spent Amount</label>
               <input
-                type="number"
-                required
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter amount"
-              />
+  type="number"
+  required
+  value={formData.spentAmount}
+  onChange={(e) =>
+    setFormData({ ...formData, spentAmount: e.target.value ? parseFloat(e.target.value) : 0 })
+  }
+  className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+  placeholder="Enter spent amount"
+/>
             </div>
 
             <div>

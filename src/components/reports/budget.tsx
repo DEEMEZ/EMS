@@ -13,7 +13,6 @@ interface BudgetAnalysis {
   _id: string;
   category: string;
   monthlyLimit: number;
-  totalBudgeted: number;
   totalSpent: number;
   remainingBudget: number;
 }
@@ -62,7 +61,6 @@ const BudgetAnalysisTable = () => {
             <TableRow>
               <TableHead>Category</TableHead>
               <TableHead>Monthly Limit</TableHead>
-              <TableHead>Total Budgeted</TableHead>
               <TableHead>Total Spent</TableHead>
               <TableHead>Remaining Budget</TableHead>
             </TableRow>
@@ -70,14 +68,13 @@ const BudgetAnalysisTable = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">Loading...</TableCell>
+                <TableCell colSpan={4} className="text-center">Loading...</TableCell>
               </TableRow>
             ) : data.length > 0 ? (
               data.map((budget, index) => (
                 <TableRow key={budget._id}>
                   <TableCell>{budget.category}</TableCell>
                   <TableCell>${budget.monthlyLimit.toFixed(2)}</TableCell>
-                  <TableCell>${budget.totalBudgeted.toFixed(2)}</TableCell>
                   <TableCell>${budget.totalSpent.toFixed(2)}</TableCell>
                   <TableCell 
                     className={budget.remainingBudget < 0 ? "text-red-500 font-bold" : "text-green-500 font-bold"}
@@ -88,7 +85,7 @@ const BudgetAnalysisTable = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">No data available</TableCell>
+                <TableCell colSpan={4} className="text-center">No data available</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -98,15 +95,15 @@ const BudgetAnalysisTable = () => {
       {data.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-gray-100 p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-center mb-2">Budget vs Expense (Bar Chart)</h3>
+            <h3 className="text-lg font-semibold text-center mb-2">Monthly Limit vs Total Spent (Bar Chart)</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={data}>
                 <XAxis dataKey="category" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="totalBudgeted" fill="#8884d8" name="Budgeted Amount" />
-                <Bar dataKey="totalSpent" fill="#ff7f50" name="Spent Amount" />
+                <Bar dataKey="monthlyLimit" fill="#8884d8" name="Monthly Limit" />
+                <Bar dataKey="totalSpent" fill="#ff7f50" name="Total Spent" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -117,7 +114,7 @@ const BudgetAnalysisTable = () => {
               <PieChart>
                 <Pie
                   data={data}
-                  dataKey="totalBudgeted"
+                  dataKey="monthlyLimit"
                   nameKey="category"
                   cx="50%"
                   cy="50%"

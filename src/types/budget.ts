@@ -6,7 +6,8 @@ export interface IBudget {
   userId: string | IUser;
   expensecategoriesId: string | IExpenseCategories;
   monthlyLimit: number;
-  amount: number; 
+  spentAmount: number; 
+  remainingBudget: number;
   startDate: Date;
   endDate: Date;
 }

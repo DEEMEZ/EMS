@@ -8,7 +8,7 @@ import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function ExpenseCategoryList() {
-  const [expenseCategories, setExpenseCategories] = useState<IExpenseCategories[]>([]);
+  const [expensecategories, setExpenseCategories] = useState<IExpenseCategories[]>([]);
   const [, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -37,7 +37,7 @@ export default function ExpenseCategoryList() {
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
       });
 
-      const response = await fetch(`/api/expenseCategories?${params.toString()}`);
+      const response = await fetch(`/api/expensecategories?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch expense categories');
 
       const data = await response.json();
@@ -79,7 +79,7 @@ export default function ExpenseCategoryList() {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this category?')) {
       try {
-        const response = await fetch('/api/expenseCategories', {
+        const response = await fetch('/api/expensecategories', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ _id: id }),
@@ -129,7 +129,7 @@ export default function ExpenseCategoryList() {
               </tr>
             </thead>
             <tbody>
-              {expenseCategories.map((category) => (
+              {expensecategories.map((category) => (
                 <tr key={category._id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-6 py-4">{category.name}</td>
                   <td className="px-6 py-4">{category.description}</td>

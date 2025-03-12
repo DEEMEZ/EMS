@@ -2,6 +2,7 @@ import Budget from '@/models/budget';
 import ExpenseCategory from '@/models/expenseCategory';
 import User from '@/models/user';
 import dbConnect from '@/utils/dbconnect';
+import mongoose from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -20,8 +21,24 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     const query: { userId?: string; expensecategoriesId?: string } = {};
-    if (userId) query.userId = userId;
-    if (expensecategoriesId) query.expensecategoriesId = expensecategoriesId;
+    if (userId) {
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return NextResponse.json(
+          { error: 'Invalid User ID' },
+          { status: 400 }
+        );
+      }
+      query.userId = userId;
+    }
+    if (expensecategoriesId) {
+      if (!mongoose.Types.ObjectId.isValid(expensecategoriesId)) {
+        return NextResponse.json(
+          { error: 'Invalid Expense Category ID' },
+          { status: 400 }
+        );
+      }
+      query.expensecategoriesId = expensecategoriesId;
+    }
 
     const skip = (page - 1) * limit;
     const budgets = await Budget.find(query)
@@ -58,11 +75,20 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate } = data;
+    console.log('Incoming POST Payload:', JSON.stringify(data, null, 2)); 
 
-    if (!userId || !expensecategoriesId || !monthlyLimit || !amount || !startDate || !endDate) {
+    const { userId, expensecategoriesId, monthlyLimit, spentAmount, startDate, endDate } = data;
+
+    if (!userId || !expensecategoriesId || !monthlyLimit || spentAmount === undefined || !startDate || !endDate) {
       return NextResponse.json(
-        { error: 'All fields are required (userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate)' },
+        { error: 'All fields are required (userId, expensecategoriesId, monthlyLimit, spentAmount, startDate, endDate)' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof monthlyLimit !== 'number' || typeof spentAmount !== 'number') {
+      return NextResponse.json(
+        { error: 'monthlyLimit and spentAmount must be valid numbers' },
         { status: 400 }
       );
     }
@@ -83,11 +109,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const remainingBudget = monthlyLimit - spentAmount;
+
     const budget = await Budget.create({
       userId,
       expensecategoriesId,
       monthlyLimit,
-      amount, 
+      spentAmount,
+      remainingBudget,
       startDate,
       endDate,
     });
@@ -109,11 +138,20 @@ export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const data = await request.json();
-    const { _id, userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate } = data;
+    console.log('Incoming PUT Payload:', JSON.stringify(data, null, 2)); 
 
-    if (!_id || !userId || !expensecategoriesId || !monthlyLimit || !amount || !startDate || !endDate) {
+    const { _id, userId, expensecategoriesId, monthlyLimit, spentAmount, startDate, endDate } = data;
+
+    if (!_id || !userId || !expensecategoriesId || !monthlyLimit || spentAmount === undefined || !startDate || !endDate) {
       return NextResponse.json(
-        { error: 'All fields are required (_id, userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate)' },
+        { error: 'All fields are required (_id, userId, expensecategoriesId, monthlyLimit, spentAmount, startDate, endDate)' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof monthlyLimit !== 'number' || typeof spentAmount !== 'number') {
+      return NextResponse.json(
+        { error: 'monthlyLimit and spentAmount must be valid numbers' },
         { status: 400 }
       );
     }
@@ -134,9 +172,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const remainingBudget = monthlyLimit - spentAmount;
+
     const budget = await Budget.findByIdAndUpdate(
       _id,
-      { userId, expensecategoriesId, monthlyLimit, amount, startDate, endDate }, // Include the amount field
+      { userId, expensecategoriesId, monthlyLimit, spentAmount, remainingBudget, startDate, endDate },
       { new: true, runValidators: true }
     );
 

@@ -16,9 +16,13 @@ const budgetSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    amount: {
+    spentAmount: {
       type: Number,
-      required: true, 
+      required: true,
+      default: 0, 
+    },
+    remainingBudget: {
+      type: Number,
     },
     startDate: {
       type: Date,
@@ -33,5 +37,14 @@ const budgetSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+budgetSchema.pre('save', function (next) {
+  this.remainingBudget = this.monthlyLimit - this.spentAmount;
+  next();
+});
+
+budgetSchema.virtual('calculatedRemainingBudget').get(function () {
+  return this.monthlyLimit - this.spentAmount;
+});
 
 export default mongoose.models.Budget || mongoose.model('Budget', budgetSchema);

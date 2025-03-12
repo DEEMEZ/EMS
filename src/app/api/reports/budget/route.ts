@@ -55,33 +55,11 @@ export async function GET(request: NextRequest) {
       .populate("userId", "fullname email");
 
     if (budgets.length === 0) {
-      console.log("❌ No Budgets Found In The Given Date Range.");
+      console.log("❌ No budgets found in the given date range.");
       return NextResponse.json([]);
     }
 
-<<<<<<< HEAD
     console.log("✅ Found", budgets.length, "budgets.");
-=======
-    console.log("✅ Found", budgets.length, "Budgets. Fetching Expenses...");
-
-    const expenses = await Expense.aggregate([
-      {
-        $match: {
-          transactionDate: { $gte: new Date(startDate), $lte: new Date(endDate) },
-        },
-      },
-      {
-        $group: {
-          _id: "$expensecategoriesId",
-          totalExpense: { $sum: "$transactionAmount" },
-        },
-      },
-    ]);
-
-    const expenseMap = new Map(
-      expenses.map((expense) => [expense._id?.toString(), expense.totalExpense])
-    );
->>>>>>> f7a4f6c93db93677ae3ac354bfaa26f9af5990db
 
     const budgetAnalysis = budgets.map((budget) => ({
       _id: budget._id,
@@ -95,15 +73,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(budgetAnalysis);
   } catch (error: unknown) {
-<<<<<<< HEAD
     console.error("❌ Error fetching budget analysis:", error);
     return NextResponse.json(
       { error: (error as Error).message || "Failed to fetch budget analysis" },
       { status: 500 }
     );
-=======
-    console.error("❌ Error Fetching Budget Analysis:", error);
-    return NextResponse.json({ error: "Failed To Fetch Budget Analysis" }, { status: 500 });
->>>>>>> f7a4f6c93db93677ae3ac354bfaa26f9af5990db
   }
 }

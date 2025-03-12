@@ -33,7 +33,7 @@ const BudgetAnalysisTable = () => {
       const result = await response.json();
       setData(result);
     } catch (error) {
-      console.error("Error Fetching Budget Analysis:", error);
+      console.error("Error fetching budget analysis:", error);
     } finally {
       setLoading(false);
     }
@@ -85,11 +85,7 @@ const BudgetAnalysisTable = () => {
               ))
             ) : (
               <TableRow>
-<<<<<<< HEAD
                 <TableCell colSpan={4} className="text-center">No data available</TableCell>
-=======
-                <TableCell colSpan={5} className="text-center">No Data Available</TableCell>
->>>>>>> f7a4f6c93db93677ae3ac354bfaa26f9af5990db
               </TableRow>
             )}
           </TableBody>
@@ -99,11 +95,7 @@ const BudgetAnalysisTable = () => {
       {data.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-gray-100 p-4 rounded-lg shadow">
-<<<<<<< HEAD
             <h3 className="text-lg font-semibold text-center mb-2">Monthly Limit vs Total Spent (Bar Chart)</h3>
-=======
-            <h3 className="text-lg font-semibold text-center mb-2">Budget VS Expense (Bar Chart)</h3>
->>>>>>> f7a4f6c93db93677ae3ac354bfaa26f9af5990db
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={data}>
                 <XAxis dataKey="category" />

@@ -48,7 +48,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
       });
 
       if (response.ok) {
-        setSuccessMessage(initialData ? 'Budget Updated Successfully!' : 'Budget Created Successfully!');
+        setSuccessMessage(initialData ? 'Budget updated successfully!' : 'Budget created successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
         if (onSuccess) setTimeout(onSuccess, 1000);
         if (!initialData)
@@ -61,10 +61,10 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
             endDate: '',
           });
       } else {
-        setError('Error Saving Budget. Please Check The Input Data.');
+        setError('Error saving budget. Please check the input data.');
       }
     } catch {
-      setError('Failed To Save Budget');
+      setError('Failed to save budget');
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +124,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
                 value={formData.userId}
                 onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter User ID"
+                placeholder="Enter user ID"
               />
             </div>
 
@@ -136,13 +136,12 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
                 value={formData.expensecategoriesId}
                 onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter Expense Category ID"
+                placeholder="Enter expense category ID"
               />
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700">Monthly Limit</label>
-<<<<<<< HEAD
              <input
   type="number"
   required
@@ -153,22 +152,11 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
   className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
   placeholder="Enter monthly limit"
 />
-=======
-              <input
-                type="number"
-                required
-                value={formData.monthlyLimit}
-                onChange={(e) => setFormData({ ...formData, monthlyLimit: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter Monthly Limit"
-              />
->>>>>>> f7a4f6c93db93677ae3ac354bfaa26f9af5990db
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700">Spent Amount</label>
               <input
-<<<<<<< HEAD
   type="number"
   required
   value={formData.spentAmount}
@@ -178,15 +166,6 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
   className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
   placeholder="Enter spent amount"
 />
-=======
-                type="number"
-                required
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter Amount"
-              />
->>>>>>> f7a4f6c93db93677ae3ac354bfaa26f9af5990db
             </div>
 
             <div>

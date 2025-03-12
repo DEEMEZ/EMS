@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
     }
 
-    console.log("🔎 Fetching transactions from", startDate, "to", endDate);
+    console.log("🔎 Fetching Transactions From", startDate, "To", endDate);
 
     const transactions = await Transaction.find({
       transactionDate: {
@@ -29,14 +29,14 @@ export async function GET(request: NextRequest) {
     }).select("_id amount");
 
     if (transactions.length === 0) {
-      console.log("❌ No transactions found in the given date range.");
+      console.log("❌ No Transactions Found In The Given Date Range.");
       return NextResponse.json([]);
     }
 
     const transactionIds = transactions.map((txn) => txn._id);
     const transactionAmounts = new Map(transactions.map((txn) => [txn._id.toString(), txn.amount]));
 
-    console.log("✅ Found", transactions.length, "transactions. Fetching incomes...");
+    console.log("✅ Found", transactions.length, "Transactions. Fetching Incomes...");
 
     const incomes = await Income.aggregate([
       {
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     if (incomes.length === 0) {
-      console.log("❌ No incomes found matching transactions.");
+      console.log("❌ No Incomes Found Matching Transactions.");
     }
 
     const updatedIncomes = incomes.map((income) => ({
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(updatedIncomes);
 
   } catch (error: unknown) {
-    console.error("❌ Error fetching income analysis:", error);
-    return NextResponse.json({ error: "Failed to fetch income analysis" }, { status: 500 });
+    console.error("❌ Error Fetching Income Analysis:", error);
+    return NextResponse.json({ error: "Failed To Fetch Income Analysis" }, { status: 500 });
   }
 }

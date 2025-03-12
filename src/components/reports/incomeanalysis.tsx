@@ -32,7 +32,7 @@ const IncomeAnalysisTable = () => {
       const result = await response.json();
       setData(result);
     } catch (error) {
-      console.error("Error fetching incomes:", error);
+      console.error("Error Fetching Incomes:", error);
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ const IncomeAnalysisTable = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="text-center">No data available</TableCell>
+                <TableCell colSpan={3} className="text-center">No Data Available</TableCell>
               </TableRow>
             )}
           </TableBody>

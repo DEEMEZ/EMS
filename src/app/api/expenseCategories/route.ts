@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in GET /api/expensecategories:', error);
-    return NextResponse.json({ error: 'Failed to fetch expense categories' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed To Fetch Expense Categories' }, { status: 500 });
   }
 }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newExpenseCategory, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/expensecategories:', error);
-    return NextResponse.json({ error: 'Failed to create expense category' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed To Create Expense Category' }, { status: 500 });
   }
 }
 
@@ -65,13 +65,13 @@ export async function PUT(request: NextRequest) {
     );
 
     if (!updatedExpenseCategory) {
-      return NextResponse.json({ error: 'Expense category not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Expense Category Not Found' }, { status: 404 });
     }
 
     return NextResponse.json(updatedExpenseCategory);
   } catch (error) {
     console.error('Error in PUT /api/expensecategories:', error);
-    return NextResponse.json({ error: 'Failed to update expense category' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed To Update Expense Category' }, { status: 500 });
   }
 }
 
@@ -82,18 +82,18 @@ export async function DELETE(request: NextRequest) {
     const { _id } = data;
 
     if (!_id) {
-      return NextResponse.json({ error: 'Expense category ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Expense Category ID Is Required' }, { status: 400 });
     }
 
     const deletedExpenseCategory = await ExpenseCategory.findByIdAndDelete(_id);
 
     if (!deletedExpenseCategory) {
-      return NextResponse.json({ error: 'Expense category not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Expense Category Not Found' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Expense category deleted successfully' });
+    return NextResponse.json({ message: 'Expense Category Deleted Successfully' });
   } catch (error) {
     console.error('Error in DELETE /api/expensecategories:', error);
-    return NextResponse.json({ error: 'Failed to delete expense category' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed To Delete Expense Category' }, { status: 500 });
   }
 }

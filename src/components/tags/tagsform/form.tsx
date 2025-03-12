@@ -43,8 +43,8 @@ export default function TagsForm({
 
       if (response.ok) {
         const successMsg = initialData
-          ? 'Tag updated successfully!'
-          : 'Tag created successfully!';
+          ? 'Tag Updated Successfully!'
+          : 'Tag Created Successfully!';
         setSuccessMessage(successMsg);
 
         setTimeout(() => setSuccessMessage(''), 3000);
@@ -62,10 +62,10 @@ export default function TagsForm({
           });
         }
       } else {
-        setError('Failed to save tag');
+        setError('Failed To Save Tag');
       }
     } catch {
-      setError('Failed to save tag');
+      setError('Failed To Save Tag');
     } finally {
       setIsSubmitting(false);
     }
@@ -121,7 +121,7 @@ export default function TagsForm({
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter tag name"
+              placeholder="Enter Tag Name"
             />
           </div>
 
@@ -136,7 +136,7 @@ export default function TagsForm({
                 setFormData({ ...formData, description: e.target.value })
               }
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter tag description (optional)"
+              placeholder="Enter Tag Description (Optional)"
             />
           </div>
         </div>

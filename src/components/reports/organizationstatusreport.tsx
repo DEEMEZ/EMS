@@ -44,7 +44,7 @@ const OrganizationAnalysisTable = () => {
         setData(result);
       }
     } catch (error) {
-      console.error("Error fetching organization data:", error);
+      console.error("Error Fetching Organization Data:", error);
       setData([]);
     } finally {
       setLoading(false);
@@ -101,7 +101,7 @@ const OrganizationAnalysisTable = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">No data available</TableCell>
+                <TableCell colSpan={5} className="text-center">No Data Available</TableCell>
               </TableRow>
             )}
           </TableBody>

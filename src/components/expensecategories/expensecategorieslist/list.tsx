@@ -37,15 +37,20 @@ export default function ExpenseCategoryList() {
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
       });
 
+<<<<<<< HEAD
       const response = await fetch(`/api/expensecategories?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch expense categories');
+=======
+      const response = await fetch(`/api/expenseCategories?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed To Fetch Expense Categories');
+>>>>>>> f7a4f6c93db93677ae3ac354bfaa26f9af5990db
 
       const data = await response.json();
       setExpenseCategories(data.categories);
       setTotalPages(data.pagination.totalPages);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      setError('Failed to fetch expense categories');
+      setError('Failed To Fetch Expense Categories');
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +82,7 @@ export default function ExpenseCategoryList() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this category?')) {
+    if (confirm('Are You Sure You Want To Delete This Category?')) {
       try {
         const response = await fetch('/api/expensecategories', {
           method: 'DELETE',
@@ -87,10 +92,10 @@ export default function ExpenseCategoryList() {
         if (response.ok) {
           fetchExpenseCategories();
         } else {
-          setError('Failed to delete expense category');
+          setError('Failed To Delete Expense Category');
         }
       } catch {
-        setError('Failed to delete expense category');
+        setError('Failed To Delete Expense Category');
       }
     }
   };

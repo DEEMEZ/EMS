@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       console.error('Unexpected error in GET /api/paymentmethods:', error);
     }
     return NextResponse.json(
-      { error: 'Failed to fetch payment methods' },
+      { error: 'Failed To Fetch Payment Methods' },
       { status: 500 }
     );
   }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       console.error('Unexpected error in POST /api/paymentmethods:', error);
     }
     return NextResponse.json(
-      { error: 'Failed to create payment method' },
+      { error: 'Failed To Create Payment Method' },
       { status: 500 }
     );
   }
@@ -82,7 +82,7 @@ export async function PUT(request: NextRequest) {
 
     if (!updatedPaymentMethod) {
       return NextResponse.json(
-        { error: 'Payment method not found' },
+        { error: 'Payment Method Not Found' },
         { status: 404 }
       );
     }
@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
       console.error('Unexpected error in PUT /api/paymentmethods:', error);
     }
     return NextResponse.json(
-      { error: 'Failed to update payment method' },
+      { error: 'Failed To Update Payment Method' },
       { status: 500 }
     );
   }
@@ -110,7 +110,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!_id) {
       return NextResponse.json(
-        { error: 'Payment method ID is required' },
+        { error: 'Payment Method ID Is Required' },
         { status: 400 }
       );
     }
@@ -119,12 +119,12 @@ export async function DELETE(request: NextRequest) {
 
     if (!deletedPaymentMethod) {
       return NextResponse.json(
-        { error: 'Payment method not found' },
+        { error: 'Payment Method Not Found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ message: 'Payment method deleted successfully' });
+    return NextResponse.json({ message: 'Payment Method Deleted Successfully' });
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('Error in DELETE /api/paymentmethods:', error.message, error.stack);
@@ -132,7 +132,7 @@ export async function DELETE(request: NextRequest) {
       console.error('Unexpected error in DELETE /api/paymentmethods:', error);
     }
     return NextResponse.json(
-      { error: 'Failed to delete payment method' },
+      { error: 'Failed To Delete Payment Method' },
       { status: 500 }
     );
   }

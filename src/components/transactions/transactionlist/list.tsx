@@ -47,13 +47,13 @@ export default function TransactionList() {
       });
 
       const response = await fetch(`/api/transactions?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch transactions');
+      if (!response.ok) throw new Error('Failed To Fetch Transactions');
 
       const data = await response.json();
       setTransactions(data.transactions);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
-      setError('Failed to fetch transactions. Please try again.');
+      setError('Failed To Fetch Transactions. Please Try Again.');
       console.error('Error:', err);
     } finally {
       setIsLoading(false);
@@ -71,11 +71,11 @@ export default function TransactionList() {
         body: JSON.stringify({ _id: transactionId }),
       });
 
-      if (!response.ok) throw new Error('Failed to delete transaction');
+      if (!response.ok) throw new Error('Failed To Delete Transaction');
 
       await fetchTransactions();
     } catch {
-      setError('Failed to delete transaction');
+      setError('Failed To Delete Transaction');
     } finally {
       setIsDeleting(null);
     }
@@ -116,7 +116,7 @@ export default function TransactionList() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Transactions</h1>
-            <p className="text-blue-200">Manage your transactions</p>
+            <p className="text-blue-200">Manage Your Transactions</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}

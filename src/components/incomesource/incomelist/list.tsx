@@ -56,13 +56,13 @@ export default function IncomeSourceList() {
       });
 
       const response = await fetch(`/api/incomesources?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch income sources');
+      if (!response.ok) throw new Error('Failed To Fetch Income Sources');
 
       const data = await response.json();
       setIncomeSources(data.sources);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
-      setError('Failed to fetch income sources');
+      setError('Failed To Fetch Income Sources');
       console.error('Error:', err);
     } finally {
       setIsLoading(false);
@@ -80,11 +80,11 @@ export default function IncomeSourceList() {
         body: JSON.stringify({ _id: sourceId }),
       });
 
-      if (!response.ok) throw new Error('Failed to delete income source');
+      if (!response.ok) throw new Error('Failed To Delete Income Source');
 
       await fetchIncomeSources();
     } catch {
-      setError('Failed to delete income source');
+      setError('Failed To Delete Income Source');
     } finally {
       setIsDeleting(null);
     }
@@ -125,7 +125,7 @@ export default function IncomeSourceList() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Income Sources</h1>
-            <p className="text-blue-100">Manage your income source listings</p>
+            <p className="text-blue-100">Manage Your Income Source Listings</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -142,7 +142,7 @@ export default function IncomeSourceList() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300" />
           <input
             type="text"
-            placeholder="Search income sources..."
+            placeholder="Search Income Sources..."
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/30"
@@ -210,7 +210,7 @@ export default function IncomeSourceList() {
 
         {incomeSources.length > 0 && (
           <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-            <div className="text-sm text-gray-500">Showing {incomeSources.length} income sources</div>
+            <div className="text-sm text-gray-500">Showing {incomeSources.length} Income Sources</div>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}

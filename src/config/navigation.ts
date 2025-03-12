@@ -76,7 +76,7 @@ export const navigationConfig: NavItem[] = [
         icon: CreditCard,
       },
       {
-        title: 'taggs',
+        title: 'Taggs',
         href: '/taggs/list',
         icon: Tags,
       }

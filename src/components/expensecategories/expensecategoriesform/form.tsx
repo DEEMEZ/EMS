@@ -43,8 +43,8 @@ export default function ExpenseCategoryForm({
 
       if (response.ok) {
         const successMsg = initialData
-          ? 'Expense category updated successfully!'
-          : 'Expense category created successfully!';
+          ? 'Expense Category Updated Successfully!'
+          : 'Expense Category Created Successfully!';
         setSuccessMessage(successMsg);
 
         setTimeout(() => setSuccessMessage(''), 3000);
@@ -62,10 +62,10 @@ export default function ExpenseCategoryForm({
           });
         }
       } else {
-        setError('Failed to save expense category');
+        setError('Failed To Save Expense Category');
       }
     } catch {
-      setError('Failed to save expense category');
+      setError('Failed To Save Expense Category');
     } finally {
       setIsSubmitting(false);
     }
@@ -118,7 +118,7 @@ export default function ExpenseCategoryForm({
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter expense category name"
+              placeholder="Enter Expense Category Name"
             />
           </div>
 
@@ -130,7 +130,7 @@ export default function ExpenseCategoryForm({
                 setFormData({ ...formData, description: e.target.value })
               }
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter expense category description (optional)"
+              placeholder="Enter Expense Category Description (Optional)"
             />
           </div>
         </div>

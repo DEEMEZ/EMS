@@ -40,8 +40,8 @@ export default function BankForm({ initialData, onCancel, onSuccess }: BankFormP
 
       if (response.ok) {
         const successMsg = initialData
-          ? 'Bank updated successfully!'
-          : 'Bank created successfully!';
+          ? 'Bank Updated Successfully!'
+          : 'Bank Created Successfully!';
         setSuccessMessage(successMsg);
 
         // Clear success message after 3 seconds
@@ -61,10 +61,10 @@ export default function BankForm({ initialData, onCancel, onSuccess }: BankFormP
           });
         }
       } else {
-        setError('Failed to save bank');
+        setError('Failed To Save Bank');
       }
     } catch {
-      setError('Failed to save bank');
+      setError('Failed To Save Bank');
     } finally {
       setIsSubmitting(false);
     }
@@ -121,7 +121,7 @@ export default function BankForm({ initialData, onCancel, onSuccess }: BankFormP
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
-              placeholder="Enter bank name"
+              placeholder="Enter Bank Name"
             />
           </div>
 
@@ -136,7 +136,7 @@ export default function BankForm({ initialData, onCancel, onSuccess }: BankFormP
               value={formData.accountNumber}
               onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
-              placeholder="Enter account number"
+              placeholder="Enter Account Number"
             />
           </div>
 
@@ -151,7 +151,7 @@ export default function BankForm({ initialData, onCancel, onSuccess }: BankFormP
               value={formData.branch}
               onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500"
-              placeholder="Enter branch name"
+              placeholder="Enter Branch Name"
             />
           </div>
         </div>

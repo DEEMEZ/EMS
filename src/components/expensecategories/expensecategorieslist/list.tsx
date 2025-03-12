@@ -37,13 +37,8 @@ export default function ExpenseCategoryList() {
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
       });
 
-<<<<<<< HEAD
       const response = await fetch(`/api/expensecategories?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch expense categories');
-=======
-      const response = await fetch(`/api/expenseCategories?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed To Fetch Expense Categories');
->>>>>>> f7a4f6c93db93677ae3ac354bfaa26f9af5990db
 
       const data = await response.json();
       setExpenseCategories(data.categories);

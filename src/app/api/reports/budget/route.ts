@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Budget from "@/models/budget";
 import "@/models/expenseCategory";
+import "@/models/user";
 import dbConnect from "@/utils/dbconnect";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";

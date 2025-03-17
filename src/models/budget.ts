@@ -3,9 +3,9 @@ import mongoose from 'mongoose';
 const budgetSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      type: String, // Keep as String since you're using token.id or token.sub
       required: true,
+      index: true // Add index for faster queries
     },
     expensecategoriesId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -46,5 +46,8 @@ budgetSchema.pre('save', function (next) {
 budgetSchema.virtual('calculatedRemainingBudget').get(function () {
   return this.monthlyLimit - this.spentAmount;
 });
-
+// Add index for common query patterns
+budgetSchema.index({ userId: 1, expensecategoriesId: 1 });
+budgetSchema.index({ startDate: -1 });
+budgetSchema.index({ endDate: -1 });
 export default mongoose.models.Budget || mongoose.model('Budget', budgetSchema);

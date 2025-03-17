@@ -1,31 +1,45 @@
-'use client';
+// src/app/page.tsx
+"use client";
 
-import { useState } from 'react';
-import ProductForm from '@/components/productform';
-import ProductList from '@/components/productlist';
-import NavbarComponent from '@/components/navbar/navbar';
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 
 export default function Home() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { status } = useSession();
+  const router = useRouter();
 
-  const handleProductUpdate = () => {
-    setRefreshTrigger(prev => prev + 1);
-  };
+  useEffect(() => {
+    // Immediate redirect if status is known
+    if (status === "authenticated") {
+      router.push("/dashboard");
+    } else if (status === "unauthenticated") {
+      router.push("/auth/signin");
+    }
+    
+    // Fallback redirect after a timeout (in case session checking takes too long)
+    const timeout = setTimeout(() => {
+      if (status === "loading") {
+        router.push("/auth/signin");
+      }
+    }, 3000); // 3 second timeout
 
+    return () => clearTimeout(timeout);
+  }, [status, router]);
+
+  // Loading indicator
   return (
-    <div>
-      <NavbarComponent />
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Inventory Management System</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <ProductForm onProductUpdate={handleProductUpdate} />
-        </div>
-        <div>
-          <ProductList refreshTrigger={refreshTrigger} />
-        </div>
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-4">Loading...</h2>
+        <p>Please wait while we check your authentication status.</p>
+        <button 
+          onClick={() => router.push("/auth/signin")}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Go to Login
+        </button>
       </div>
-    </main>
     </div>
   );
 }

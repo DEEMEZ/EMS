@@ -3,6 +3,10 @@ import mongoose from 'mongoose';
 // Bank Schema
 const bankSchema = new mongoose.Schema(
   {
+    userId: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       required: [true, 'Bank name is required'],

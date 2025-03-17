@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, Save, X, FileText, Activity, CheckCircle } from 'lucide-react';
+import { Building2, Save, X, FileText, Activity, CheckCircle, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { IOrganization } from '@/types/organization';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 interface OrganizationFormProps {
   initialData?: IOrganization;
@@ -13,6 +15,10 @@ interface OrganizationFormProps {
 }
 
 export default function OrganizationForm({ initialData, onCancel, onSuccess }: OrganizationFormProps) {
+  // Authentication state
+  const { status: authStatus } = useSession();
+  const isAuthenticated = authStatus === 'authenticated';
+  
   const [formData, setFormData] = useState<IOrganization>({
     name: initialData?.name || '',
     description: initialData?.description || '',
@@ -25,6 +31,13 @@ export default function OrganizationForm({ initialData, onCancel, onSuccess }: O
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setError('You must be signed in to save an organization');
+      return;
+    }
+    
     setError('');
     setIsSubmitting(true);
     setSuccessMessage('');
@@ -37,6 +50,12 @@ export default function OrganizationForm({ initialData, onCancel, onSuccess }: O
         },
         body: JSON.stringify({ ...formData, _id: initialData?._id }),
       });
+
+      // Handle unauthorized error
+      if (response.status === 401) {
+        setError('You must be signed in to save an organization');
+        return;
+      }
 
       if (response.ok) {
         const successMsg = initialData 
@@ -67,28 +86,53 @@ export default function OrganizationForm({ initialData, onCancel, onSuccess }: O
           });
         }
       } else {
-        setError('Failed to save organization');
+        const data = await response.json();
+        setError(data.error || 'Failed to save organization');
       }
-    } catch {
-      setError('Failed to save organization');
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to save organization. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Not authenticated state
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center py-6">
+        <AlertCircle className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h2>
+        <p className="text-gray-600 mb-4">
+          You need to be signed in to create or edit organizations.
+        </p>
+        <div className="flex justify-center gap-3">
+          <Link 
+            href="/auth/signin"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Sign In
+          </Link>
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-200"
+      className="bg-white rounded-2xl"
     >
-      <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl">
-        <h2 className="text-xl font-semibold text-white">
-          {initialData ? 'Update Organization' : 'Create New Organization'}
-        </h2>
-      </div>
-
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <AnimatePresence>
           {error && (
             <motion.div

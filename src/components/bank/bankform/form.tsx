@@ -5,6 +5,7 @@ import { IBank } from '@/types/bank';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Banknote, CheckCircle, Save, X } from 'lucide-react';
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface BankFormProps {
   initialData?: IBank;
@@ -22,7 +23,9 @@ export default function BankForm({ initialData, onCancel, onSuccess }: BankFormP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

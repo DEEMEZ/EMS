@@ -1,13 +1,12 @@
-import { IExpenseCategories } from '@/types/expensecategories';
-import { IUser } from '@/types/user';
-
 export interface IBudget {
   _id?: string;
-  userId: string | IUser;
-  expensecategoriesId: string | IExpenseCategories;
+  userId?: string;
+  expensecategoriesId: string | { _id: string; name: string };
   monthlyLimit: number;
-  spentAmount: number; 
+  spentAmount: number;
   remainingBudget: number;
   startDate: Date;
   endDate: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

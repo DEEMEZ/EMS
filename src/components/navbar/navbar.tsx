@@ -1,16 +1,19 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { navigationConfig, NavItem } from '@/config/navigation';
+import { useSession, signOut } from 'next-auth/react';
 
 const NavbarComponent = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const pathname = usePathname();
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -29,6 +32,11 @@ const NavbarComponent = () => {
     setOpenDropdown(null);
     setIsMobileMenuOpen(false);
   }, [pathname]);
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    router.push('/auth/signin');
+  };
 
   const DesktopDropdown = ({ item }: { item: NavItem }) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
@@ -136,13 +144,14 @@ const NavbarComponent = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-blue-600">IMS</span>
+            <span className="text-xl font-bold text-blue-600">EMS</span>
             <span className="text-gray-700">System</span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-1">
-            {navigationConfig.map((item) => (
+            {/* Only show navigation items when logged in */}
+            {status === "authenticated" && navigationConfig.map((item) => (
               item.subItems ? (
                 <DesktopDropdown key={item.title} item={item} />
               ) : (
@@ -163,18 +172,29 @@ const NavbarComponent = () => {
 
             {/* Auth Buttons */}
             <div className="ml-4 flex items-center gap-2">
-              <Link
-                href="/login"
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 rounded-md hover:bg-gray-50"
-              >
-                Log In
-              </Link>
-              <Link
-                href="/signup"
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-              >
-                Sign Up
-              </Link>
+              {status === "authenticated" ? (
+                <button
+                  onClick={handleSignOut}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/signin"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 rounded-md hover:bg-gray-50"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -204,24 +224,36 @@ const NavbarComponent = () => {
             className="lg:hidden border-t"
           >
             <div className="space-y-1 py-3">
-              {navigationConfig.map((item) => (
+              {/* Only show navigation items when logged in */}
+              {status === "authenticated" && navigationConfig.map((item) => (
                 <MobileDropdown key={item.title} item={item} />
               ))}
               
               {/* Mobile Auth Buttons */}
               <div className="px-2 pt-4 pb-1 space-y-2">
-                <Link
-                  href="/login"
-                  className="block w-full px-3 py-2 text-sm font-medium text-center text-gray-700 hover:text-blue-600 rounded-md border hover:bg-gray-50"
-                >
-                  Log In
-                </Link>
-                <Link
-                  href="/signup"
-                  className="block w-full px-3 py-2 text-sm font-medium text-center text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                >
-                  Sign Up
-                </Link>
+                {status === "authenticated" ? (
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full px-3 py-2 text-sm font-medium text-center text-white bg-red-600 rounded-md hover:bg-red-700"
+                  >
+                    Sign Out
+                  </button>
+                ) : (
+                  <>
+                    <Link
+                      href="/auth/signin"
+                      className="block w-full px-3 py-2 text-sm font-medium text-center text-gray-700 hover:text-blue-600 rounded-md border hover:bg-gray-50"
+                    >
+                      Log In
+                    </Link>
+                    <Link
+                      href="/auth/signup"
+                      className="block w-full px-3 py-2 text-sm font-medium text-center text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

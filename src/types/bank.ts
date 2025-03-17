@@ -4,5 +4,6 @@ export interface IBank {
   accountNumber: string;         
   branch: string;                
   createdAt?: Date;              
-  updatedAt?: Date;              
+  updatedAt?: Date;          
+  userId?: string;     
 }

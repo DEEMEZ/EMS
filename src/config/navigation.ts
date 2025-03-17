@@ -43,11 +43,6 @@ export const navigationConfig: NavItem[] = [
         title: 'Organization',
         href: '/organization/list',
         icon: Building2,
-      },
-      {
-        title: 'Users',
-        href: '/user/list',
-        icon: UserCircle,
       }
     ],
   },

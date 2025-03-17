@@ -5,6 +5,7 @@ import { IExpenseCategories } from '@/types/expensecategories';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Save, X } from 'lucide-react';
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface ExpenseCategoryFormProps {
   initialData?: IExpenseCategories;
@@ -17,6 +18,9 @@ export default function ExpenseCategoryForm({
   onCancel,
   onSuccess,
 }: ExpenseCategoryFormProps) {
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  
   const [formData, setFormData] = useState<IExpenseCategories>({
     name: initialData?.name || '',
     description: initialData?.description || '',
@@ -28,13 +32,20 @@ export default function ExpenseCategoryForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setError('You must be signed in to create or update expense categories');
+      return;
+    }
+    
     setError('');
     setIsSubmitting(true);
     setSuccessMessage('');
 
     try {
       const response = await fetch('/api/expensecategories', {
-        method: initialData ? 'PUT' : 'POST',
+        method: initialData?._id ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -42,7 +53,7 @@ export default function ExpenseCategoryForm({
       });
 
       if (response.ok) {
-        const successMsg = initialData
+        const successMsg = initialData?._id
           ? 'Expense Category Updated Successfully!'
           : 'Expense Category Created Successfully!';
         setSuccessMessage(successMsg);
@@ -62,10 +73,12 @@ export default function ExpenseCategoryForm({
           });
         }
       } else {
-        setError('Failed To Save Expense Category');
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed To Save Expense Category');
       }
-    } catch {
+    } catch (error) {
       setError('Failed To Save Expense Category');
+      console.error('Error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -79,7 +92,7 @@ export default function ExpenseCategoryForm({
     >
       <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl">
         <h2 className="text-xl font-semibold text-white">
-          {initialData ? 'Update Expense Category' : 'Create New Expense Category'}
+          {initialData?._id ? 'Update Expense Category' : 'Create New Expense Category'}
         </h2>
       </div>
 
@@ -90,9 +103,9 @@ export default function ExpenseCategoryForm({
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md"
+              className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md"
             >
-              <p className="text-blue-700">{error}</p>
+              <p className="text-red-700">{error}</p>
             </motion.div>
           )}
 
@@ -148,7 +161,7 @@ export default function ExpenseCategoryForm({
           )}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isAuthenticated}
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (
@@ -159,7 +172,7 @@ export default function ExpenseCategoryForm({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                {initialData ? 'Update' : 'Create'}
+                {initialData?._id ? 'Update' : 'Create'}
               </>
             )}
           </button>

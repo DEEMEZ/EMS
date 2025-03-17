@@ -1,11 +1,29 @@
-// src/app/api/organizations/route.ts
+// src/app/api/organization/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbconnect';
 import Organization from '@/models/organization';
+import { getToken } from 'next-auth/jwt';
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    
+    // Get the token to find the current user ID
+    const token = await getToken({ req: request });
+    
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json({
+        organizations: [],
+        pagination: {
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0
+        }
+      });
+    }
+    
+    const userId = token.id || token.sub;
     
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
@@ -15,11 +33,13 @@ export async function GET(request: NextRequest) {
     const sortField = searchParams.get('sortField') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    // Build query
-    const query: { name?: { $regex: string, $options: string }, status?: string } = {};
+    // Build query with userId filter
+    const query: any = { userId };
+    
     if (search) {
       query.name = { $regex: search, $options: 'i' };
     }
+    
     if (status) {
       query.status = status;
     }
@@ -45,7 +65,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: unknown) {
-    console.error('Error in GET /api/organizations:', error);
+    console.error('Error in GET /api/organization:', error);
     return NextResponse.json(
       { error: (error as Error).message || 'Failed to fetch organizations' },
       { status: 500 }
@@ -56,16 +76,26 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const data = await request.json();
-
-    // Generate unique orgId if not provided
-    // if (!data.orgId) {
-    //   data.orgId = Math.floor(Math.random() * 1000000);
-    // }
     
+    // Get the token to find the current user ID
+    const token = await getToken({ req: request });
+    
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'You must be signed in to create an organization' },
+        { status: 401 }
+      );
+    }
+    
+    const userId = token.id || token.sub;
+    
+    const data = await request.json();
+    
+    // Create organization with the current user ID
     const organization = await Organization.create({
       ...data,
-      modifiedBy: 'System', // Replace with actual user when auth is implemented
+      userId, // Add user ID
+      modifiedBy: token.name || 'System',
       modifiedDate: new Date(),
       status: data.status || 'Active'
     });
@@ -75,15 +105,15 @@ export async function POST(request: NextRequest) {
       organization
     }, { status: 201 });
   } catch (error: unknown) {
-    console.error('Error in POST /api/organizations:', error);
+    console.error('Error in POST /api/organization:', error);
     
-    // Handle duplicate orgId error
-    // if (error.code === 11000) {
-    //   return NextResponse.json(
-    //     { error: 'An organization with this ID already exists' },
-    //     { status: 409 }
-    //   );
-    // }
+    // Handle duplicate organization name for this user
+    if ((error as any).code === 11000) {
+      return NextResponse.json(
+        { error: 'An organization with this name already exists for your account' },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json(
       { error: (error as Error).message || 'Failed to create organization' },
@@ -95,35 +125,66 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
+    
+    // Get the token to find the current user ID
+    const token = await getToken({ req: request });
+    
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'You must be signed in to update an organization' },
+        { status: 401 }
+      );
+    }
+    
+    const userId = token.id || token.sub;
+    
     const data = await request.json();
     const { _id, ...updateData } = data;
 
-    // Remove orgId from update if it exists
-    // delete updateData.orgId; // Prevent orgId modification
-
-    const organization = await Organization.findByIdAndUpdate(
-      _id,
-      {
-        ...updateData,
-        modifiedBy: 'System', // Replace with actual user when auth is implemented
-        modifiedDate: new Date()
-      },
-      { new: true, runValidators: true }//ensures updated doc is returned and the the update is validated agains the schema
-    );
-
-    if (!organization) {
+    // Find the organization first to check ownership
+    const existingOrg = await Organization.findById(_id);
+    
+    if (!existingOrg) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
       );
     }
+    
+    // Check if the organization belongs to the current user
+    if (existingOrg.userId && userId && existingOrg.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to modify this organization' },
+        { status: 403 }
+      );
+    }
+
+    const organization = await Organization.findByIdAndUpdate(
+      _id,
+      {
+        ...updateData,
+        userId, // Ensure userId is updated to current user
+        modifiedBy: token.name || 'System',
+        modifiedDate: new Date()
+      },
+      { new: true, runValidators: true }
+    );
 
     return NextResponse.json({
       message: 'Organization updated successfully',
       organization
     });
   } catch (error: unknown) {
-    console.error('Error in PUT /api/organizations:', error);
+    console.error('Error in PUT /api/organization:', error);
+    
+    // Handle duplicate organization name
+    if ((error as any).code === 11000) {
+      return NextResponse.json(
+        { error: 'An organization with this name already exists for your account' },
+        { status: 409 }
+      );
+    }
+    
     return NextResponse.json(
       { error: (error as Error).message || 'Failed to update organization' },
       { status: 500 }
@@ -134,6 +195,19 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
+    
+    // Get the token to find the current user ID
+    const token = await getToken({ req: request });
+    
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'You must be signed in to delete an organization' },
+        { status: 401 }
+      );
+    }
+    
+    const userId = token.id || token.sub;
+    
     const data = await request.json();
     const { _id } = data;
 
@@ -143,16 +217,27 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const organization = await Organization.findByIdAndDelete(_id);
     
-    if (!organization) {
+    // Find the organization first to check ownership
+    const existingOrg = await Organization.findById(_id);
+    
+    if (!existingOrg) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
       );
     }
+    
+    // Check if the organization belongs to the current user
+    if (existingOrg.userId && userId && existingOrg.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete this organization' },
+        { status: 403 }
+      );
+    }
 
+    await Organization.findByIdAndDelete(_id);
+    
     return NextResponse.json({
       message: 'Organization deleted successfully',
       success: true

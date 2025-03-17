@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Budget from "@/models/budget";
+import "@/models/expenseCategory";
+import "@/models/user";
 import dbConnect from "@/utils/dbconnect";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -7,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
-
+console.log("Registered Models:", mongoose.modelNames());
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");

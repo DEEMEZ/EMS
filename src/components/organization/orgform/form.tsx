@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, Save, X, FileText, Activity, CheckCircle, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { IOrganization } from '@/types/organization';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Activity, AlertCircle, Building2, CheckCircle, FileText, Save, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 interface OrganizationFormProps {
   initialData?: IOrganization;

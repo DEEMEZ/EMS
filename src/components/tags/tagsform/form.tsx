@@ -4,6 +4,7 @@ import { LoadingSpinner } from '@/components/loadiingspinner';
 import { ITags } from '@/types/tags';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Save, X } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
 interface TagsFormProps {
@@ -25,12 +26,20 @@ export default function TagsForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
     setSuccessMessage('');
+
+    if (!isAuthenticated) {
+      setError('Authentication required');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/tags', {
@@ -155,7 +164,7 @@ export default function TagsForm({
           )}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isAuthenticated}
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (

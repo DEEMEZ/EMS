@@ -2,11 +2,23 @@
 import Income from "@/models/income";
 import Transaction from "@/models/transaction";
 import dbConnect from "@/utils/dbconnect";
+import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Verify authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
 
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
@@ -15,7 +27,10 @@ export async function GET(request: NextRequest) {
     const orgId = searchParams.get("orgId") || "";
 
     if (!startDate || !endDate) {
-      return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "startDate and endDate are required" },
+        { status: 400 }
+      );
     }
 
     console.log("🔎 Fetching Transactions From", startDate, "To", endDate);
@@ -26,6 +41,7 @@ export async function GET(request: NextRequest) {
         $lte: new Date(endDate),
       },
       type: "Income",
+      userId, // Ensure only transactions for the authenticated user are fetched
     }).select("_id amount");
 
     if (transactions.length === 0) {
@@ -44,6 +60,7 @@ export async function GET(request: NextRequest) {
           transactionId: { $in: transactionIds },
           ...(incomeSourceId && { incomeSourceId }),
           ...(orgId && { orgId }),
+          userId, // Ensure only incomes for the authenticated user are fetched
         },
       },
       {
@@ -79,8 +96,8 @@ export async function GET(request: NextRequest) {
           incomeSource: { $first: "$incomeSource.name" },
           totalAmount: { $sum: "$transaction.amount" },
           organizations: { $addToSet: "$organization.name" },
-          transactions: { 
-            $push: { transactionId: "$transaction._id", amount: "$transaction.amount" } 
+          transactions: {
+            $push: { transactionId: "$transaction._id", amount: "$transaction.amount" },
           },
         },
       },
@@ -104,9 +121,11 @@ export async function GET(request: NextRequest) {
 
     console.log("✅ Income Analysis Data:", updatedIncomes);
     return NextResponse.json(updatedIncomes);
-
   } catch (error: unknown) {
     console.error("❌ Error Fetching Income Analysis:", error);
-    return NextResponse.json({ error: "Failed To Fetch Income Analysis" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed To Fetch Income Analysis" },
+      { status: 500 }
+    );
   }
 }

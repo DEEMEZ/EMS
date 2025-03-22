@@ -5,6 +5,7 @@ import { LoadingSpinner } from '@/components/loadiingspinner';
 import { ITransaction } from '@/types/transaction';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Save, X } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
 interface TransactionFormProps {
@@ -14,6 +15,9 @@ interface TransactionFormProps {
 }
 
 export default function TransactionForm({ initialData, onCancel, onSuccess }: TransactionFormProps) {
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+
   const [formData, setFormData] = useState<ITransaction>({
     userId: initialData?.userId || '',
     amount: initialData?.amount || 0,
@@ -51,6 +55,11 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
     setError('');
     setSuccessMessage('');
     setValidationErrors({});
+
+    if (!isAuthenticated) {
+      setError('Authentication required');
+      return;
+    }
 
     if (!validateForm()) {
       return;
@@ -228,7 +237,7 @@ export default function TransactionForm({ initialData, onCancel, onSuccess }: Tr
             )}
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isAuthenticated}
               className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               {isSubmitting ? (

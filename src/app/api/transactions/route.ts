@@ -1,22 +1,33 @@
 import Transaction from '@/models/transaction';
 import User from '@/models/user';
 import dbConnect from '@/utils/dbconnect';
+import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
 
+    // Verify authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json({
+        transactions: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      });
+    }
+
+    const userId = token.id || token.sub;
+
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
-    const userId = searchParams.get('userId') || '';
     const type = searchParams.get('type') || '';
     const sortField = searchParams.get('sortField') || 'transactionDate';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    const query: { userId?: string; type?: string } = {};
-    if (userId) query.userId = userId;
+    // Build query with userId filter
+    const query: { userId: string; type?: string } = { userId };
     if (type) query.type = type;
 
     const skip = (page - 1) * limit;
@@ -50,13 +61,24 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Verify authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
-    const { userId, type, transactionDate, description, amount } = data;
+    const { type, transactionDate, description, amount } = data;
 
     // Validate required fields
-    if (!userId || !type || !transactionDate || typeof amount !== 'number' || isNaN(amount)) {
+    if (!type || !transactionDate || typeof amount !== 'number' || isNaN(amount)) {
       return NextResponse.json(
-        { error: 'Missing or invalid required fields (userId, type, transactionDate, amount)' },
+        { error: 'Missing or invalid required fields (type, transactionDate, amount)' },
         { status: 400 }
       );
     }
@@ -77,6 +99,8 @@ export async function POST(request: NextRequest) {
       transactionDate,
       description,
       amount,
+      modifiedBy: token.name || 'System',
+      modifiedDate: new Date(),
     });
 
     return NextResponse.json(
@@ -98,22 +122,24 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
-    const data = await request.json();
-    const { _id, userId, ...updateData } = data;
 
-    // Validate required fields
-    if (!_id || !userId) {
+    // Verify authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
       return NextResponse.json(
-        { error: 'Transaction ID and User ID are required' },
-        { status: 400 }
+        { error: 'Authentication required' },
+        { status: 401 }
       );
     }
 
-    // Check if user exists
-    const userExists = await User.findById(userId);
-    if (!userExists) {
+    const userId = token.id || token.sub;
+    const data = await request.json();
+    const { _id, ...updateData } = data;
+
+    // Validate required fields
+    if (!_id) {
       return NextResponse.json(
-        { error: 'Invalid User ID. No such user exists.' },
+        { error: 'Transaction ID is required' },
         { status: 400 }
       );
     }
@@ -127,10 +153,23 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Check if the transaction belongs to the current user
+    if (transaction.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to modify this transaction' },
+        { status: 403 }
+      );
+    }
+
     // Update transaction
     const updatedTransaction = await Transaction.findByIdAndUpdate(
       _id,
-      { userId, ...updateData },
+      {
+        ...updateData,
+        userId, // Ensure userId is updated to current user
+        modifiedBy: token.name || 'System',
+        modifiedDate: new Date(),
+      },
       { new: true, runValidators: true }
     );
 
@@ -150,6 +189,17 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Verify authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
     const { _id } = data;
 
@@ -161,15 +211,25 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Delete transaction
-    const transaction = await Transaction.findByIdAndDelete(_id);
-
+    // Check if transaction exists
+    const transaction = await Transaction.findById(_id);
     if (!transaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
         { status: 404 }
       );
     }
+
+    // Check if the transaction belongs to the current user
+    if (transaction.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete this transaction' },
+        { status: 403 }
+      );
+    }
+
+    // Delete transaction
+    await Transaction.findByIdAndDelete(_id);
 
     return NextResponse.json({
       message: 'Transaction deleted successfully',

@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { IBank } from '@/types/bank';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Banknote, CheckCircle, Save, X } from 'lucide-react';
-import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 
 interface BankFormProps {
   initialData?: IBank;

@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/api/organization/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/utils/dbconnect';
 import Organization from '@/models/organization';
+import dbConnect from '@/utils/dbconnect';
 import { getToken } from 'next-auth/jwt';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {

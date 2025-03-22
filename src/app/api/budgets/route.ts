@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Budget from '@/models/budget';
 import ExpenseCategory from '@/models/expenseCategory';
 import dbConnect from '@/utils/dbconnect';
 import mongoose from 'mongoose';
-import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {

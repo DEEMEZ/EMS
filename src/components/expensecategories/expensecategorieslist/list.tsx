@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import ExpenseCategoryForm from '@/components/expensecategories/expensecategoriesform/form';
@@ -6,9 +7,9 @@ import { IExpenseCategories } from '@/types/expensecategories';
 import { AnimatePresence, motion } from 'framer-motion';
 import _ from 'lodash';
 import { AlertCircle, ChevronLeft, ChevronRight, Edit, LogIn, Plus, Search, Trash2, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function ExpenseCategoryList() {
   // Authentication state

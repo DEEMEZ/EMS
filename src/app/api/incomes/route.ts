@@ -4,11 +4,23 @@ import IncomeSources from '@/models/incomesource';
 import Organization from '@/models/organization';
 import Transaction from '@/models/transaction';
 import dbConnect from '@/utils/dbconnect';
+import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Check authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json({
+        incomes: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      });
+    }
+
+    const userId = token.id || token.sub;
 
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
@@ -19,30 +31,27 @@ export async function GET(request: NextRequest) {
     const sortField = searchParams.get('sortField') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    const query: any = {};
+    const query: any = { userId };
     if (transactionId) query.transactionId = transactionId;
     if (incomeSourceId) query.incomeSourceId = incomeSourceId;
     if (orgId) query.orgId = orgId;
 
     const skip = (page - 1) * limit;
     const incomes = await Income.find(query)
-  .populate({
-    path: 'transactionId',
-    select: 'amount type transactionDate',
-  })
-  .populate('incomeSourceId', 'name')
-  .populate('orgId', 'name')
-  .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
-  .skip(skip)
-  .limit(limit)
-  .select('-__v');
+      .populate({
+        path: 'transactionId',
+        select: 'amount type transactionDate',
+      })
+      .populate('incomeSourceId', 'name')
+      .populate('orgId', 'name')
+      .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('-__v');
 
-console.log("Populated incomes:", JSON.stringify(incomes, null, 2)); // Debugging
-
-
-    const incomesWithAmount = incomes.map(income => ({
+    const incomesWithAmount = incomes.map((income) => ({
       ...income.toObject(),
-      transactionAmount: income.transactionId?.amount || 0 
+      transactionAmount: income.transactionId?.amount || 0,
     }));
 
     const total = await Income.countDocuments(query);
@@ -68,6 +77,17 @@ console.log("Populated incomes:", JSON.stringify(incomes, null, 2)); // Debuggin
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Check authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
     const { transactionId, incomeSourceId, orgId } = data;
 
@@ -92,7 +112,8 @@ export async function POST(request: NextRequest) {
       transactionId,
       incomeSourceId,
       orgId,
-      transactionAmount, 
+      transactionAmount,
+      userId, // Add the userId field
     });
 
     return NextResponse.json(
@@ -114,12 +135,31 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Check authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
     const { _id, transactionId, incomeSourceId, orgId } = data;
 
     const income = await Income.findById(_id);
     if (!income) {
       return NextResponse.json({ error: 'Income not found' }, { status: 404 });
+    }
+
+    // Check if the income belongs to the current user
+    if (income.userId && income.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to modify this income' },
+        { status: 403 }
+      );
     }
 
     const transaction = await Transaction.findById(transactionId);
@@ -130,7 +170,7 @@ export async function PUT(request: NextRequest) {
 
     const updatedIncome = await Income.findByIdAndUpdate(
       _id,
-      { transactionId, incomeSourceId, orgId, transactionAmount },
+      { transactionId, incomeSourceId, orgId, transactionAmount, userId },
       { new: true, runValidators: true }
     );
 
@@ -150,6 +190,17 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Check authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
     const { _id } = data;
 
@@ -157,11 +208,20 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Income ID is required' }, { status: 400 });
     }
 
-    const income = await Income.findByIdAndDelete(_id);
-
+    const income = await Income.findById(_id);
     if (!income) {
       return NextResponse.json({ error: 'Income not found' }, { status: 404 });
     }
+
+    // Check if the income belongs to the current user
+    if (income.userId && income.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete this income' },
+        { status: 403 }
+      );
+    }
+
+    await Income.findByIdAndDelete(_id);
 
     return NextResponse.json({
       message: 'Income deleted successfully',

@@ -4,28 +4,32 @@ import "@/models/expenseCategory";
 import "@/models/user";
 import dbConnect from "@/utils/dbconnect";
 import mongoose from "mongoose";
+import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
-console.log("Registered Models:", mongoose.modelNames());
+
+    // Verify authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
+
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const expensecategoriesId = searchParams.get("expensecategoriesId") || "";
-    const userId = searchParams.get("userId") || "";
 
     if (!startDate || !endDate) {
       return NextResponse.json(
         { error: "startDate and endDate are required" },
-        { status: 400 }
-      );
-    }
-
-    if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
-      return NextResponse.json(
-        { error: "Invalid User ID" },
         { status: 400 }
       );
     }
@@ -39,17 +43,14 @@ console.log("Registered Models:", mongoose.modelNames());
 
     console.log("🔎 Fetching budgets from", startDate, "to", endDate);
 
-    const query: { startDate: any; endDate: any; expensecategoriesId?: string; userId?: string } = {
+    const query: { startDate: any; endDate: any; expensecategoriesId?: string; userId: string } = {
       startDate: { $lte: new Date(endDate) },
       endDate: { $gte: new Date(startDate) },
+      userId, // Ensure only budgets for the authenticated user are fetched
     };
 
     if (expensecategoriesId) {
       query.expensecategoriesId = expensecategoriesId;
-    }
-
-    if (userId) {
-      query.userId = userId;
     }
 
     const budgets = await Budget.find(query)
@@ -67,8 +68,8 @@ console.log("Registered Models:", mongoose.modelNames());
       _id: budget._id,
       category: budget.expensecategoriesId?.name || "Unknown",
       monthlyLimit: budget.monthlyLimit,
-      totalSpent: budget.spentAmount || 0, 
-      remainingBudget: budget.remainingBudget || 0, 
+      totalSpent: budget.spentAmount || 0,
+      remainingBudget: budget.remainingBudget || 0,
     }));
 
     console.log("✅ Budget Analysis Data:", budgetAnalysis);

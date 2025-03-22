@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { IIncomeSources } from '@/types/incomesource';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle, Save, X } from 'lucide-react';
+import { CheckCircle, CreditCard, List, Save, X } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
 interface IncomeSourceFormProps {
@@ -25,12 +27,20 @@ export default function IncomeSourceForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
     setSuccessMessage('');
+
+    if (!isAuthenticated) {
+      setError('Authentication required');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/incomesources', {
@@ -112,7 +122,8 @@ export default function IncomeSourceForm({
         <div className="space-y-4">
           {/* Name Field */}
           <div>
-            <label className="text-sm font-medium text-gray-700">
+            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
+              <List className="w-4 h-4" />
               Name
             </label>
             <input
@@ -127,7 +138,8 @@ export default function IncomeSourceForm({
 
           {/* Description Field */}
           <div>
-            <label className="text-sm font-medium text-gray-700">
+            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
+              <CreditCard className="w-4 h-4" />
               Description
             </label>
             <textarea

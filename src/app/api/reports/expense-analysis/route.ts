@@ -2,11 +2,23 @@
 import Expense from "@/models/expense";
 import Transaction from "@/models/transaction";
 import dbConnect from "@/utils/dbconnect";
+import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+
+    // Verify authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
 
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
@@ -16,7 +28,10 @@ export async function GET(request: NextRequest) {
     const bankId = searchParams.get("bankId") || "";
 
     if (!startDate || !endDate) {
-      return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "startDate and endDate are required" },
+        { status: 400 }
+      );
     }
 
     console.log("🔎 Fetching Transactions From", startDate, "To", endDate);
@@ -26,7 +41,8 @@ export async function GET(request: NextRequest) {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
-      type: "Expense", 
+      type: "Expense",
+      userId, // Ensure only transactions for the authenticated user are fetched
     }).select("_id amount");
 
     if (transactions.length === 0) {
@@ -46,6 +62,7 @@ export async function GET(request: NextRequest) {
           ...(expensecategoriesId && { expensecategoriesId }),
           ...(paymentMethod && { paymentMethod }),
           ...(bankId && { bankId }),
+          userId, // Ensure only expenses for the authenticated user are fetched
         },
       },
       {
@@ -65,7 +82,7 @@ export async function GET(request: NextRequest) {
           as: "category",
         },
       },
-      { $unwind: "$category" }, 
+      { $unwind: "$category" },
       {
         $lookup: {
           from: "banks",
@@ -77,13 +94,13 @@ export async function GET(request: NextRequest) {
       { $unwind: { path: "$bank", preserveNullAndEmptyArrays: true } },
       {
         $group: {
-          _id: "$expensecategoriesId", 
+          _id: "$expensecategoriesId",
           category: { $first: "$category.name" },
           totalAmount: { $sum: "$transaction.amount" },
           paymentMethods: { $addToSet: "$paymentMethod" },
           banksUsed: { $addToSet: "$bank.name" },
-          transactions: { 
-            $push: { transactionId: "$transaction._id", amount: "$transaction.amount" } 
+          transactions: {
+            $push: { transactionId: "$transaction._id", amount: "$transaction.amount" },
           },
         },
       },
@@ -91,8 +108,8 @@ export async function GET(request: NextRequest) {
     ]);
 
     const updatedExpenses = expenses.map((expense) => ({
-      _id: expense._id, 
-      category: expense.category, 
+      _id: expense._id,
+      category: expense.category,
       totalAmount: expense.totalAmount,
       paymentMethods: expense.paymentMethods,
       banksUsed: expense.banksUsed,
@@ -104,9 +121,11 @@ export async function GET(request: NextRequest) {
 
     console.log("✅ Expense Analysis Data:", updatedExpenses);
     return NextResponse.json(updatedExpenses);
-
   } catch (error: unknown) {
     console.error("❌ Error Fetching Expense Analysis:", error);
-    return NextResponse.json({ error: "Failed To Fetch Expense Analysis" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed To Fetch Expense Analysis" },
+      { status: 500 }
+    );
   }
 }

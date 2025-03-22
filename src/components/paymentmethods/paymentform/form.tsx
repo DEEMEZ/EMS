@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { IPaymentmethods } from '@/types/paymentmethods';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Save, X } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
 interface PaymentmethodsFormProps {
@@ -25,12 +27,20 @@ export default function PaymentmethodsForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
     setSuccessMessage('');
+
+    if (!isAuthenticated) {
+      setError('Authentication required');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/paymentmethods', {
@@ -43,8 +53,8 @@ export default function PaymentmethodsForm({
 
       if (response.ok) {
         const successMsg = initialData
-          ? 'Payment Methods Updated Successfully!'
-          : 'Payment Methods Created Successfully!';
+          ? 'Payment Method Updated Successfully!'
+          : 'Payment Method Created Successfully!';
         setSuccessMessage(successMsg);
 
         setTimeout(() => setSuccessMessage(''), 3000);
@@ -62,10 +72,10 @@ export default function PaymentmethodsForm({
           });
         }
       } else {
-        setError('Failed To Save Payment Methods');
+        setError('Failed To Save Payment Method');
       }
     } catch {
-      setError('Failed To Save Payment Methods');
+      setError('Failed To Save Payment Method');
     } finally {
       setIsSubmitting(false);
     }
@@ -79,7 +89,7 @@ export default function PaymentmethodsForm({
     >
       <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl">
         <h2 className="text-xl font-semibold text-white">
-          {initialData ? 'Update Payment methods' : 'Create New Payment methods'}
+          {initialData ? 'Update Payment Method' : 'Create New Payment Method'}
         </h2>
       </div>
 
@@ -121,7 +131,7 @@ export default function PaymentmethodsForm({
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Income Source Name"
+              placeholder="Enter Payment Method Name"
             />
           </div>
 
@@ -136,7 +146,7 @@ export default function PaymentmethodsForm({
                 setFormData({ ...formData, description: e.target.value })
               }
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Payment Methods Description (Optional)"
+              placeholder="Enter Payment Method Description (Optional)"
             />
           </div>
         </div>
@@ -155,7 +165,7 @@ export default function PaymentmethodsForm({
           )}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isAuthenticated}
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (

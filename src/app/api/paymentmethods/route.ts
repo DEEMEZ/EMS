@@ -1,19 +1,29 @@
 import Paymentmethods from '@/models/paymentmethods';
 import dbConnect from '@/utils/dbconnect';
+import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    const token = await getToken({ req: request });
+
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json({
+        sources: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
+      });
+    }
 
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const search = searchParams.get('search') || '';
 
+    const userId = token.id || token.sub;
     const query = search
-      ? { name: { $regex: search, $options: 'i' } }
-      : {};
+      ? { userId, name: { $regex: search, $options: 'i' } }
+      : { userId };
 
     const skip = (page - 1) * limit;
 
@@ -48,10 +58,24 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
+    const token = await getToken({ req: request });
 
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
 
-    const newPaymentMethod = await Paymentmethods.create(data);
+    const newPaymentMethod = await Paymentmethods.create({
+      ...data,
+      userId,
+      modifiedBy: token.name || 'System',
+      modifiedDate: new Date()
+    });
 
     return NextResponse.json(newPaymentMethod, { status: 201 });
   } catch (error: unknown) {
@@ -70,22 +94,45 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
+    const token = await getToken({ req: request });
 
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
     const { _id, ...updateData } = data;
 
-    const updatedPaymentMethod = await Paymentmethods.findByIdAndUpdate(
-      _id,
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const existingPaymentMethod = await Paymentmethods.findById(_id);
 
-    if (!updatedPaymentMethod) {
+    if (!existingPaymentMethod) {
       return NextResponse.json(
         { error: 'Payment Method Not Found' },
         { status: 404 }
       );
     }
+
+    if (existingPaymentMethod.userId && existingPaymentMethod.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to modify this payment method' },
+        { status: 403 }
+      );
+    }
+
+    const updatedPaymentMethod = await Paymentmethods.findByIdAndUpdate(
+      _id,
+      {
+        ...updateData,
+        userId,
+        modifiedBy: token.name || 'System',
+        modifiedDate: new Date()
+      },
+      { new: true, runValidators: true }
+    );
 
     return NextResponse.json(updatedPaymentMethod);
   } catch (error: unknown) {
@@ -104,7 +151,16 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
+    const token = await getToken({ req: request });
 
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
     const { _id } = data;
 
@@ -115,14 +171,23 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const deletedPaymentMethod = await Paymentmethods.findByIdAndDelete(_id);
+    const existingPaymentMethod = await Paymentmethods.findById(_id);
 
-    if (!deletedPaymentMethod) {
+    if (!existingPaymentMethod) {
       return NextResponse.json(
         { error: 'Payment Method Not Found' },
         { status: 404 }
       );
     }
+
+    if (existingPaymentMethod.userId && existingPaymentMethod.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete this payment method' },
+        { status: 403 }
+      );
+    }
+
+    await Paymentmethods.findByIdAndDelete(_id);
 
     return NextResponse.json({ message: 'Payment Method Deleted Successfully' });
   } catch (error: unknown) {

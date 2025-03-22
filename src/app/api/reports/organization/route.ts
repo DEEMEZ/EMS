@@ -2,18 +2,33 @@
 import Expense from "@/models/expense";
 import Income from "@/models/income";
 import dbConnect from "@/utils/dbconnect";
+import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
 
+    // Verify authentication
+    const token = await getToken({ req: request });
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
+
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
     if (!startDate || !endDate) {
-      return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "startDate and endDate are required" },
+        { status: 400 }
+      );
     }
 
     console.log("🔎 Fetching Organization Analysis From", startDate, "To", endDate);
@@ -35,6 +50,7 @@ export async function GET(request: NextRequest) {
             $gte: new Date(startDate),
             $lte: new Date(endDate),
           },
+          userId, // Ensure only expenses for the authenticated user are fetched
         },
       },
       {
@@ -75,6 +91,7 @@ export async function GET(request: NextRequest) {
             $gte: new Date(startDate),
             $lte: new Date(endDate),
           },
+          userId, // Ensure only incomes for the authenticated user are fetched
         },
       },
       {
@@ -102,9 +119,11 @@ export async function GET(request: NextRequest) {
 
     console.log("✅ Organization Analysis Data:", organizationAnalysis);
     return NextResponse.json(organizationAnalysis);
-
   } catch (error: unknown) {
     console.error("❌ Error Fetching Organization Analysis:", error);
-    return NextResponse.json({ error: "Failed To Fetch Organization Analysis" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed To Fetch Organization Analysis" },
+      { status: 500 }
+    );
   }
 }

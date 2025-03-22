@@ -1,13 +1,13 @@
 import ExpenseCategory from "@/models/expenseCategory";
 import dbConnect from "@/utils/dbconnect";
-import { NextRequest, NextResponse } from "next/server";
 import { getToken } from 'next-auth/jwt';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
     const token = await getToken({ req: request });
-    
+
     // Return empty data for unauthenticated users
     if (!token?.id && !token?.sub) {
       return NextResponse.json({
@@ -15,16 +15,16 @@ export async function GET(request: NextRequest) {
         pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
       });
     }
-    
+
     const userId = token.id || token.sub;
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
-    
+
     // Build query with userId filter
     const query: any = { userId };
-    
+
     if (search) {
       query.name = { $regex: search, $options: 'i' };
     }
@@ -34,10 +34,14 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-      
+
     const total = await ExpenseCategory.countDocuments(query);
+
+    // Log fetched categories for debugging
     console.log('GET - Using userId:', userId);
     console.log('GET - Query:', query);
+    console.log('Fetched Categories:', expenseCategories);
+
     return NextResponse.json({
       categories: expenseCategories,
       pagination: {
@@ -61,38 +65,39 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const token = await getToken({ req: request });
-    
+
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
-    
+
     const userId = token.id || token.sub;
     const data = await request.json();
-    
+
     console.log('POST Request Data:', data);
     console.log('User ID from token:', userId);
-    
+
     // Create with proper error handling and validation
     let category;
     try {
       category = await ExpenseCategory.create({
         name: data.name,
         description: data.description,
-        userId: userId.toString()  // Explicitly set this
+        userId: userId // Ensure userId is correctly set
       });
       console.log('Category created:', category);
     } catch (createError) {
       console.error('Error creating category:', createError);
-      // Return detailed error to help debugging
       return NextResponse.json({
         error: 'Failed to create category',
         details: (createError as Error).message
       }, { status: 500 });
     }
+
     console.log('POST - Using userId:', userId);
+
     // Double-check the category was created
     const savedCategory = await ExpenseCategory.findById(category._id);
     if (!savedCategory) {
@@ -108,7 +113,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error: unknown) {
     console.error('Error in POST /api/expensecategories:', error);
-    
+
     // Handle duplicate key error
     if ((error as any).code === 11000) {
       return NextResponse.json(
@@ -116,39 +121,40 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
-    
+
     return NextResponse.json(
       { error: (error as Error).message || 'Failed To Create Expense Category' },
       { status: 500 }
     );
   }
 }
+
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
     const token = await getToken({ req: request });
-    
+
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
-    
+
     const userId = token.id || token.sub;
     const data = await request.json();
     const { _id, ...updateData } = data;
 
     // Find the category first to check ownership
     const existingCategory = await ExpenseCategory.findById(_id);
-    
+
     if (!existingCategory) {
       return NextResponse.json(
         { error: 'Expense Category Not Found' },
         { status: 404 }
       );
     }
-    
+
     // Check if the category belongs to the current user
     if (existingCategory.userId && existingCategory.userId.toString() !== userId.toString()) {
       return NextResponse.json(
@@ -172,7 +178,7 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('Error in PUT /api/expensecategories:', error);
-    
+
     // Handle duplicate key error
     if ((error as any).code === 11000) {
       return NextResponse.json(
@@ -180,7 +186,7 @@ export async function PUT(request: NextRequest) {
         { status: 409 }
       );
     }
-    
+
     return NextResponse.json(
       { error: (error as Error).message || 'Failed To Update Expense Category' },
       { status: 500 }
@@ -192,14 +198,14 @@ export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
     const token = await getToken({ req: request });
-    
+
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
-    
+
     const userId = token.id || token.sub;
     const data = await request.json();
     const { _id } = data;
@@ -210,17 +216,17 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // Find the category first to check ownership
     const existingCategory = await ExpenseCategory.findById(_id);
-    
+
     if (!existingCategory) {
       return NextResponse.json(
         { error: 'Expense Category Not Found' },
         { status: 404 }
       );
     }
-    
+
     // Check if the category belongs to the current user
     if (existingCategory.userId && existingCategory.userId.toString() !== userId.toString()) {
       return NextResponse.json(
@@ -230,7 +236,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await ExpenseCategory.findByIdAndDelete(_id);
-    
+
     return NextResponse.json({
       message: 'Expense Category Deleted Successfully',
       success: true

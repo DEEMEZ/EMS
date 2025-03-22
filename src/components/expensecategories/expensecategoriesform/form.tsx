@@ -4,8 +4,8 @@ import { LoadingSpinner } from '@/components/loadiingspinner';
 import { IExpenseCategories } from '@/types/expensecategories';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Save, X } from 'lucide-react';
-import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 
 interface ExpenseCategoryFormProps {
   initialData?: IExpenseCategories;
@@ -20,7 +20,7 @@ export default function ExpenseCategoryForm({
 }: ExpenseCategoryFormProps) {
   const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
-  
+
   const [formData, setFormData] = useState<IExpenseCategories>({
     name: initialData?.name || '',
     description: initialData?.description || '',
@@ -32,13 +32,13 @@ export default function ExpenseCategoryForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check if user is authenticated
     if (!isAuthenticated) {
       setError('You must be signed in to create or update expense categories');
       return;
     }
-    
+
     setError('');
     setIsSubmitting(true);
     setSuccessMessage('');

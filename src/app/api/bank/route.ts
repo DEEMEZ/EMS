@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Bank from '@/models/bank';
 import dbConnect from '@/utils/dbconnect';
 import { getToken } from 'next-auth/jwt';

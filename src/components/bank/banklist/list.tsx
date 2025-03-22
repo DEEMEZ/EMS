@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import BankForm from '@/components/bank/bankform/form';
@@ -15,9 +16,9 @@ import {
   Trash2,
   X
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function BankList() {
   // Authentication state

@@ -5,12 +5,22 @@ import ExpenseCategories from '@/models/expenseCategory';
 import Organization from '@/models/organization';
 import Transaction from '@/models/transaction';
 import dbConnect from '@/utils/dbconnect';
+import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    const token = await getToken({ req: request });
 
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json({
+        expenses: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
+      });
+    }
+
+    const userId = token.id || token.sub;
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -21,32 +31,29 @@ export async function GET(request: NextRequest) {
     const sortField = searchParams.get('sortField') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    const query: any = {};
+    const query: any = { userId };
     if (transactionId) query.transactionId = transactionId;
     if (expensecategoriesId) query.expensecategoriesId = expensecategoriesId;
     if (orgId) query.orgId = orgId;
     if (paymentMethod) query.paymentMethod = paymentMethod;
 
     const skip = (page - 1) * limit;
-   const expenses = await Expense.find(query)
-  .populate({
-    path: 'transactionId',
-    select: 'amount type transactionDate'
-  })
-  .populate('expensecategoriesId', 'name')
-  .populate('orgId', 'name')
-  .populate('bankId', 'name')
-  .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
-  .skip(skip)
-  .limit(limit)
-  .select('-__v');
-
-console.log("Populated expenses:", JSON.stringify(expenses, null, 2)); // Debugging
-
+    const expenses = await Expense.find(query)
+      .populate({
+        path: 'transactionId',
+        select: 'amount type transactionDate'
+      })
+      .populate('expensecategoriesId', 'name')
+      .populate('orgId', 'name')
+      .populate('bankId', 'name')
+      .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('-__v');
 
     const expensesWithAmount = expenses.map(expense => ({
       ...expense.toObject(),
-      transactionAmount: expense.transactionId?.amount || 0 
+      transactionAmount: expense.transactionId?.amount || 0
     }));
 
     const total = await Expense.countDocuments(query);
@@ -72,6 +79,16 @@ console.log("Populated expenses:", JSON.stringify(expenses, null, 2)); // Debugg
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
+    const token = await getToken({ req: request });
+
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
     const { transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
 
@@ -109,7 +126,8 @@ export async function POST(request: NextRequest) {
       orgId,
       paymentMethod,
       bankId: paymentMethod === 'Transfer' ? bankId : null,
-      transactionAmount, 
+      transactionAmount,
+      userId, // Add the userId field
     });
 
     return NextResponse.json({ message: 'Expense created successfully', expense });
@@ -125,12 +143,29 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
+    const token = await getToken({ req: request });
+
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
     const { _id, transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
 
     const expense = await Expense.findById(_id);
     if (!expense) {
       return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
+    }
+
+    if (expense.userId && expense.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to modify this expense' },
+        { status: 403 }
+      );
     }
 
     if (paymentMethod === 'Transfer' && !bankId) {
@@ -151,7 +186,8 @@ export async function PUT(request: NextRequest) {
         orgId,
         paymentMethod,
         bankId: paymentMethod === 'Transfer' ? bankId : null,
-        transactionAmount, 
+        transactionAmount,
+        userId, // Ensure userId is updated to current user
       },
       { new: true, runValidators: true }
     );
@@ -172,6 +208,16 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
+    const token = await getToken({ req: request });
+
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
     const data = await request.json();
     const { _id } = data;
 
@@ -179,11 +225,19 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Expense ID is required' }, { status: 400 });
     }
 
-    const expense = await Expense.findByIdAndDelete(_id);
-
+    const expense = await Expense.findById(_id);
     if (!expense) {
       return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
+
+    if (expense.userId && expense.userId.toString() !== userId.toString()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete this expense' },
+        { status: 403 }
+      );
+    }
+
+    await Expense.findByIdAndDelete(_id);
 
     return NextResponse.json({
       message: 'Expense deleted successfully',

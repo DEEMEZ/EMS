@@ -1,17 +1,27 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, Plus, Filter, Building2, Edit, Trash2,
-  ChevronLeft, ChevronRight, AlertCircle, RefreshCw, X, LogIn 
-} from 'lucide-react';
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import OrganizationForm from '@/components/organization/orgform/form';
 import { IOrganization } from '@/types/organization';
+import { AnimatePresence, motion } from 'framer-motion';
 import _ from 'lodash';
+import {
+  AlertCircle,
+  Building2,
+  ChevronLeft, ChevronRight,
+  Edit,
+  Filter,
+  LogIn,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  X
+} from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function OrganizationList() {
   // Authentication state

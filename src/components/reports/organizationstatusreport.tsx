@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
@@ -33,8 +32,8 @@ const OrganizationAnalysisTable = () => {
 
   const [data, setData] = useState<OrganizationAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(new Date(new Date().setDate(1))); // First day of current month
+  const [endDate, setEndDate] = useState<Date | null>(new Date()); // Today
   const [error, setError] = useState("");
 
   const fetchOrganizations = async () => {
@@ -43,26 +42,35 @@ const OrganizationAnalysisTable = () => {
       return;
     }
 
+    if (!startDate || !endDate) {
+      setError("Please select both start and end dates");
+      return;
+    }
+
+    if (startDate > endDate) {
+      setError("Start date must be before end date");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
-      const start = startDate ? format(startDate, "yyyy-MM-dd") : "";
-      const end = endDate ? format(endDate, "yyyy-MM-dd") : "";
+      const start = format(startDate, "yyyy-MM-dd");
+      const end = format(endDate, "yyyy-MM-dd");
 
       const response = await fetch(`/api/reports/organization?startDate=${start}&endDate=${end}`);
-      if (!response.ok) throw new Error("Failed to fetch organization analysis");
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch organization data");
+      }
 
       const result = await response.json();
-      if (!Array.isArray(result)) {
-        console.error("Invalid API response:", result);
-        setData([]);
-      } else {
-        setData(result);
-      }
+      setData(Array.isArray(result) ? result : []);
     } catch (error) {
-      console.error("Error Fetching Organization Data:", error);
-      setError("Failed to fetch organization analysis. Please try again.");
+      console.error("Error fetching organizations:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch organization analysis");
       setData([]);
     } finally {
       setLoading(false);
@@ -76,8 +84,6 @@ const OrganizationAnalysisTable = () => {
   }, [isAuthenticated]);
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
-
-  // Separate data for income & expenses
   const incomeData = data.filter((item) => item.type === "Income");
   const expenseData = data.filter((item) => item.type === "Expense");
 
@@ -85,7 +91,6 @@ const OrganizationAnalysisTable = () => {
     <div className="p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl font-semibold mb-6 text-center">Organization Analysis</h2>
 
-      {/* Authentication Status Banner */}
       {!isAuthenticated && !isAuthLoading && (
         <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-amber-400" />
@@ -102,7 +107,6 @@ const OrganizationAnalysisTable = () => {
         </div>
       )}
 
-      {/* Loading State */}
       {isAuthLoading && (
         <div className="flex justify-center items-center py-12">
           <div className="text-center">
@@ -112,28 +116,43 @@ const OrganizationAnalysisTable = () => {
         </div>
       )}
 
-      {/* Organization Analysis Content */}
       {isAuthenticated && !isAuthLoading && (
         <>
           <div className="flex flex-wrap gap-4 justify-center mb-6">
-            <DatePicker selected={startDate} onChange={setStartDate} placeholderText="Start Date" />
-            <DatePicker selected={endDate} onChange={setEndDate} placeholderText="End Date" />
-            <Button onClick={fetchOrganizations} disabled={loading}>
-              {loading ? "Loading..." : "Filter"}
-            </Button>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">Start Date</label>
+              <DatePicker
+                selected={startDate}
+                onChange={setStartDate}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                className="border p-2 rounded-lg"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">End Date</label>
+              <DatePicker
+                selected={endDate}
+                onChange={setEndDate}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={startDate}
+                className="border p-2 rounded-lg"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button onClick={fetchOrganizations} disabled={loading}>
+                {loading ? "Loading..." : "Filter"}
+              </Button>
+            </div>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-400" />
               <p className="text-red-700">{error}</p>
-              <button
-                onClick={fetchOrganizations}
-                className="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-              >
-                Retry
-              </button>
             </div>
           )}
 
@@ -143,24 +162,24 @@ const OrganizationAnalysisTable = () => {
                 <TableRow>
                   <TableHead>Organization</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Transaction Type</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Total Amount</TableHead>
-                  <TableHead>Transaction Count</TableHead>
+                  <TableHead>Count</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center">
-                      Loading...
+                      <LoadingSpinner size="sm" />
                     </TableCell>
                   </TableRow>
                 ) : data.length > 0 ? (
-                  data.map((org, index) => (
-                    <TableRow key={`${org._id.orgId}-${index}`}>
+                  data.map((org) => (
+                    <TableRow key={`${org._id.orgId}-${org._id.type}`}>
                       <TableCell>{org.orgName}</TableCell>
                       <TableCell>{org.status}</TableCell>
-                      <TableCell>{org.type}</TableCell>
+                      <TableCell className="capitalize">{org.type}</TableCell>
                       <TableCell>${org.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>{org.count}</TableCell>
                     </TableRow>
@@ -168,7 +187,7 @@ const OrganizationAnalysisTable = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center">
-                      No Data Available
+                      No organization data available for selected period
                     </TableCell>
                   </TableRow>
                 )}
@@ -178,89 +197,101 @@ const OrganizationAnalysisTable = () => {
 
           {data.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Income Bar Chart */}
-              <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Income Breakdown (Bar Chart)</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={incomeData}>
-                    <XAxis dataKey="orgName" label={{ value: "", position: "insideBottom", offset: -5 }} />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="totalAmount" fill="#4CAF50">
-                      {incomeData.map((entry, index) => (
-                        <Cell key={`bar-income-${index}`} fill={colors[index % colors.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              {incomeData.length > 0 && (
+                <>
+                  <div className="bg-gray-100 p-4 rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-center mb-2">Income by Organization</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={incomeData}>
+                        <XAxis dataKey="orgName" />
+                        <YAxis />
+                        <Tooltip 
+                          formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                          labelFormatter={(label) => `Org: ${label}`}
+                        />
+                        <Legend />
+                        <Bar dataKey="totalAmount" name="Total Income">
+                          {incomeData.map((_, index) => (
+                            <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
 
-              {/* Expense Bar Chart */}
-              <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Expense Breakdown (Bar Chart)</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={expenseData}>
-                    <XAxis dataKey="orgName" label={{ value: "", position: "insideBottom", offset: -5 }} />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="totalAmount" fill="#82ca9d">
-                      {expenseData.map((entry, index) => (
-                        <Cell key={`bar-expense-${index}`} fill={colors[index % colors.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+                  <div className="bg-gray-100 p-4 rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-center mb-2">Income Distribution</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={incomeData}
+                          dataKey="totalAmount"
+                          nameKey="orgName"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                        >
+                          {incomeData.map((_, index) => (
+                            <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
 
-              {/* Income Pie Chart */}
-              <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Income Distribution (Pie Chart)</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={incomeData}
-                      dataKey="totalAmount"
-                      nameKey="orgName"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      fill="#4CAF50"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
-                    >
-                      {incomeData.map((entry, index) => (
-                        <Cell key={`pie-income-${index}`} fill={colors[index % colors.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              {expenseData.length > 0 && (
+                <>
+                  <div className="bg-gray-100 p-4 rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-center mb-2">Expenses by Organization</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={expenseData}>
+                        <XAxis dataKey="orgName" />
+                        <YAxis />
+                        <Tooltip 
+                          formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                          labelFormatter={(label) => `Org: ${label}`}
+                        />
+                        <Legend />
+                        <Bar dataKey="totalAmount" name="Total Expenses">
+                          {expenseData.map((_, index) => (
+                            <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
 
-              {/* Expense Pie Chart */}
-              <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Expense Distribution (Pie Chart)</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={expenseData}
-                      dataKey="totalAmount"
-                      nameKey="orgName"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      fill="#F44336"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
-                    >
-                      {expenseData.map((entry, index) => (
-                        <Cell key={`pie-expense-${index}`} fill={colors[index % colors.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+                  <div className="bg-gray-100 p-4 rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-center mb-2">Expense Distribution</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={expenseData}
+                          dataKey="totalAmount"
+                          nameKey="orgName"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                        >
+                          {expenseData.map((_, index) => (
+                            <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </>

@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 
 const expenseSchema = new mongoose.Schema(
   {
+    userId: {
+      type: String, // Keeping as String to align with token.id or token.sub
+      required: true,
+      index: true // Adding index for optimized queries
+    },
     transactionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Transaction',
@@ -41,7 +46,6 @@ expenseSchema.pre(['find', 'findOne'], function (next) {
   this.populate('transactionId', 'amount type transactionDate');
   next();
 });
-
 
 expenseSchema.pre('save', function (next) {
   if (this.paymentMethod === 'Transfer' && !this.bankId) {

@@ -1,68 +1,83 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Income from "@/models/income";
 import Transaction from "@/models/transaction";
 import dbConnect from "@/utils/dbconnect";
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from "next/server";
 
+interface IncomeAnalysisResult {
+  _id: string;
+  incomeSource: string;
+  totalAmount: number;
+  organizations: string[];
+}
+
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    console.log('✅ Database connected');
 
     // Verify authentication
     const token = await getToken({ req: request });
+    console.log('🔑 User token:', token?.id || token?.sub);
+    
     if (!token?.id && !token?.sub) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      console.log('❌ No user token found');
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     const userId = token.id || token.sub;
-
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const incomeSourceId = searchParams.get("incomeSourceId") || "";
-    const orgId = searchParams.get("orgId") || "";
+
+    console.log('📅 Date range:', { startDate, endDate });
 
     if (!startDate || !endDate) {
-      return NextResponse.json(
-        { error: "startDate and endDate are required" },
-        { status: 400 }
-      );
+      console.log('❌ Missing date parameters');
+      return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
     }
 
-    console.log("🔎 Fetching Transactions From", startDate, "To", endDate);
-
-    const transactions = await Transaction.find({
+    // 1. First find transactions in date range
+    const transactionQuery = {
       transactionDate: {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
       type: "Income",
-      userId, // Ensure only transactions for the authenticated user are fetched
-    }).select("_id amount");
+      userTokenId: userId, // Match the string ID used in transactions
+    };
+    
+    console.log('🔍 Transaction query:', JSON.stringify(transactionQuery, null, 2));
+
+    const transactions = await Transaction.find(transactionQuery)
+      .select("_id amount transactionDate")
+      .lean();
+    
+    console.log('📊 Transactions found:', transactions.length);
+    console.log('Sample transactions:', transactions.slice(0, 3));
 
     if (transactions.length === 0) {
-      console.log("❌ No Transactions Found In The Given Date Range.");
+      console.log('❌ No transactions found - checking if any exist without date filter...');
+      const anyTransactions = await Transaction.find({ userTokenId: userId, type: "Income" }).limit(5);
+      console.log('Any income transactions:', anyTransactions);
       return NextResponse.json([]);
     }
 
-    const transactionIds = transactions.map((txn) => txn._id);
-    const transactionAmounts = new Map(transactions.map((txn) => [txn._id.toString(), txn.amount]));
+    const transactionIds = transactions.map(t => t._id);
+    const transactionAmounts = new Map(
+      transactions.map(t => [t._id.toString(), t.amount])
+    );
 
-    console.log("✅ Found", transactions.length, "Transactions. Fetching Incomes...");
+    // 2. Find incomes linked to these transactions
+    const incomeQuery = {
+      transactionId: { $in: transactionIds },
+      userId, // Match the string ID used in incomes
+    };
+    
+    console.log('🔍 Income query:', JSON.stringify(incomeQuery, null, 2));
 
-    const incomes = await Income.aggregate([
-      {
-        $match: {
-          transactionId: { $in: transactionIds },
-          ...(incomeSourceId && { incomeSourceId }),
-          ...(orgId && { orgId }),
-          userId, // Ensure only incomes for the authenticated user are fetched
-        },
-      },
+    const incomes = await Income.aggregate<IncomeAnalysisResult>([
+      { $match: incomeQuery },
       {
         $lookup: {
           from: "transactions",
@@ -89,42 +104,39 @@ export async function GET(request: NextRequest) {
           as: "organization",
         },
       },
-      { $unwind: "$organization" },
+      { $unwind: { path: "$organization", preserveNullAndEmptyArrays: true } },
       {
         $group: {
           _id: "$incomeSourceId",
           incomeSource: { $first: "$incomeSource.name" },
           totalAmount: { $sum: "$transaction.amount" },
           organizations: { $addToSet: "$organization.name" },
-          transactions: {
-            $push: { transactionId: "$transaction._id", amount: "$transaction.amount" },
-          },
         },
+      },
+      {
+        $addFields: {
+          organizations: {
+            $filter: {
+              input: "$organizations",
+              as: "org",
+              cond: { $ne: ["$$org", null] }
+            }
+          }
+        }
       },
       { $sort: { totalAmount: -1 } },
     ]);
 
-    if (incomes.length === 0) {
-      console.log("❌ No Incomes Found Matching Transactions.");
-    }
-
-    const updatedIncomes = incomes.map((income) => ({
-      _id: income._id,
-      incomeSource: income.incomeSource,
-      totalAmount: income.totalAmount,
-      organizations: income.organizations,
-      transactions: income.transactions.map((txn: { transactionId: { toString: () => any } }) => ({
-        transactionId: txn.transactionId,
-        amount: transactionAmounts.get(txn.transactionId.toString()) || 0,
-      })),
-    }));
-
-    console.log("✅ Income Analysis Data:", updatedIncomes);
-    return NextResponse.json(updatedIncomes);
-  } catch (error: unknown) {
-    console.error("❌ Error Fetching Income Analysis:", error);
+    console.log('✅ Income analysis results:', incomes);
+    return NextResponse.json(incomes, {
+      headers: {
+        'Cache-Control': 'public, max-age=300' // 5 minute cache
+      }
+    });
+  } catch (error) {
+    console.error('❌ Full error:', error);
     return NextResponse.json(
-      { error: "Failed To Fetch Income Analysis" },
+      { error: "Failed to fetch income analysis" },
       { status: 500 }
     );
   }

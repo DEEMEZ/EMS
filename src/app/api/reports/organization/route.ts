@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Expense from "@/models/expense";
 import Income from "@/models/income";
 import dbConnect from "@/utils/dbconnect";
@@ -9,7 +8,6 @@ export async function GET(request: NextRequest) {
   try {
     await dbConnect();
 
-    // Verify authentication
     const token = await getToken({ req: request });
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -19,7 +17,6 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = token.id || token.sub;
-
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
@@ -31,98 +28,118 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log("🔎 Fetching Organization Analysis From", startDate, "To", endDate);
+    // Common match stage for both expenses and incomes
+    const dateMatch = {
+      "transaction.transactionDate": {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      },
+      userId
+    };
 
-    // 🔹 Fetch Expenses and Link to Transactions & Organizations
+    // Fetch expenses with organization details
     const expenses = await Expense.aggregate([
       {
         $lookup: {
           from: "transactions",
           localField: "transactionId",
           foreignField: "_id",
-          as: "transaction",
-        },
+          as: "transaction"
+        }
       },
       { $unwind: "$transaction" },
-      {
-        $match: {
-          "transaction.transactionDate": {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate),
-          },
-          userId, // Ensure only expenses for the authenticated user are fetched
-        },
-      },
+      { $match: dateMatch },
       {
         $lookup: {
           from: "organizations",
           localField: "orgId",
           foreignField: "_id",
-          as: "organization",
-        },
+          as: "organization"
+        }
       },
-      { $unwind: "$organization" },
+      { $unwind: { path: "$organization", preserveNullAndEmptyArrays: true } },
       {
         $group: {
-          _id: { orgId: "$organization._id", status: "$organization.status", type: "Expense" },
-          orgName: { $first: "$organization.name" },
-          status: { $first: "$organization.status" },
+          _id: {
+            orgId: "$orgId",
+            type: "Expense"
+          },
+          orgName: { 
+            $first: { 
+              $ifNull: ["$organization.name", "Uncategorized"] 
+            } 
+          },
+          status: { 
+            $first: { 
+              $ifNull: ["$organization.status", "Unknown"] 
+            } 
+          },
           type: { $first: "Expense" },
           totalAmount: { $sum: "$transactionAmount" },
-          count: { $sum: 1 },
-        },
-      },
+          count: { $sum: 1 }
+        }
+      }
     ]);
 
-    // 🔹 Fetch Incomes and Link to Transactions & Organizations
+    // Fetch incomes with organization details
     const incomes = await Income.aggregate([
       {
         $lookup: {
           from: "transactions",
           localField: "transactionId",
           foreignField: "_id",
-          as: "transaction",
-        },
+          as: "transaction"
+        }
       },
       { $unwind: "$transaction" },
-      {
-        $match: {
-          "transaction.transactionDate": {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate),
-          },
-          userId, // Ensure only incomes for the authenticated user are fetched
-        },
-      },
+      { $match: dateMatch },
       {
         $lookup: {
           from: "organizations",
           localField: "orgId",
           foreignField: "_id",
-          as: "organization",
-        },
+          as: "organization"
+        }
       },
-      { $unwind: "$organization" },
+      { $unwind: { path: "$organization", preserveNullAndEmptyArrays: true } },
       {
         $group: {
-          _id: { orgId: "$organization._id", status: "$organization.status", type: "Income" },
-          orgName: { $first: "$organization.name" },
-          status: { $first: "$organization.status" },
+          _id: {
+            orgId: "$orgId",
+            type: "Income"
+          },
+          orgName: { 
+            $first: { 
+              $ifNull: ["$organization.name", "Uncategorized"] 
+            } 
+          },
+          status: { 
+            $first: { 
+              $ifNull: ["$organization.status", "Unknown"] 
+            } 
+          },
           type: { $first: "Income" },
           totalAmount: { $sum: "$transactionAmount" },
-          count: { $sum: 1 },
-        },
-      },
+          count: { $sum: 1 }
+        }
+      }
     ]);
 
-    const organizationAnalysis = [...expenses, ...incomes];
+    // Combine and format results
+    const result = [...expenses, ...incomes].map(item => ({
+      ...item,
+      _id: {
+        orgId: item._id.orgId?.toString() || "uncategorized",
+        type: item._id.type,
+        status: item.status
+      }
+    }));
 
-    console.log("✅ Organization Analysis Data:", organizationAnalysis);
-    return NextResponse.json(organizationAnalysis);
+    return NextResponse.json(result);
   } catch (error: unknown) {
-    console.error("❌ Error Fetching Organization Analysis:", error);
+    console.error("Error in organization analysis:", error);
     return NextResponse.json(
-      { error: "Failed To Fetch Organization Analysis" },
+      { error: error instanceof Error ? error.message : "Failed to fetch organization analysis" },
       { status: 500 }
     );
   }

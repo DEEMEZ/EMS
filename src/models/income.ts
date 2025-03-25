@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 
 const incomeSchema = new mongoose.Schema(
   {
+    userId: {
+      type: String, // Keeping as String to align with token.id or token.sub
+      required: true,
+      index: true // Adding index for optimized queries
+    },
     transactionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Transaction',

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
@@ -18,7 +17,7 @@ interface TransactionAnalysis {
   type: string;
   totalAmount: number;
   count: number;
-  transactions: {
+  transactions?: {
     _id: string;
     amount: number;
     transactionDate: string;
@@ -32,8 +31,8 @@ const TransactionAnalysisTable = () => {
 
   const [data, setData] = useState<TransactionAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(new Date("2023-10-01"));
-  const [endDate, setEndDate] = useState<Date | null>(new Date("2023-10-31"));
+  const [startDate, setStartDate] = useState<Date | null>(new Date(new Date().setDate(1))); // First day of current month
+  const [endDate, setEndDate] = useState<Date | null>(new Date()); // Today
   const [error, setError] = useState("");
 
   const fetchTransactions = async () => {
@@ -42,15 +41,13 @@ const TransactionAnalysisTable = () => {
       return;
     }
 
-    // Validate startDate and endDate
     if (!startDate || !endDate) {
-      setError("startDate and endDate are required");
+      setError("Please select both start and end dates");
       return;
     }
 
-    // Validate date range
     if (startDate > endDate) {
-      setError("startDate must be before or equal to endDate");
+      setError("Start date must be before end date");
       return;
     }
 
@@ -58,25 +55,21 @@ const TransactionAnalysisTable = () => {
     setError("");
 
     try {
-      // Format dates
       const start = format(startDate, "yyyy-MM-dd");
       const end = format(endDate, "yyyy-MM-dd");
 
-      // Make API request
       const response = await fetch(`/api/reports/transaction?startDate=${start}&endDate=${end}`);
       
-      // Handle non-OK responses
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch transaction analysis");
+        throw new Error(errorData.error || "Failed to fetch transaction data");
       }
 
-      // Parse and set data
       const result = await response.json();
       setData(result);
     } catch (error) {
-      console.error("Error Fetching Transactions:", error);
-      setError(error.message || "Failed to fetch transaction analysis. Please try again.");
+      console.error("Error fetching transactions:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch transactions");
       setData([]);
     } finally {
       setLoading(false);
@@ -84,10 +77,10 @@ const TransactionAnalysisTable = () => {
   };
 
   useEffect(() => {
-    if (isAuthenticated && startDate && endDate && startDate <= endDate) {
+    if (isAuthenticated) {
       fetchTransactions();
     }
-  }, [isAuthenticated, startDate, endDate]);
+  }, [isAuthenticated]);
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
 
@@ -95,7 +88,6 @@ const TransactionAnalysisTable = () => {
     <div className="p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl font-semibold mb-6 text-center">Transaction Analysis</h2>
 
-      {/* Authentication Status Banner */}
       {!isAuthenticated && !isAuthLoading && (
         <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-amber-400" />
@@ -112,7 +104,6 @@ const TransactionAnalysisTable = () => {
         </div>
       )}
 
-      {/* Loading State */}
       {isAuthLoading && (
         <div className="flex justify-center items-center py-12">
           <div className="text-center">
@@ -122,28 +113,43 @@ const TransactionAnalysisTable = () => {
         </div>
       )}
 
-      {/* Transaction Analysis Content */}
       {isAuthenticated && !isAuthLoading && (
         <>
           <div className="flex flex-wrap gap-4 justify-center mb-6">
-            <DatePicker selected={startDate} onChange={setStartDate} placeholderText="Start Date" />
-            <DatePicker selected={endDate} onChange={setEndDate} placeholderText="End Date" />
-            <Button onClick={fetchTransactions} disabled={loading}>
-              {loading ? "Loading..." : "Filter"}
-            </Button>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">Start Date</label>
+              <DatePicker
+                selected={startDate}
+                onChange={setStartDate}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                className="border p-2 rounded-lg"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">End Date</label>
+              <DatePicker
+                selected={endDate}
+                onChange={setEndDate}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={startDate}
+                className="border p-2 rounded-lg"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button onClick={fetchTransactions} disabled={loading}>
+                {loading ? "Loading..." : "Filter"}
+              </Button>
+            </div>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-400" />
               <p className="text-red-700">{error}</p>
-              <button
-                onClick={fetchTransactions}
-                className="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-              >
-                Retry
-              </button>
             </div>
           )}
 
@@ -151,22 +157,22 @@ const TransactionAnalysisTable = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Transaction Type</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Total Amount</TableHead>
-                  <TableHead>Transaction Count</TableHead>
+                  <TableHead>Count</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      Loading...
+                      <LoadingSpinner size="sm" />
                     </TableCell>
                   </TableRow>
                 ) : data.length > 0 ? (
-                  data.map((transaction, index) => (
-                    <TableRow key={`${transaction._id}-${index}`}>
-                      <TableCell>{transaction.type || transaction._id || "Unknown"}</TableCell>
+                  data.map((transaction) => (
+                    <TableRow key={transaction._id}>
+                      <TableCell className="capitalize">{transaction.type || transaction._id}</TableCell>
                       <TableCell>${transaction.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>{transaction.count}</TableCell>
                     </TableRow>
@@ -174,7 +180,7 @@ const TransactionAnalysisTable = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      No Data Available
+                      No transaction data available for selected period
                     </TableCell>
                   </TableRow>
                 )}
@@ -184,44 +190,46 @@ const TransactionAnalysisTable = () => {
 
           {data.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Bar Chart */}
               <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Transaction Breakdown (Bar Chart)</h3>
+                <h3 className="text-lg font-semibold text-center mb-2">Transaction Amounts</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={data}>
-                    <XAxis dataKey="_id" label={{ value: "", position: "insideBottom", offset: -5 }} />
+                    <XAxis dataKey="type" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip 
+                      formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                      labelFormatter={(label) => `Type: ${label}`}
+                    />
                     <Legend />
-                    <Bar dataKey="totalAmount" fill="#8884d8">
-                      {data.map((entry, index) => (
-                        <Cell key={`bar-${index}`} fill={colors[index % colors.length]} />
+                    <Bar dataKey="totalAmount" name="Total Amount">
+                      {data.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* Pie Chart */}
               <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Transaction Distribution (Pie Chart)</h3>
+                <h3 className="text-lg font-semibold text-center mb-2">Transaction Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={data}
                       dataKey="totalAmount"
-                      nameKey="_id"
+                      nameKey="type"
                       cx="50%"
                       cy="50%"
                       outerRadius={100}
-                      fill="#82ca9d"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                     >
-                      {data.map((entry, index) => (
+                      {data.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip 
+                      formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

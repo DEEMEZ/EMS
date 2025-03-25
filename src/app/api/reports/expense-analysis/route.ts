@@ -1,79 +1,76 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import Expense from "@/models/expense";
-import Transaction from "@/models/transaction";
-import dbConnect from "@/utils/dbconnect";
+import Expense from '@/models/expense';
+import Transaction from '@/models/transaction';
+import dbConnect from '@/utils/dbconnect';
 import { getToken } from 'next-auth/jwt';
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    console.log('✅ Database connected');
 
     // Verify authentication
     const token = await getToken({ req: request });
+    console.log('🔑 User token:', token?.id || token?.sub);
+    
     if (!token?.id && !token?.sub) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      console.log('❌ No user token found');
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const userId = token.id || token.sub;
-
+    const userTokenId = token.id || token.sub;
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const expensecategoriesId = searchParams.get("expensecategoriesId") || "";
-    const paymentMethod = searchParams.get("paymentMethod") || "";
-    const bankId = searchParams.get("bankId") || "";
+
+    console.log('📅 Date range:', { startDate, endDate });
 
     if (!startDate || !endDate) {
-      return NextResponse.json(
-        { error: "startDate and endDate are required" },
-        { status: 400 }
-      );
+      console.log('❌ Missing date parameters');
+      return NextResponse.json({ error: "startDate and endDate are required" }, { status: 400 });
     }
 
-    console.log("🔎 Fetching Transactions From", startDate, "To", endDate);
-
-    const transactions = await Transaction.find({
+    // 1. First find transactions in date range
+    const transactionQuery = {
       transactionDate: {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
-      type: "Expense",
-      userId, // Ensure only transactions for the authenticated user are fetched
-    }).select("_id amount");
+      type: { $regex: /^expense$/i }, // Case-insensitive match
+      userTokenId, // Match the string ID used in transactions
+    };
+    
+    console.log('🔍 Transaction query:', JSON.stringify(transactionQuery, null, 2));
+
+    const transactions = await Transaction.find(transactionQuery)
+      .select("_id amount transactionDate")
+      .lean();
+    
+    console.log('📊 Transactions found:', transactions.length);
+    console.log('Sample transactions:', transactions.slice(0, 3));
 
     if (transactions.length === 0) {
-      console.log("❌ No transactions Found In The Given Date Range.");
+      console.log('❌ No transactions found - checking if any exist without date filter...');
+      const anyTransactions = await Transaction.find({ userTokenId }).limit(5);
+      console.log('Any user transactions:', anyTransactions);
       return NextResponse.json([]);
     }
 
-    const transactionIds = transactions.map((txn) => txn._id);
-    const transactionAmounts = new Map(transactions.map((txn) => [txn._id.toString(), txn.amount]));
+    const transactionIds = transactions.map(t => t._id);
+    const transactionAmounts = new Map(
+      transactions.map(t => [t._id.toString(), t.amount])
+    );
 
-    console.log("✅ Found", transactions.length, "Transactions. Fetching Expenses...");
+    // 2. Find expenses linked to these transactions
+    const expenseQuery = {
+      transactionId: { $in: transactionIds },
+      userId: userTokenId, // Match the string ID used in expenses
+    };
+    
+    console.log('🔍 Expense query:', JSON.stringify(expenseQuery, null, 2));
 
     const expenses = await Expense.aggregate([
-      {
-        $match: {
-          transactionId: { $in: transactionIds },
-          ...(expensecategoriesId && { expensecategoriesId }),
-          ...(paymentMethod && { paymentMethod }),
-          ...(bankId && { bankId }),
-          userId, // Ensure only expenses for the authenticated user are fetched
-        },
-      },
-      {
-        $lookup: {
-          from: "transactions",
-          localField: "transactionId",
-          foreignField: "_id",
-          as: "transaction",
-        },
-      },
-      { $unwind: "$transaction" },
+      { $match: expenseQuery },
       {
         $lookup: {
           from: "expensecategories",
@@ -96,35 +93,39 @@ export async function GET(request: NextRequest) {
         $group: {
           _id: "$expensecategoriesId",
           category: { $first: "$category.name" },
-          totalAmount: { $sum: "$transaction.amount" },
+          totalAmount: { $sum: "$transactionAmount" },
           paymentMethods: { $addToSet: "$paymentMethod" },
-          banksUsed: { $addToSet: "$bank.name" },
-          transactions: {
-            $push: { transactionId: "$transaction._id", amount: "$transaction.amount" },
+          banksUsed: { 
+            $addToSet: {
+              $cond: [
+                { $ifNull: ["$bank", false] },
+                "$bank.name",
+                null
+              ]
+            }
           },
         },
+      },
+      {
+        $addFields: {
+          banksUsed: {
+            $filter: {
+              input: "$banksUsed",
+              as: "bank",
+              cond: { $ne: ["$$bank", null] }
+            }
+          }
+        }
       },
       { $sort: { totalAmount: -1 } },
     ]);
 
-    const updatedExpenses = expenses.map((expense) => ({
-      _id: expense._id,
-      category: expense.category,
-      totalAmount: expense.totalAmount,
-      paymentMethods: expense.paymentMethods,
-      banksUsed: expense.banksUsed,
-      transactions: expense.transactions.map((txn: { transactionId: { toString: () => any } }) => ({
-        transactionId: txn.transactionId,
-        amount: transactionAmounts.get(txn.transactionId.toString()) || 0,
-      })),
-    }));
-
-    console.log("✅ Expense Analysis Data:", updatedExpenses);
-    return NextResponse.json(updatedExpenses);
-  } catch (error: unknown) {
-    console.error("❌ Error Fetching Expense Analysis:", error);
+    console.log('✅ Expense analysis results:', expenses);
+    return NextResponse.json(expenses);
+  } catch (error) {
+    console.error('❌ Full error:', error);
     return NextResponse.json(
-      { error: "Failed To Fetch Expense Analysis" },
+      { error: "Failed to fetch expense analysis" },
       { status: 500 }
     );
   }

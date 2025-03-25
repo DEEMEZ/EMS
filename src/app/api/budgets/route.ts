@@ -10,15 +10,15 @@ export async function GET(request: NextRequest) {
   try {
     await dbConnect();
     const token = await getToken({ req: request });
-    
+
     // Return empty data for unauthenticated users
     if (!token?.id && !token?.sub) {
       return NextResponse.json({
         budgets: [],
-        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
       });
     }
-    
+
     const userId = token.id || token.sub;
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
@@ -31,12 +31,11 @@ export async function GET(request: NextRequest) {
 
     // Build query with userId filter
     const query: any = { userId };
-    
+
     if (search) {
       // Add search fields if needed
-      // For budget, you might want to search by category name via aggregation
     }
-    
+
     if (status) {
       query.status = status;
     }
@@ -46,13 +45,14 @@ export async function GET(request: NextRequest) {
     }
 
     const skip = (page - 1) * limit;
-    const budgets = await Budget.find(query)
-      .populate('expensecategoriesId', 'name')
-      .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
-      .skip(skip)
-      .limit(limit)
-      .select('-__v');
-      
+   const budgets = await Budget.find(query)
+  .populate('userId', 'fullname email') // Populate userId with user's fullname and email
+  .populate('expensecategoriesId', 'name')
+  .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
+  .skip(skip)
+  .limit(limit)
+  .select('-__v');
+
     const total = await Budget.countDocuments(query);
 
     return NextResponse.json({
@@ -61,10 +61,9 @@ export async function GET(request: NextRequest) {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     });
-
   } catch (error: unknown) {
     console.error('Error in GET /api/budgets:', error);
     return NextResponse.json(

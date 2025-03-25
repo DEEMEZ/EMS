@@ -3,6 +3,11 @@ import mongoose from 'mongoose';
 // IncomeSources Schema
 const incomeSourcesSchema = new mongoose.Schema(
   {
+    userId: {
+      type: String, // Keeping as String to align with token.id or token.sub
+      required: true,
+      index: true // Adding index for optimized queries
+    },
     name: {
       type: String,
       required: [true, 'Income source name is required'],

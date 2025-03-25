@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-'use client';
-
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Link, Save, X } from 'lucide-react';
@@ -8,7 +5,6 @@ import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
 interface BudgetFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any;
   onCancel?: () => void;
   onSuccess?: () => void;
@@ -157,6 +153,16 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
 
           {/* Form Fields */}
           <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700">User ID</label>
+              <input
+                type="text"
+                value={formData.userId}
+                readOnly
+                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm bg-gray-100 cursor-not-allowed"
+              />
+            </div>
+
             <div>
               <label className="text-sm font-medium text-gray-700">Expense Category ID</label>
               <input

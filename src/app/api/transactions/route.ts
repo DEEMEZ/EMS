@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Transaction from '@/models/transaction';
 import User from '@/models/user';
 import dbConnect from '@/utils/dbconnect';
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const userId = token.id || token.sub;
+    const userTokenId = token.id || token.sub;
 
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     // Build query with userId filter
-    const query: { userId: string; type?: string } = { userId };
+    const query: { userTokenId: string; type?: string } = { userTokenId };
     if (type) query.type = type;
 
     const skip = (page - 1) * limit;
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = token.id || token.sub;
+    const userTokenId = token.id || token.sub;
     const data = await request.json();
     const { type, transactionDate, description, amount } = data;
 
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user exists
-    const userExists = await User.findById(userId);
+    const userExists = await User.findOne({ _id: userTokenId });
     if (!userExists) {
       return NextResponse.json(
         { error: 'Invalid User ID. No such user exists.' },
@@ -94,7 +95,8 @@ export async function POST(request: NextRequest) {
 
     // Create transaction
     const transaction = await Transaction.create({
-      userId,
+      userId: userExists._id, // Save userId as ObjectId
+      userTokenId, // Save token ID as string
       type,
       transactionDate,
       description,
@@ -132,7 +134,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const userId = token.id || token.sub;
+    const userTokenId = token.id || token.sub;
     const data = await request.json();
     const { _id, ...updateData } = data;
 
@@ -154,7 +156,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if the transaction belongs to the current user
-    if (transaction.userId.toString() !== userId.toString()) {
+    if (transaction.userTokenId !== userTokenId) {
       return NextResponse.json(
         { error: 'You do not have permission to modify this transaction' },
         { status: 403 }
@@ -166,7 +168,6 @@ export async function PUT(request: NextRequest) {
       _id,
       {
         ...updateData,
-        userId, // Ensure userId is updated to current user
         modifiedBy: token.name || 'System',
         modifiedDate: new Date(),
       },
@@ -199,7 +200,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const userId = token.id || token.sub;
+    const userTokenId = token.id || token.sub;
     const data = await request.json();
     const { _id } = data;
 
@@ -221,7 +222,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check if the transaction belongs to the current user
-    if (transaction.userId.toString() !== userId.toString()) {
+    if (transaction.userTokenId !== userTokenId) {
       return NextResponse.json(
         { error: 'You do not have permission to delete this transaction' },
         { status: 403 }

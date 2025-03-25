@@ -46,19 +46,25 @@ const ExpenseAnalysisTable = () => {
       const end = endDate ? format(endDate, "yyyy-MM-dd") : "";
 
       const response = await fetch(`/api/reports/expense-analysis?startDate=${start}&endDate=${end}`);
-      if (!response.ok) throw new Error("Failed to fetch expense analysis");
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch expense analysis");
+      }
 
       const result = await response.json();
 
       if (!Array.isArray(result)) {
-        console.error("Invalid API response:", result);
-        setData([]);
-      } else {
-        setData(result);
+        throw new Error("Invalid data format received from server");
       }
+
+      setData(result.map(item => ({
+        ...item,
+        banksUsed: item.banksUsed || []
+      })));
     } catch (error) {
       console.error("Error Fetching Expenses:", error);
-      setError("Failed to fetch expense analysis. Please try again.");
+      setError(error instanceof Error ? error.message : "Failed to fetch expense analysis. Please try again.");
       setData([]);
     } finally {
       setLoading(false);
@@ -77,7 +83,6 @@ const ExpenseAnalysisTable = () => {
     <div className="p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl font-semibold mb-6 text-center">Expense Analysis</h2>
 
-      {/* Authentication Status Banner */}
       {!isAuthenticated && !isAuthLoading && (
         <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-amber-400" />
@@ -94,7 +99,6 @@ const ExpenseAnalysisTable = () => {
         </div>
       )}
 
-      {/* Loading State */}
       {isAuthLoading && (
         <div className="flex justify-center items-center py-12">
           <div className="text-center">
@@ -104,18 +108,33 @@ const ExpenseAnalysisTable = () => {
         </div>
       )}
 
-      {/* Expense Analysis Content */}
       {isAuthenticated && !isAuthLoading && (
         <>
           <div className="flex flex-wrap gap-4 justify-center mb-6">
-            <DatePicker selected={startDate} onChange={setStartDate} placeholderText="Start Date" />
-            <DatePicker selected={endDate} onChange={setEndDate} placeholderText="End Date" />
+            <DatePicker
+              selected={startDate}
+              onChange={setStartDate}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              placeholderText="Start Date"
+              className="border rounded p-2"
+            />
+            <DatePicker
+              selected={endDate}
+              onChange={setEndDate}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate}
+              placeholderText="End Date"
+              className="border rounded p-2"
+            />
             <Button onClick={fetchExpenses} disabled={loading}>
               {loading ? "Loading..." : "Filter"}
             </Button>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-400" />
@@ -143,22 +162,24 @@ const ExpenseAnalysisTable = () => {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      Loading...
+                      <LoadingSpinner size="sm" />
                     </TableCell>
                   </TableRow>
                 ) : data.length > 0 ? (
-                  data.map((expense, index) => (
-                    <TableRow key={`${expense._id}-${index}`}>
+                  data.map((expense) => (
+                    <TableRow key={expense._id}>
                       <TableCell>{expense.category}</TableCell>
                       <TableCell>${expense.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>{expense.paymentMethods.join(", ")}</TableCell>
-                      <TableCell>{expense.banksUsed.length > 0 ? expense.banksUsed.join(", ") : "N/A"}</TableCell>
+                      <TableCell>
+                        {expense.banksUsed.length > 0 ? expense.banksUsed.join(", ") : "N/A"}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      No Data Available
+                      {error ? "Error loading data" : "No data available for selected period"}
                     </TableCell>
                   </TableRow>
                 )}
@@ -169,16 +190,16 @@ const ExpenseAnalysisTable = () => {
           {data.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Expense Breakdown (Bar Chart)</h3>
+                <h3 className="text-lg font-semibold text-center mb-2">Expense Breakdown</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={data}>
                     <XAxis dataKey="category" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip formatter={(value) => [`$${value}`, "Amount"]} />
                     <Legend />
-                    <Bar dataKey="totalAmount" fill="#8884d8">
-                      {data.map((entry, index) => (
-                        <Cell key={`bar-${index}`} fill={colors[index % colors.length]} />
+                    <Bar dataKey="totalAmount" name="Amount" fill="#8884d8">
+                      {data.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -186,7 +207,7 @@ const ExpenseAnalysisTable = () => {
               </div>
 
               <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Expense Distribution (Pie Chart)</h3>
+                <h3 className="text-lg font-semibold text-center mb-2">Expense Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -196,14 +217,13 @@ const ExpenseAnalysisTable = () => {
                       cx="50%"
                       cy="50%"
                       outerRadius={100}
-                      fill="#82ca9d"
-                      label
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
-                      {data.map((entry, index) => (
+                      {data.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip formatter={(value) => [`$${value}`, "Amount"]} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

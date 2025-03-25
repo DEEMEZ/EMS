@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { Button } from "@/components/ui/button";
@@ -27,8 +26,8 @@ const BudgetAnalysisTable = () => {
 
   const [data, setData] = useState<BudgetAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(new Date(new Date().setDate(1))); // First day of current month
+  const [endDate, setEndDate] = useState<Date | null>(new Date()); // Today
   const [error, setError] = useState("");
 
   const fetchBudgets = async () => {
@@ -37,12 +36,23 @@ const BudgetAnalysisTable = () => {
       return;
     }
 
+    // Validate date range
+    if (!startDate || !endDate) {
+      setError("Please select a valid date range.");
+      return;
+    }
+
+    if (startDate > endDate) {
+      setError("Start date cannot be after end date.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
-      const start = startDate ? format(startDate, "yyyy-MM-dd") : "";
-      const end = endDate ? format(endDate, "yyyy-MM-dd") : "";
+      const start = format(startDate, "yyyy-MM-dd");
+      const end = format(endDate, "yyyy-MM-dd");
 
       const response = await fetch(`/api/reports/budget?startDate=${start}&endDate=${end}`);
       if (!response.ok) throw new Error("Failed to fetch budget analysis");
@@ -100,11 +110,34 @@ const BudgetAnalysisTable = () => {
       {isAuthenticated && !isAuthLoading && (
         <>
           <div className="flex flex-wrap gap-4 justify-center mb-6">
-            <DatePicker selected={startDate} onChange={setStartDate} placeholderText="Start Date" />
-            <DatePicker selected={endDate} onChange={setEndDate} placeholderText="End Date" />
-            <Button onClick={fetchBudgets} disabled={loading}>
-              Filter
-            </Button>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">Start Date</label>
+              <DatePicker
+                selected={startDate}
+                onChange={setStartDate}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                className="border p-2 rounded-lg"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">End Date</label>
+              <DatePicker
+                selected={endDate}
+                onChange={setEndDate}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={startDate}
+                className="border p-2 rounded-lg"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button onClick={fetchBudgets} disabled={loading}>
+                {loading ? "Loading..." : "Filter"}
+              </Button>
+            </div>
           </div>
 
           {/* Error Message */}
@@ -112,12 +145,6 @@ const BudgetAnalysisTable = () => {
             <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-400" />
               <p className="text-red-700">{error}</p>
-              <button
-                onClick={fetchBudgets}
-                className="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-              >
-                Retry
-              </button>
             </div>
           )}
 
@@ -135,11 +162,11 @@ const BudgetAnalysisTable = () => {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      Loading...
+                      <LoadingSpinner size="sm" />
                     </TableCell>
                   </TableRow>
                 ) : data.length > 0 ? (
-                  data.map((budget, index) => (
+                  data.map((budget) => (
                     <TableRow key={budget._id}>
                       <TableCell>{budget.category}</TableCell>
                       <TableCell>${budget.monthlyLimit.toFixed(2)}</TableCell>
@@ -154,7 +181,7 @@ const BudgetAnalysisTable = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      No data available
+                      No budget data available for the selected date range
                     </TableCell>
                   </TableRow>
                 )}
@@ -165,12 +192,15 @@ const BudgetAnalysisTable = () => {
           {data.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Monthly Limit vs Total Spent (Bar Chart)</h3>
+                <h3 className="text-lg font-semibold text-center mb-2">Monthly Limit vs Total Spent</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={data}>
                     <XAxis dataKey="category" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip 
+                      formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                      labelFormatter={(label) => `Category: ${label}`}
+                    />
                     <Legend />
                     <Bar dataKey="monthlyLimit" fill="#8884d8" name="Monthly Limit" />
                     <Bar dataKey="totalSpent" fill="#ff7f50" name="Total Spent" />
@@ -179,7 +209,7 @@ const BudgetAnalysisTable = () => {
               </div>
 
               <div className="bg-gray-100 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-center mb-2">Budget Distribution (Pie Chart)</h3>
+                <h3 className="text-lg font-semibold text-center mb-2">Budget Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -190,13 +220,15 @@ const BudgetAnalysisTable = () => {
                       cy="50%"
                       outerRadius={100}
                       fill="#82ca9d"
-                      label
+                      label={({ category, percent }) => `${category}: ${(percent * 100).toFixed(0)}%`}
                     >
                       {data.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip 
+                      formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

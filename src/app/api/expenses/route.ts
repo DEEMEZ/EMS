@@ -8,10 +8,28 @@ import dbConnect from '@/utils/dbconnect';
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
+interface TokenPayload {
+  id?: string;
+  sub?: string;
+  name?: string;
+  email?: string;
+}
+
+interface ExpenseDocument {
+  _id: string;
+  userId: string;
+  transactionId: string;
+  expensecategoriesId: string;
+  orgId: string;
+  paymentMethod: string;
+  bankId?: string;
+  transactionAmount: number;
+}
+
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
 
     if (!token?.id && !token?.sub) {
       return NextResponse.json({
@@ -21,6 +39,13 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json({
+        expenses: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
+      });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -79,7 +104,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
 
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -89,6 +114,13 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
 
@@ -127,7 +159,7 @@ export async function POST(request: NextRequest) {
       paymentMethod,
       bankId: paymentMethod === 'Transfer' ? bankId : null,
       transactionAmount,
-      userId, // Add the userId field
+      userId,
     });
 
     return NextResponse.json({ message: 'Expense created successfully', expense });
@@ -143,7 +175,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
 
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -153,15 +185,22 @@ export async function PUT(request: NextRequest) {
     }
 
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { _id, transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
 
-    const expense = await Expense.findById(_id);
+    const expense = await Expense.findById(_id).lean<ExpenseDocument>();
     if (!expense) {
       return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
 
-    if (expense.userId && expense.userId.toString() !== userId.toString()) {
+    if (expense.userId.toString() !== userId) {
       return NextResponse.json(
         { error: 'You do not have permission to modify this expense' },
         { status: 403 }
@@ -187,7 +226,7 @@ export async function PUT(request: NextRequest) {
         paymentMethod,
         bankId: paymentMethod === 'Transfer' ? bankId : null,
         transactionAmount,
-        userId, // Ensure userId is updated to current user
+        userId,
       },
       { new: true, runValidators: true }
     );
@@ -208,7 +247,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
 
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -218,6 +257,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { _id } = data;
 
@@ -225,12 +271,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Expense ID is required' }, { status: 400 });
     }
 
-    const expense = await Expense.findById(_id);
+    const expense = await Expense.findById(_id).lean<ExpenseDocument>();
     if (!expense) {
       return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
 
-    if (expense.userId && expense.userId.toString() !== userId.toString()) {
+    if (expense.userId.toString() !== userId) {
       return NextResponse.json(
         { error: 'You do not have permission to delete this expense' },
         { status: 403 }

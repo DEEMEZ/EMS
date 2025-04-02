@@ -1,30 +1,59 @@
 import mongoose from 'mongoose';
 
-// PaymentMethods Schema
-const PaymentmethodsSchema = new mongoose.Schema(
+const PaymentMethodSchema = new mongoose.Schema(
   {
     userId: {
-      type: String, // Keeping as String to align with token.id or token.sub
+      type: String,
       required: true,
-      index: true // Adding index for optimized queries
+      index: true
     },
     name: {
       type: String,
       required: [true, 'Payment method name is required'],
-      maxLength: 100,
+      maxLength: [100, 'Name cannot exceed 100 characters'],
       trim: true
     },
     description: {
       type: String,
-      maxLength: 200,
+      maxLength: [200, 'Description cannot exceed 200 characters'],
       trim: true
+    },
+    modifiedBy: {
+      type: String,
+      default: 'System'
+    },
+    modifiedDate: {
+      type: Date,
+      default: Date.now
     }
   },
   {
-    timestamps: true 
+    timestamps: true,
+    toJSON: {
+      transform: function (doc, ret) {
+        ret._id = ret._id.toString();
+        ret.createdAt = ret.createdAt.toISOString();
+        ret.updatedAt = ret.updatedAt.toISOString();
+        if (ret.modifiedDate) {
+          ret.modifiedDate = ret.modifiedDate.toISOString();
+        }
+        return ret;
+      }
+    }
   }
 );
 
-PaymentmethodsSchema.index({ name: 1 });
+// Index for faster queries
+PaymentMethodSchema.index({ userId: 1, name: 1 });
 
-export default mongoose.models.Paymentmethods || mongoose.model('Paymentmethods', PaymentmethodsSchema);
+// Prevent duplicate payment methods per user
+PaymentMethodSchema.index(
+  { userId: 1, name: 1 },
+  { unique: true, partialFilterExpression: { name: { $exists: true } } }
+);
+
+const PaymentMethodModel =
+  mongoose.models.PaymentMethod ||
+  mongoose.model('PaymentMethod', PaymentMethodSchema);
+
+export default PaymentMethodModel;

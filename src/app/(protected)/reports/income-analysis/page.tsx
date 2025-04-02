@@ -1,4 +1,3 @@
-import NavbarComponent from "@/components/navbar/navbar";
 import IncomeAnalysisTable from "@/components/reports/incomeanalysis";
 
 export default function IncomeReportPage() {

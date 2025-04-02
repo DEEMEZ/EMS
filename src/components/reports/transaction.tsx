@@ -25,7 +25,7 @@ interface TransactionAnalysis {
 }
 
 const TransactionAnalysisTable = () => {
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === "authenticated";
   const isAuthLoading = authStatus === "loading";
 
@@ -34,6 +34,10 @@ const TransactionAnalysisTable = () => {
   const [startDate, setStartDate] = useState<Date | null>(new Date(new Date().setDate(1))); // First day of current month
   const [endDate, setEndDate] = useState<Date | null>(new Date()); // Today
   const [error, setError] = useState("");
+
+  // Convert null to undefined for DatePicker props
+  const safeStartDate = startDate ?? undefined;
+  const safeEndDate = endDate ?? undefined;
 
   const fetchTransactions = async () => {
     if (!isAuthenticated) {
@@ -66,7 +70,12 @@ const TransactionAnalysisTable = () => {
       }
 
       const result = await response.json();
-      setData(result);
+      // Ensure all items have unique _id values
+      const processedData = result.map((item: TransactionAnalysis, index: number) => ({
+        ...item,
+        _id: item._id || `temp-id-${index}-${Date.now()}` // Fallback for missing IDs
+      }));
+      setData(processedData);
     } catch (error) {
       console.error("Error fetching transactions:", error);
       setError(error instanceof Error ? error.message : "Failed to fetch transactions");
@@ -83,6 +92,11 @@ const TransactionAnalysisTable = () => {
   }, [isAuthenticated]);
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
+
+  // Generate stable unique keys for rendering
+  const generateKey = (item: TransactionAnalysis, index: number) => {
+    return `${item._id}-${item.type}-${index}`;
+  };
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg">
@@ -119,23 +133,23 @@ const TransactionAnalysisTable = () => {
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1">Start Date</label>
               <DatePicker
-                selected={startDate}
+                selected={safeStartDate}
                 onChange={setStartDate}
                 selectsStart
-                startDate={startDate}
-                endDate={endDate}
+                startDate={safeStartDate}
+                endDate={safeEndDate}
                 className="border p-2 rounded-lg"
               />
             </div>
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1">End Date</label>
               <DatePicker
-                selected={endDate}
+                selected={safeEndDate}
                 onChange={setEndDate}
                 selectsEnd
-                startDate={startDate}
-                endDate={endDate}
-                minDate={startDate}
+                startDate={safeStartDate}
+                endDate={safeEndDate}
+                minDate={safeStartDate}
                 className="border p-2 rounded-lg"
               />
             </div>
@@ -164,21 +178,21 @@ const TransactionAnalysisTable = () => {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow>
+                  <TableRow key="loading-row">
                     <TableCell colSpan={3} className="text-center">
                       <LoadingSpinner size="sm" />
                     </TableCell>
                   </TableRow>
                 ) : data.length > 0 ? (
-                  data.map((transaction) => (
-                    <TableRow key={transaction._id}>
+                  data.map((transaction, index) => (
+                    <TableRow key={generateKey(transaction, index)}>
                       <TableCell className="capitalize">{transaction.type || transaction._id}</TableCell>
                       <TableCell>${transaction.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>{transaction.count}</TableCell>
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow>
+                  <TableRow key="no-data-row">
                     <TableCell colSpan={3} className="text-center">
                       No transaction data available for selected period
                     </TableCell>
@@ -197,13 +211,19 @@ const TransactionAnalysisTable = () => {
                     <XAxis dataKey="type" />
                     <YAxis />
                     <Tooltip 
-                      formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                      formatter={(value) => {
+                        const numValue = typeof value === 'number' ? value : 0;
+                        return [`$${numValue.toFixed(2)}`, ""];
+                      }}
                       labelFormatter={(label) => `Type: ${label}`}
                     />
                     <Legend />
                     <Bar dataKey="totalAmount" name="Total Amount">
-                      {data.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                      {data.map((entry, index) => (
+                        <Cell 
+                          key={`bar-cell-${generateKey(entry, index)}`}
+                          fill={colors[index % colors.length]} 
+                        />
                       ))}
                     </Bar>
                   </BarChart>
@@ -223,12 +243,18 @@ const TransactionAnalysisTable = () => {
                       outerRadius={100}
                       label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                     >
-                      {data.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                      {data.map((entry, index) => (
+                        <Cell 
+                          key={`pie-cell-${generateKey(entry, index)}`}
+                          fill={colors[index % colors.length]} 
+                        />
                       ))}
                     </Pie>
                     <Tooltip 
-                      formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                      formatter={(value) => {
+                        const numValue = typeof value === 'number' ? value : 0;
+                        return [`$${numValue.toFixed(2)}`, ""];
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>

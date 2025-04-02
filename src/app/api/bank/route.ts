@@ -4,10 +4,26 @@ import dbConnect from '@/utils/dbconnect';
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
+interface TokenPayload {
+  id?: string;
+  sub?: string;
+  name?: string;
+  email?: string;
+}
+
+interface BankDocument {
+  _id: string;
+  userId?: string;
+  name: string;
+  status?: string;
+  modifiedBy?: string;
+  modifiedDate?: Date;
+}
+
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
     
     if (!token?.id && !token?.sub) {
       return NextResponse.json({
@@ -25,6 +41,12 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json({
+        banks: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
+      });
+    }
     
     // Build query with userId filter
     const query: any = { userId };
@@ -57,7 +79,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: unknown) {
-    console.error('Error in GET /api/banks:', error);
+    console.error('Error in GET /api/bank:', error);
     return NextResponse.json(
       { error: (error as Error).message || 'Failed To Fetch Banks' },
       { status: 500 }
@@ -68,7 +90,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
     
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -78,12 +100,19 @@ export async function POST(request: NextRequest) {
     }
     
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
     const data = await request.json();
     
     // Add userId to the bank data
     const bank = await Bank.create({
       ...data,
-      userId, // Add the userId field
+      userId,
       modifiedBy: token.name || 'System', 
       modifiedDate: new Date()
     });
@@ -93,9 +122,8 @@ export async function POST(request: NextRequest) {
       bank
     }, { status: 201 });
   } catch (error: unknown) {
-    console.error('Error in POST /api/banks:', error);
+    console.error('Error in POST /api/bank:', error);
     
-    // Handle duplicate key error
     if ((error as any).code === 11000) {
       return NextResponse.json(
         { error: 'A bank with this name already exists for your account' },
@@ -113,7 +141,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
     
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -123,11 +151,18 @@ export async function PUT(request: NextRequest) {
     }
     
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { _id, ...updateData } = data;
 
     // Find the bank first to check ownership
-    const existingBank = await Bank.findById(_id);
+    const existingBank = await Bank.findById(_id).lean<BankDocument>();
     
     if (!existingBank) {
       return NextResponse.json(
@@ -137,7 +172,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Check if the bank belongs to the current user
-    if (existingBank.userId && existingBank.userId.toString() !== userId.toString()) {
+    if (!existingBank.userId || existingBank.userId.toString() !== userId) {
       return NextResponse.json(
         { error: 'You do not have permission to modify this bank' },
         { status: 403 }
@@ -148,7 +183,7 @@ export async function PUT(request: NextRequest) {
       _id,
       {
         ...updateData,
-        userId, // Ensure userId is updated to current user
+        userId,
         modifiedBy: token.name || 'System',
         modifiedDate: new Date()
       },
@@ -160,9 +195,8 @@ export async function PUT(request: NextRequest) {
       bank
     });
   } catch (error: unknown) {
-    console.error('Error in PUT /api/banks:', error);
+    console.error('Error in PUT /api/bank:', error);
     
-    // Handle duplicate key error
     if ((error as any).code === 11000) {
       return NextResponse.json(
         { error: 'A bank with this name already exists for your account' },
@@ -180,7 +214,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
     
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -190,6 +224,13 @@ export async function DELETE(request: NextRequest) {
     }
     
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { _id } = data;
 
@@ -201,7 +242,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Find the bank first to check ownership
-    const existingBank = await Bank.findById(_id);
+    const existingBank = await Bank.findById(_id).lean<BankDocument>();
     
     if (!existingBank) {
       return NextResponse.json(
@@ -211,7 +252,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Check if the bank belongs to the current user
-    if (existingBank.userId && existingBank.userId.toString() !== userId.toString()) {
+    if (!existingBank.userId || existingBank.userId.toString() !== userId) {
       return NextResponse.json(
         { error: 'You do not have permission to delete this bank' },
         { status: 403 }
@@ -225,7 +266,7 @@ export async function DELETE(request: NextRequest) {
       success: true
     });
   } catch (error: unknown) {
-    console.error('Error in DELETE /api/banks:', error);
+    console.error('Error in DELETE /api/bank:', error);
     return NextResponse.json(
       { error: (error as Error).message || 'Failed To Delete Bank' },
       { status: 500 }

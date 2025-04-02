@@ -1,4 +1,3 @@
-import NavbarComponent from "@/components/navbar/navbar";
 import ExpenseAnalysisTable from "@/components/reports/expenseanalysis";
 
 export default function ExpenseReportPage() {

@@ -1,7 +1,6 @@
 'use client';
 
 import PaymentmethodsForm from "@/components/paymentmethods/paymentform/form";
-import NavbarComponent from "@/components/navbar/navbar";
 
 export default function AddPaymentmethods() {
     return (

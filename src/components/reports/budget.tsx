@@ -20,7 +20,7 @@ interface BudgetAnalysis {
 }
 
 const BudgetAnalysisTable = () => {
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === "authenticated";
   const isAuthLoading = authStatus === "loading";
 
@@ -29,6 +29,10 @@ const BudgetAnalysisTable = () => {
   const [startDate, setStartDate] = useState<Date | null>(new Date(new Date().setDate(1))); // First day of current month
   const [endDate, setEndDate] = useState<Date | null>(new Date()); // Today
   const [error, setError] = useState("");
+
+  // Convert null to undefined for DatePicker props
+  const safeStartDate = startDate ?? undefined;
+  const safeEndDate = endDate ?? undefined;
 
   const fetchBudgets = async () => {
     if (!isAuthenticated) {
@@ -113,23 +117,23 @@ const BudgetAnalysisTable = () => {
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1">Start Date</label>
               <DatePicker
-                selected={startDate}
+                selected={safeStartDate}
                 onChange={setStartDate}
                 selectsStart
-                startDate={startDate}
-                endDate={endDate}
+                startDate={safeStartDate}
+                endDate={safeEndDate}
                 className="border p-2 rounded-lg"
               />
             </div>
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1">End Date</label>
               <DatePicker
-                selected={endDate}
+                selected={safeEndDate}
                 onChange={setEndDate}
                 selectsEnd
-                startDate={startDate}
-                endDate={endDate}
-                minDate={startDate}
+                startDate={safeStartDate}
+                endDate={safeEndDate}
+                minDate={safeStartDate}
                 className="border p-2 rounded-lg"
               />
             </div>
@@ -194,42 +198,42 @@ const BudgetAnalysisTable = () => {
               <div className="bg-gray-100 p-4 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-center mb-2">Monthly Limit vs Total Spent</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={data}>
-                    <XAxis dataKey="category" />
-                    <YAxis />
-                    <Tooltip 
-                      formatter={(value) => [`$${value.toFixed(2)}`, ""]}
-                      labelFormatter={(label) => `Category: ${label}`}
-                    />
-                    <Legend />
-                    <Bar dataKey="monthlyLimit" fill="#8884d8" name="Monthly Limit" />
-                    <Bar dataKey="totalSpent" fill="#ff7f50" name="Total Spent" />
-                  </BarChart>
+                <BarChart data={data}>
+  <XAxis dataKey="category" />
+  <YAxis />
+  <Tooltip 
+    formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
+    labelFormatter={(label) => `Category: ${label}`}
+  />
+  <Legend />
+  <Bar dataKey="monthlyLimit" fill="#8884d8" name="Monthly Limit" />
+  <Bar dataKey="totalSpent" fill="#ff7f50" name="Total Spent" />
+</BarChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="bg-gray-100 p-4 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-center mb-2">Budget Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={data}
-                      dataKey="monthlyLimit"
-                      nameKey="category"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      fill="#82ca9d"
-                      label={({ category, percent }) => `${category}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {data.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value) => [`$${value.toFixed(2)}`, ""]}
-                    />
-                  </PieChart>
+               <PieChart>
+  <Pie
+    data={data}
+    dataKey="monthlyLimit"
+    nameKey="category"
+    cx="50%"
+    cy="50%"
+    outerRadius={100}
+    fill="#82ca9d"
+    label={({ category, percent }) => `${category}: ${(percent * 100).toFixed(0)}%`}
+  >
+    {data.map((_, index) => (
+      <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+    ))}
+  </Pie>
+  <Tooltip 
+    formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
+  />
+</PieChart>
                 </ResponsiveContainer>
               </div>
             </div>

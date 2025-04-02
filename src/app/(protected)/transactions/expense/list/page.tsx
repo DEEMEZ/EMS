@@ -1,7 +1,6 @@
 'use client';
 
 import ExpenseList from "@/components/expense/expenselist/list";
-import NavbarComponent from "@/components/navbar/navbar";
 
 export default function ExpenseListPage() {
     return (

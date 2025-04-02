@@ -6,10 +6,28 @@ import mongoose from 'mongoose';
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
+interface TokenPayload {
+  id?: string;
+  sub?: string;
+  name?: string;
+  email?: string;
+}
+
+interface BudgetDocument {
+  _id: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+  expensecategoriesId: mongoose.Types.ObjectId;
+  monthlyLimit: number;
+  spentAmount: number;
+  remainingBudget: number;
+  startDate: Date;
+  endDate: Date;
+}
+
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
 
     // Return empty data for unauthenticated users
     if (!token?.id && !token?.sub) {
@@ -20,6 +38,13 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json({
+        budgets: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -45,13 +70,13 @@ export async function GET(request: NextRequest) {
     }
 
     const skip = (page - 1) * limit;
-   const budgets = await Budget.find(query)
-  .populate('userId', 'fullname email') // Populate userId with user's fullname and email
-  .populate('expensecategoriesId', 'name')
-  .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
-  .skip(skip)
-  .limit(limit)
-  .select('-__v');
+    const budgets = await Budget.find(query)
+      .populate('userId', 'fullname email')
+      .populate('expensecategoriesId', 'name')
+      .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('-__v');
 
     const total = await Budget.countDocuments(query);
 
@@ -76,7 +101,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
     
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -86,8 +111,14 @@ export async function POST(request: NextRequest) {
     }
     
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
-    
     const { expensecategoriesId, monthlyLimit, spentAmount, startDate, endDate } = data;
 
     // Validate required fields
@@ -153,7 +184,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
     
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -163,8 +194,14 @@ export async function PUT(request: NextRequest) {
     }
     
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
-    
     const { _id, expensecategoriesId, monthlyLimit, spentAmount, startDate, endDate } = data;
 
     // Validate required fields
@@ -184,7 +221,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Find the budget first to check ownership
-    const existingBudget = await Budget.findById(_id);
+    const existingBudget = await Budget.findById(_id).lean<BudgetDocument>();
     
     if (!existingBudget) {
       return NextResponse.json(
@@ -194,7 +231,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Check if the budget belongs to the current user
-    if (existingBudget.userId.toString() !== userId.toString()) {
+    if (existingBudget.userId.toString() !== userId) {
       return NextResponse.json(
         { error: 'You do not have permission to modify this budget' },
         { status: 403 }
@@ -230,7 +267,6 @@ export async function PUT(request: NextRequest) {
         remainingBudget,
         startDate,
         endDate,
-        // userId remains the same, do not update it
       },
       { new: true, runValidators: true }
     );
@@ -252,7 +288,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request });
+    const token = await getToken({ req: request }) as TokenPayload;
     
     if (!token?.id && !token?.sub) {
       return NextResponse.json(
@@ -262,6 +298,13 @@ export async function DELETE(request: NextRequest) {
     }
     
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { _id } = data;
 
@@ -273,7 +316,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Find the budget first to check ownership
-    const existingBudget = await Budget.findById(_id);
+    const existingBudget = await Budget.findById(_id).lean<BudgetDocument>();
     
     if (!existingBudget) {
       return NextResponse.json(
@@ -283,7 +326,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Check if the budget belongs to the current user
-    if (existingBudget.userId.toString() !== userId.toString()) {
+    if (existingBudget.userId.toString() !== userId) {
       return NextResponse.json(
         { error: 'You do not have permission to delete this budget' },
         { status: 403 }

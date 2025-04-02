@@ -1,34 +1,39 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import Transaction from '@/models/transaction';
 import User from '@/models/user';
 import dbConnect from '@/utils/dbconnect';
+import { Types } from 'mongoose';
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
+
+interface TransactionQuery {
+  userTokenId: string;
+  type?: string;
+}
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
 
-    // Verify authentication
+    // Verify authentication with proper type narrowing
     const token = await getToken({ req: request });
-    if (!token?.id && !token?.sub) {
+    const userTokenId = token?.id || token?.sub;
+    
+    if (!userTokenId) {
       return NextResponse.json({
         transactions: [],
         pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
       });
     }
 
-    const userTokenId = token.id || token.sub;
-
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
     const type = searchParams.get('type') || '';
     const sortField = searchParams.get('sortField') || 'transactionDate';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     // Build query with userId filter
-    const query: { userTokenId: string; type?: string } = { userTokenId };
+    const query: TransactionQuery = { userTokenId };
     if (type) query.type = type;
 
     const skip = (page - 1) * limit;
@@ -37,7 +42,7 @@ export async function GET(request: NextRequest) {
       .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)
-      .select('-__v'); // Exclude __v field
+      .select('-__v');
 
     const total = await Transaction.countDocuments(query);
 
@@ -59,21 +64,29 @@ export async function GET(request: NextRequest) {
   }
 }
 
+interface TransactionData {
+  type: string;
+  transactionDate: string;
+  description?: string;
+  amount: number;
+}
+
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
 
-    // Verify authentication
+    // Verify authentication with proper type narrowing
     const token = await getToken({ req: request });
-    if (!token?.id && !token?.sub) {
+    const userTokenId = token?.id || token?.sub;
+    
+    if (!userTokenId) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const userTokenId = token.id || token.sub;
-    const data = await request.json();
+    const data = await request.json() as TransactionData;
     const { type, transactionDate, description, amount } = data;
 
     // Validate required fields
@@ -84,8 +97,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user exists
-    const userExists = await User.findOne({ _id: userTokenId });
+    // Check if user exists with proper ObjectId conversion
+    const userExists = await User.findOne({ _id: new Types.ObjectId(userTokenId) });
     if (!userExists) {
       return NextResponse.json(
         { error: 'Invalid User ID. No such user exists.' },
@@ -93,15 +106,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create transaction
+    // Create transaction with proper types
     const transaction = await Transaction.create({
-      userId: userExists._id, // Save userId as ObjectId
-      userTokenId, // Save token ID as string
+      userId: userExists._id,
+      userTokenId,
       type,
-      transactionDate,
+      transactionDate: new Date(transactionDate),
       description,
       amount,
-      modifiedBy: token.name || 'System',
+      modifiedBy: token?.name || 'System',
       modifiedDate: new Date(),
     });
 
@@ -121,21 +134,26 @@ export async function POST(request: NextRequest) {
   }
 }
 
+interface UpdateTransactionData extends TransactionData {
+  _id: string;
+}
+
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
 
-    // Verify authentication
+    // Verify authentication with proper type narrowing
     const token = await getToken({ req: request });
-    if (!token?.id && !token?.sub) {
+    const userTokenId = token?.id || token?.sub;
+    
+    if (!userTokenId) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const userTokenId = token.id || token.sub;
-    const data = await request.json();
+    const data = await request.json() as UpdateTransactionData;
     const { _id, ...updateData } = data;
 
     // Validate required fields
@@ -155,20 +173,21 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Check if the transaction belongs to the current user
-    if (transaction.userTokenId !== userTokenId) {
+    // Safe comparison with null check
+    if (!transaction.userTokenId || transaction.userTokenId.toString() !== userTokenId.toString()) {
       return NextResponse.json(
         { error: 'You do not have permission to modify this transaction' },
         { status: 403 }
       );
     }
 
-    // Update transaction
+    // Update transaction with proper types
     const updatedTransaction = await Transaction.findByIdAndUpdate(
       _id,
       {
         ...updateData,
-        modifiedBy: token.name || 'System',
+        transactionDate: updateData.transactionDate ? new Date(updateData.transactionDate) : undefined,
+        modifiedBy: token?.name || 'System',
         modifiedDate: new Date(),
       },
       { new: true, runValidators: true }
@@ -187,21 +206,26 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+interface DeleteRequestData {
+  _id: string;
+}
+
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
 
-    // Verify authentication
+    // Verify authentication with proper type narrowing
     const token = await getToken({ req: request });
-    if (!token?.id && !token?.sub) {
+    const userTokenId = token?.id || token?.sub;
+    
+    if (!userTokenId) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const userTokenId = token.id || token.sub;
-    const data = await request.json();
+    const data = await request.json() as DeleteRequestData;
     const { _id } = data;
 
     // Validate required fields
@@ -221,8 +245,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Check if the transaction belongs to the current user
-    if (transaction.userTokenId !== userTokenId) {
+    // Safe comparison with null check
+    if (!transaction.userTokenId || transaction.userTokenId.toString() !== userTokenId.toString()) {
       return NextResponse.json(
         { error: 'You do not have permission to delete this transaction' },
         { status: 403 }

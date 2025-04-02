@@ -1,15 +1,13 @@
-// src/scripts/migrate-organizations.js
-// Run this script with: node -r dotenv/config src/scripts/migrate-organizations.js
+// src/scripts/migrate-organizations.ts
+// Run this script with: ts-node -r dotenv/config src/scripts/migrate-organizations.ts
 
-const mongoose = require('mongoose');
-const { MongoClient, ObjectId } = require('mongodb');
+import { MongoClient } from 'mongodb';
 
 // This script will assign a default userId to existing organizations
 // You'll need to run this if you already have data in your database
 
 async function migrateOrganizations() {
   try {
-    
     // Connect to MongoDB
     const uri = process.env.MONGODB_URI;
     if (!uri) {
@@ -24,7 +22,9 @@ async function migrateOrganizations() {
     const organizationsCollection = db.collection('organizations');
     
     // Find all organizations without a userId
-    const organizationsWithoutUserId = await organizationsCollection.find({ userId: { $exists: false } }).toArray();
+    const organizationsWithoutUserId = await organizationsCollection
+      .find({ userId: { $exists: false } })
+      .toArray();
     
     console.log(`Found ${organizationsWithoutUserId.length} organizations without userId`);
     
@@ -60,4 +60,6 @@ async function migrateOrganizations() {
   }
 }
 
-migrateOrganizations().then(() => process.exit(0));
+migrateOrganizations()
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1));

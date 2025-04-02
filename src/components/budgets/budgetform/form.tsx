@@ -4,8 +4,18 @@ import { CheckCircle, Link, Save, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
+interface BudgetData {
+  _id?: string;
+  userId?: string;
+  expensecategoriesId: string;
+  monthlyLimit: number | string;
+  spentAmount: number;
+  startDate: string;
+  endDate: string;
+}
+
 interface BudgetFormProps {
-  initialData?: any;
+  initialData?: BudgetData;
   onCancel?: () => void;
   onSuccess?: () => void;
 }
@@ -15,8 +25,8 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
   const isAuthenticated = authStatus === 'authenticated';
   const isAuthLoading = authStatus === 'loading';
 
-  const [formData, setFormData] = useState({
-    userId: initialData?.userId || (isAuthenticated ? session?.user?.id : ''), // Auto-populate userId if authenticated
+  const [formData, setFormData] = useState<BudgetData>({
+    userId: initialData?.userId || (isAuthenticated ? session?.user?.id : ''),
     expensecategoriesId: initialData?.expensecategoriesId || '',
     monthlyLimit: initialData?.monthlyLimit || '',
     spentAmount: initialData?.spentAmount || 0,
@@ -25,23 +35,26 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setErrorMessage('');
     setIsSubmitting(true);
     setSuccessMessage('');
 
     if (!isAuthenticated) {
-      setError('Authentication required. Please sign in.');
+      setErrorMessage('Authentication required. Please sign in.');
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const remainingBudget = formData.monthlyLimit - formData.spentAmount;
+      const monthlyLimit = typeof formData.monthlyLimit === 'string' 
+        ? parseFloat(formData.monthlyLimit) 
+        : formData.monthlyLimit;
+      const remainingBudget = monthlyLimit - formData.spentAmount;
 
       const response = await fetch('/api/budgets', {
         method: initialData ? 'PUT' : 'POST',
@@ -50,6 +63,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
         },
         body: JSON.stringify({
           ...formData,
+          monthlyLimit,
           remainingBudget,
           _id: initialData?._id,
         }),
@@ -59,21 +73,22 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
         setSuccessMessage(initialData ? 'Budget updated successfully!' : 'Budget created successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
         if (onSuccess) setTimeout(onSuccess, 1000);
-        if (!initialData)
+        if (!initialData) {
           setFormData({
-            userId: session?.user?.id || '', // Reset userId to authenticated user's ID
+            userId: session?.user?.id || '',
             expensecategoriesId: '',
             monthlyLimit: '',
             spentAmount: 0,
             startDate: '',
             endDate: '',
           });
+        }
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Error saving budget. Please check the input data.');
+        setErrorMessage(errorData.error || 'Error saving budget. Please check the input data.');
       }
-    } catch (error) {
-      setError('Failed to save budget. Please try again.');
+    } catch {
+      setErrorMessage('Failed to save budget. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -128,14 +143,14 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <AnimatePresence>
-            {error && (
+            {errorMessage && (
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md text-red-700"
               >
-                {error}
+                {errorMessage}
               </motion.div>
             )}
             {successMessage && (
@@ -181,7 +196,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
                 type="number"
                 required
                 value={formData.monthlyLimit}
-                onChange={(e) => setFormData({ ...formData, monthlyLimit: parseFloat(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, monthlyLimit: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter monthly limit"
               />

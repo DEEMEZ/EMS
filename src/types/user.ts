@@ -4,6 +4,7 @@ export interface IUser {
   fullname: string; 
   email: string;
   password?: string; // Add password field
+  role: 'User' ;
   phone?: string; 
   createdAt?: Date; 
   modifiedBy?: string; 

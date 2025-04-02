@@ -9,7 +9,7 @@ import _ from 'lodash';
 import { AlertCircle, ChevronLeft, ChevronRight, Edit, LogIn, Plus, Search, Trash2, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function ExpenseList() {
   // Authentication state
@@ -45,7 +45,7 @@ export default function ExpenseList() {
     debouncedSearch(value);
   };
 
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -82,7 +82,7 @@ export default function ExpenseList() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, page, debouncedSearchTerm]);
 
   const handleDelete = async (expenseId: string) => {
     try {
@@ -152,7 +152,7 @@ export default function ExpenseList() {
       setExpenses([]);
       setIsLoading(false);
     }
-  }, [debouncedSearchTerm, page, authStatus]);
+  }, [debouncedSearchTerm, page, authStatus, fetchExpenses]);
 
   useEffect(() => {
     return () => {

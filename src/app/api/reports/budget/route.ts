@@ -27,7 +27,17 @@ export async function GET(request: NextRequest) {
     // Validate date range
     if (!startDate || !endDate) {
       return NextResponse.json(
-        { error: "startDate and endDate are required" },
+        { error: "startDate and endDate are required query parameters" },
+        { status: 400 }
+      );
+    }
+
+    // Validate date format
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
+    if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
+      return NextResponse.json(
+        { error: "Invalid date format. Please use ISO format (YYYY-MM-DD)" },
         { status: 400 }
       );
     }
@@ -35,36 +45,57 @@ export async function GET(request: NextRequest) {
     // Find budgets that overlap with the requested date range
     const budgets = await Budget.find({
       userId,
-      startDate: { $lte: new Date(endDate) },
-      endDate: { $gte: new Date(startDate) }
+      startDate: { $lte: endDateObj },
+      endDate: { $gte: startDateObj }
     })
-    .populate("expensecategoriesId", "name")
+    .populate({
+      path: "expensecategoriesId",
+      select: "name",
+      model: "ExpenseCategory"
+    })
     .lean();
 
     if (!budgets || budgets.length === 0) {
       return NextResponse.json([]);
     }
 
-    // Calculate budget analysis
+    // Calculate budget analysis with proper type checking
     const budgetAnalysis = budgets.map((budget) => {
-      const spent = budget.spentAmount || 0;
-      const limit = budget.monthlyLimit || 0;
-      const remaining = limit - spent;
+      try {
+        if (!budget || !budget._id) {
+          throw new Error("Invalid budget document");
+        }
 
-      return {
-        _id: budget._id.toString(),
-        category: budget.expensecategoriesId?.name || "Uncategorized",
-        monthlyLimit: limit,
-        totalSpent: spent,
-        remainingBudget: remaining
-      };
-    });
+        const spent = typeof budget.spentAmount === 'number' ? budget.spentAmount : 0;
+        const limit = typeof budget.monthlyLimit === 'number' ? budget.monthlyLimit : 0;
+        const remaining = limit - spent;
+
+        // Safely handle populated category
+        const categoryName = (budget.expensecategoriesId && typeof budget.expensecategoriesId === 'object' && 'name' in budget.expensecategoriesId)
+          ? (budget.expensecategoriesId as { name: string }).name
+          : "Uncategorized";
+
+        return {
+          _id: budget._id.toString(),
+          category: categoryName,
+          monthlyLimit: limit,
+          totalSpent: spent,
+          remainingBudget: remaining,
+          startDate: budget.startDate?.toISOString().split('T')[0],
+          endDate: budget.endDate?.toISOString().split('T')[0]
+        };
+      } catch (error) {
+        console.error("Error processing budget:", budget, error);
+        return null;
+      }
+    }).filter(Boolean); // Remove any null entries from failed processing
 
     return NextResponse.json(budgetAnalysis);
   } catch (error: unknown) {
     console.error("Error fetching budget analysis:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json(
-      { error: (error as Error).message || "Failed to fetch budget analysis" },
+      { error: `Failed to fetch budget analysis: ${errorMessage}` },
       { status: 500 }
     );
   }

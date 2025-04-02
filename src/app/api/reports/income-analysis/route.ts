@@ -64,9 +64,6 @@ export async function GET(request: NextRequest) {
     }
 
     const transactionIds = transactions.map(t => t._id);
-    const transactionAmounts = new Map(
-      transactions.map(t => [t._id.toString(), t.amount])
-    );
 
     // 2. Find incomes linked to these transactions
     const incomeQuery = {
@@ -133,10 +130,10 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'public, max-age=300' // 5 minute cache
       }
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ Full error:', error);
     return NextResponse.json(
-      { error: "Failed to fetch income analysis" },
+      { error: (error as Error).message || "Failed to fetch income analysis" },
       { status: 500 }
     );
   }

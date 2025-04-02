@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function BankList() {
   // Authentication state
@@ -53,7 +53,7 @@ export default function BankList() {
     debouncedSearch(value);
   };
 
-  const fetchBanks = async () => {
+  const fetchBanks = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -90,7 +90,7 @@ export default function BankList() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [debouncedSearchTerm, page, isAuthenticated]);
 
   const handleDelete = async (bankId: string) => {
     try {
@@ -160,7 +160,7 @@ export default function BankList() {
       setBanks([]);
       setIsLoading(false);
     }
-  }, [debouncedSearchTerm, page, authStatus]);
+  }, [debouncedSearchTerm, page, authStatus, fetchBanks]);
 
   useEffect(() => {
     return () => {

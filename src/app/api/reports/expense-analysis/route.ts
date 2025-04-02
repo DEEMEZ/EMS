@@ -57,11 +57,8 @@ export async function GET(request: NextRequest) {
     }
 
     const transactionIds = transactions.map(t => t._id);
-    const transactionAmounts = new Map(
-      transactions.map(t => [t._id.toString(), t.amount])
-    );
 
-    // 2. Find expenses linked to these transactions
+    // 2. Find expenses linked to these transactions and use transaction amount directly
     const expenseQuery = {
       transactionId: { $in: transactionIds },
       userId: userTokenId, // Match the string ID used in expenses
@@ -71,6 +68,17 @@ export async function GET(request: NextRequest) {
 
     const expenses = await Expense.aggregate([
       { $match: expenseQuery },
+      // Lookup the transaction to get the current amount
+      {
+        $lookup: {
+          from: "transactions",
+          localField: "transactionId",
+          foreignField: "_id",
+          as: "transaction",
+        },
+      },
+      { $unwind: "$transaction" },
+      // Lookup category information
       {
         $lookup: {
           from: "expensecategories",
@@ -80,6 +88,7 @@ export async function GET(request: NextRequest) {
         },
       },
       { $unwind: "$category" },
+      // Lookup bank information
       {
         $lookup: {
           from: "banks",
@@ -89,11 +98,12 @@ export async function GET(request: NextRequest) {
         },
       },
       { $unwind: { path: "$bank", preserveNullAndEmptyArrays: true } },
+      // Group by category and sum amounts from transactions
       {
         $group: {
           _id: "$expensecategoriesId",
           category: { $first: "$category.name" },
-          totalAmount: { $sum: "$transactionAmount" },
+          totalAmount: { $sum: "$transaction.amount" }, // Using transaction amount here
           paymentMethods: { $addToSet: "$paymentMethod" },
           banksUsed: { 
             $addToSet: {
@@ -106,6 +116,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
+      // Filter out null banks
       {
         $addFields: {
           banksUsed: {
@@ -117,15 +128,16 @@ export async function GET(request: NextRequest) {
           }
         }
       },
+      // Sort by highest amount first
       { $sort: { totalAmount: -1 } },
     ]);
 
     console.log('✅ Expense analysis results:', expenses);
     return NextResponse.json(expenses);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ Full error:', error);
     return NextResponse.json(
-      { error: "Failed to fetch expense analysis" },
+      { error: (error as Error).message || "Failed to fetch expense analysis" },
       { status: 500 }
     );
   }

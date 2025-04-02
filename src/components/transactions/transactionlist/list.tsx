@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 export default function TransactionList() {
   // Authentication state
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === 'authenticated';
   const isAuthLoading = authStatus === 'loading';
 

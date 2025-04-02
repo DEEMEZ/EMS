@@ -1,7 +1,6 @@
 'use client';
 
 import UserList from "@/components/user/userlist/list";
-import NavbarComponent from "@/components/navbar/navbar";
 
 export default function UserListPage() {
   return (

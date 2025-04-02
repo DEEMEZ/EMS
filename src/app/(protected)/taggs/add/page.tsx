@@ -1,6 +1,5 @@
 'use client';
 
-import NavbarComponent from "@/components/navbar/navbar";
 import TagsForm from "@/components/tags/tagsform/form";
 
 export default function AddTagPage() {

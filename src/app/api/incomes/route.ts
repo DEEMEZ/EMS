@@ -88,8 +88,22 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { transactionId, incomeSourceId, orgId } = data;
+
+    if (!transactionId || !incomeSourceId || !orgId) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
 
     const transactionExists = await Transaction.findById(transactionId);
     if (!transactionExists) {
@@ -113,7 +127,7 @@ export async function POST(request: NextRequest) {
       incomeSourceId,
       orgId,
       transactionAmount,
-      userId, // Add the userId field
+      userId,
     });
 
     return NextResponse.json(
@@ -146,8 +160,22 @@ export async function PUT(request: NextRequest) {
     }
 
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { _id, transactionId, incomeSourceId, orgId } = data;
+
+    if (!_id) {
+      return NextResponse.json(
+        { error: 'Income ID is required' },
+        { status: 400 }
+      );
+    }
 
     const income = await Income.findById(_id);
     if (!income) {
@@ -155,7 +183,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if the income belongs to the current user
-    if (income.userId && income.userId.toString() !== userId.toString()) {
+    if (!income.userId || income.userId.toString() !== userId.toString()) {
       return NextResponse.json(
         { error: 'You do not have permission to modify this income' },
         { status: 403 }
@@ -170,13 +198,19 @@ export async function PUT(request: NextRequest) {
 
     const updatedIncome = await Income.findByIdAndUpdate(
       _id,
-      { transactionId, incomeSourceId, orgId, transactionAmount, userId },
+      { 
+        transactionId, 
+        incomeSourceId, 
+        orgId, 
+        transactionAmount, 
+        userId 
+      },
       { new: true, runValidators: true }
     );
 
     return NextResponse.json({
       message: 'Income updated successfully',
-      updatedIncome,
+      income: updatedIncome,
     });
   } catch (error) {
     console.error('Error in PUT /api/incomes:', error);
@@ -201,20 +235,33 @@ export async function DELETE(request: NextRequest) {
     }
 
     const userId = token.id || token.sub;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { _id } = data;
 
     if (!_id) {
-      return NextResponse.json({ error: 'Income ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Income ID is required' },
+        { status: 400 }
+      );
     }
 
     const income = await Income.findById(_id);
     if (!income) {
-      return NextResponse.json({ error: 'Income not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Income not found' },
+        { status: 404 }
+      );
     }
 
     // Check if the income belongs to the current user
-    if (income.userId && income.userId.toString() !== userId.toString()) {
+    if (!income.userId || income.userId.toString() !== userId.toString()) {
       return NextResponse.json(
         { error: 'You do not have permission to delete this income' },
         { status: 403 }

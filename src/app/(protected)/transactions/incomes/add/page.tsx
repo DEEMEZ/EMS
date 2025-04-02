@@ -1,7 +1,6 @@
 'use client';
 
 import IncomeForm from "@/components/income/incomeform/form";
-import NavbarComponent from "@/components/navbar/navbar";
 
 export default function AddIncome() {
     return (

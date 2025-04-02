@@ -1,4 +1,3 @@
-import NavbarComponent from "@/components/navbar/navbar";
 import BudgetAnalysisTable from "@/components/reports/budget";
 
 export default function BudgetReportPage() {

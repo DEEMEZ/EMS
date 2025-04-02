@@ -1,6 +1,5 @@
 'use client';
 import OrganizationForm from "@/components/organization/orgform/form";
-import NavbarComponent from "@/components/navbar/navbar";
 
 export default function AddOrganization() {
     return (

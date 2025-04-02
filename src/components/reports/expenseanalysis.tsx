@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
@@ -22,7 +21,7 @@ interface ExpenseAnalysis {
 }
 
 const ExpenseAnalysisTable = () => {
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === "authenticated";
   const isAuthLoading = authStatus === "loading";
 
@@ -31,6 +30,10 @@ const ExpenseAnalysisTable = () => {
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [error, setError] = useState("");
+
+  // Convert null to undefined for DatePicker props
+  const safeStartDate = startDate ?? undefined;
+  const safeEndDate = endDate ?? undefined;
 
   const fetchExpenses = async () => {
     if (!isAuthenticated) {
@@ -112,21 +115,21 @@ const ExpenseAnalysisTable = () => {
         <>
           <div className="flex flex-wrap gap-4 justify-center mb-6">
             <DatePicker
-              selected={startDate}
+              selected={safeStartDate}
               onChange={setStartDate}
               selectsStart
-              startDate={startDate}
-              endDate={endDate}
+              startDate={safeStartDate}
+              endDate={safeEndDate}
               placeholderText="Start Date"
               className="border rounded p-2"
             />
             <DatePicker
-              selected={endDate}
+              selected={safeEndDate}
               onChange={setEndDate}
               selectsEnd
-              startDate={startDate}
-              endDate={endDate}
-              minDate={startDate}
+              startDate={safeStartDate}
+              endDate={safeEndDate}
+              minDate={safeStartDate}
               placeholderText="End Date"
               className="border rounded p-2"
             />

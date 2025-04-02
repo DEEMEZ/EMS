@@ -12,7 +12,6 @@ import {
   Receipt,
   Settings,
   Tags,
-  UserCircle,
   Wallet
 } from 'lucide-react';
 

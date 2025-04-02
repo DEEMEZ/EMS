@@ -1,4 +1,3 @@
-import NavbarComponent from "@/components/navbar/navbar";
 import TransactionAnalysisTable from "@/components/reports/transaction";
 
 export default function TransactionReportPage() {

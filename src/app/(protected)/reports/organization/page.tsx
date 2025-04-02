@@ -1,4 +1,3 @@
-import NavbarComponent from "@/components/navbar/navbar";
 import OrganizationStatusReport from "@/components/reports/organizationstatusreport";
 
 export default function OrganizationReportPage() {

@@ -1,7 +1,6 @@
 'use client';
 
 import ExpenseCategoryList from "@/components/expensecategories/expensecategorieslist/list";
-import NavbarComponent from "@/components/navbar/navbar";
 
 export default function ExpenseCategoriesList() {
     return (

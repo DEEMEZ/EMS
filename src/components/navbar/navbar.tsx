@@ -1,18 +1,18 @@
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import { navigationConfig, NavItem } from '@/config/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, Menu, X } from 'lucide-react';
+import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Menu, X } from 'lucide-react';
-import { navigationConfig, NavItem } from '@/config/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const NavbarComponent = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const pathname = usePathname();
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   // Close dropdown when clicking outside

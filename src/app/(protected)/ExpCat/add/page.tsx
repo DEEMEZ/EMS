@@ -1,7 +1,6 @@
 'use client';
 
 import ExpenseCategoryForm from "@/components/expensecategories/expensecategoriesform/form";
-import NavbarComponent from "@/components/navbar/navbar";
 
 export default function ExpenseCategoryPage() { 
     return (

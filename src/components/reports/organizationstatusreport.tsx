@@ -26,7 +26,7 @@ interface OrganizationAnalysis {
 }
 
 const OrganizationAnalysisTable = () => {
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === "authenticated";
   const isAuthLoading = authStatus === "loading";
 
@@ -35,6 +35,10 @@ const OrganizationAnalysisTable = () => {
   const [startDate, setStartDate] = useState<Date | null>(new Date(new Date().setDate(1))); // First day of current month
   const [endDate, setEndDate] = useState<Date | null>(new Date()); // Today
   const [error, setError] = useState("");
+
+  // Convert null to undefined for DatePicker props
+  const safeStartDate = startDate ?? undefined;
+  const safeEndDate = endDate ?? undefined;
 
   const fetchOrganizations = async () => {
     if (!isAuthenticated) {
@@ -122,23 +126,23 @@ const OrganizationAnalysisTable = () => {
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1">Start Date</label>
               <DatePicker
-                selected={startDate}
+                selected={safeStartDate}
                 onChange={setStartDate}
                 selectsStart
-                startDate={startDate}
-                endDate={endDate}
+                startDate={safeStartDate}
+                endDate={safeEndDate}
                 className="border p-2 rounded-lg"
               />
             </div>
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1">End Date</label>
               <DatePicker
-                selected={endDate}
+                selected={safeEndDate}
                 onChange={setEndDate}
                 selectsEnd
-                startDate={startDate}
-                endDate={endDate}
-                minDate={startDate}
+                startDate={safeStartDate}
+                endDate={safeEndDate}
+                minDate={safeStartDate}
                 className="border p-2 rounded-lg"
               />
             </div>
@@ -197,101 +201,113 @@ const OrganizationAnalysisTable = () => {
 
           {data.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {incomeData.length > 0 && (
-                <>
-                  <div className="bg-gray-100 p-4 rounded-lg shadow">
-                    <h3 className="text-lg font-semibold text-center mb-2">Income by Organization</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={incomeData}>
-                        <XAxis dataKey="orgName" />
-                        <YAxis />
-                        <Tooltip 
-                          formatter={(value) => [`$${value.toFixed(2)}`, ""]}
-                          labelFormatter={(label) => `Org: ${label}`}
-                        />
-                        <Legend />
-                        <Bar dataKey="totalAmount" name="Total Income">
-                          {incomeData.map((_, index) => (
-                            <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+            {incomeData.length > 0 && (
+  <>
+    <div className="bg-gray-100 p-4 rounded-lg shadow">
+      <h3 className="text-lg font-semibold text-center mb-2">Income by Organization</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={incomeData}>
+          <XAxis dataKey="orgName" />
+          <YAxis />
+          <Tooltip 
+            formatter={(value) => {
+              const numValue = typeof value === 'number' ? value : 0;
+              return [`$${numValue.toFixed(2)}`, ""];
+            }}
+            labelFormatter={(label) => `Org: ${label}`}
+          />
+          <Legend />
+          <Bar dataKey="totalAmount" name="Total Income">
+            {incomeData.map((_, index) => (
+              <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
 
-                  <div className="bg-gray-100 p-4 rounded-lg shadow">
-                    <h3 className="text-lg font-semibold text-center mb-2">Income Distribution</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={incomeData}
-                          dataKey="totalAmount"
-                          nameKey="orgName"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={100}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                        >
-                          {incomeData.map((_, index) => (
-                            <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value) => [`$${value.toFixed(2)}`, ""]}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </>
-              )}
+    <div className="bg-gray-100 p-4 rounded-lg shadow">
+      <h3 className="text-lg font-semibold text-center mb-2">Income Distribution</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <Pie
+            data={incomeData}
+            dataKey="totalAmount"
+            nameKey="orgName"
+            cx="50%"
+            cy="50%"
+            outerRadius={100}
+            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+          >
+            {incomeData.map((_, index) => (
+              <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
+            ))}
+          </Pie>
+          <Tooltip 
+            formatter={(value) => {
+              const numValue = typeof value === 'number' ? value : 0;
+              return [`$${numValue.toFixed(2)}`, ""];
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  </>
+)}
 
-              {expenseData.length > 0 && (
-                <>
-                  <div className="bg-gray-100 p-4 rounded-lg shadow">
-                    <h3 className="text-lg font-semibold text-center mb-2">Expenses by Organization</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={expenseData}>
-                        <XAxis dataKey="orgName" />
-                        <YAxis />
-                        <Tooltip 
-                          formatter={(value) => [`$${value.toFixed(2)}`, ""]}
-                          labelFormatter={(label) => `Org: ${label}`}
-                        />
-                        <Legend />
-                        <Bar dataKey="totalAmount" name="Total Expenses">
-                          {expenseData.map((_, index) => (
-                            <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+{expenseData.length > 0 && (
+  <>
+    <div className="bg-gray-100 p-4 rounded-lg shadow">
+      <h3 className="text-lg font-semibold text-center mb-2">Expenses by Organization</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={expenseData}>
+          <XAxis dataKey="orgName" />
+          <YAxis />
+          <Tooltip 
+            formatter={(value) => {
+              const numValue = typeof value === 'number' ? value : 0;
+              return [`$${numValue.toFixed(2)}`, ""];
+            }}
+            labelFormatter={(label) => `Org: ${label}`}
+          />
+          <Legend />
+          <Bar dataKey="totalAmount" name="Total Expenses">
+            {expenseData.map((_, index) => (
+              <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
 
-                  <div className="bg-gray-100 p-4 rounded-lg shadow">
-                    <h3 className="text-lg font-semibold text-center mb-2">Expense Distribution</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={expenseData}
-                          dataKey="totalAmount"
-                          nameKey="orgName"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={100}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                        >
-                          {expenseData.map((_, index) => (
-                            <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value) => [`$${value.toFixed(2)}`, ""]}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </>
-              )}
+    <div className="bg-gray-100 p-4 rounded-lg shadow">
+      <h3 className="text-lg font-semibold text-center mb-2">Expense Distribution</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <Pie
+            data={expenseData}
+            dataKey="totalAmount"
+            nameKey="orgName"
+            cx="50%"
+            cy="50%"
+            outerRadius={100}
+            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+          >
+            {expenseData.map((_, index) => (
+              <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
+            ))}
+          </Pie>
+          <Tooltip 
+            formatter={(value) => {
+              const numValue = typeof value === 'number' ? value : 0;
+              return [`$${numValue.toFixed(2)}`, ""];
+            }}
+          />
+                  </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
+            )}
             </div>
           )}
         </>

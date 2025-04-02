@@ -1,7 +1,6 @@
 'use client';
 
 import BudgetForm from "@/components/budgets/budgetform/form";
-import NavbarComponent from "@/components/navbar/navbar";
 
 export default function AddBudget() {
     return (

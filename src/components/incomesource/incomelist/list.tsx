@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function IncomeSourceList() {
   // Authentication state
@@ -55,7 +55,7 @@ export default function IncomeSourceList() {
     debouncedSearch(value);
   };
 
-  const fetchIncomeSources = async () => {
+  const fetchIncomeSources = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -92,7 +92,7 @@ export default function IncomeSourceList() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, page, debouncedSearchTerm]);
 
   const handleDelete = async (sourceId: string) => {
     try {
@@ -162,7 +162,7 @@ export default function IncomeSourceList() {
       setIncomeSources([]);
       setIsLoading(false);
     }
-  }, [debouncedSearchTerm, page, authStatus]);
+  }, [debouncedSearchTerm, page, authStatus, fetchIncomeSources]);
 
   useEffect(() => {
     return () => {

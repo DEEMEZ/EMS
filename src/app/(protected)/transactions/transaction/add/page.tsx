@@ -1,6 +1,5 @@
 'use client';
 
-import NavbarComponent from "@/components/navbar/navbar";
 import TransactionForm from "@/components/transactions/transactionform/form";
 
 export default function AddTransaction() {

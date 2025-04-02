@@ -2,14 +2,14 @@
 'use client';
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
-import { IPaymentmethods } from '@/types/paymentmethods';
+import { IPaymentMethodInput } from '@/types/paymentmethods'; // Updated import
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Save, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
 interface PaymentmethodsFormProps {
-  initialData?: IPaymentmethods;
+  initialData?: IPaymentMethodInput; // Updated type
   onCancel?: () => void;
   onSuccess?: () => void;
 }
@@ -19,9 +19,10 @@ export default function PaymentmethodsForm({
   onCancel,
   onSuccess,
 }: PaymentmethodsFormProps) {
-  const [formData, setFormData] = useState<IPaymentmethods>({
+  const [formData, setFormData] = useState<IPaymentMethodInput>({ // Updated type
     name: initialData?.name || '',
     description: initialData?.description || '',
+    ...(initialData?._id && { _id: initialData._id }) // Include _id if editing
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,44 +44,48 @@ export default function PaymentmethodsForm({
     }
 
     try {
-      const response = await fetch('/api/paymentmethods', {
-        method: initialData ? 'PUT' : 'POST',
+      const url = initialData?._id 
+        ? `/api/paymentmethods?id=${initialData._id}`
+        : '/api/paymentmethods';
+
+      const method = initialData?._id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...formData, _id: initialData?._id }),
+        body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
-        const successMsg = initialData
-          ? 'Payment Method Updated Successfully!'
-          : 'Payment Method Created Successfully!';
-        setSuccessMessage(successMsg);
-
-        setTimeout(() => setSuccessMessage(''), 3000);
-
-        if (onSuccess) {
-          setTimeout(() => {
-            onSuccess();
-          }, 1000);
-        }
-
-        if (!initialData) {
-          setFormData({
-            name: '',
-            description: '',
-          });
-        }
-      } else {
-        setError('Failed To Save Payment Method');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save payment method');
       }
-    } catch {
-      setError('Failed To Save Payment Method');
+
+      const successMsg = initialData?._id
+        ? 'Payment Method Updated Successfully!'
+        : 'Payment Method Created Successfully!';
+      setSuccessMessage(successMsg);
+
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      if (onSuccess) {
+        setTimeout(() => onSuccess(), 1000);
+      }
+
+      if (!initialData?._id) {
+        setFormData({
+          name: '',
+          description: '',
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save payment method');
     } finally {
       setIsSubmitting(false);
     }
   };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

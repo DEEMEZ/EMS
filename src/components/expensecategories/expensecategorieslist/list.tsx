@@ -9,7 +9,7 @@ import _ from 'lodash';
 import { AlertCircle, ChevronLeft, ChevronRight, Edit, LogIn, Plus, Search, Trash2, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function ExpenseCategoryList() {
   // Authentication state
@@ -44,7 +44,7 @@ export default function ExpenseCategoryList() {
     debouncedSearch(value);
   };
 
-  const fetchExpenseCategories = async () => {
+  const fetchExpenseCategories = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -73,9 +73,8 @@ export default function ExpenseCategoryList() {
       }
 
       const data = await response.json();
- 
       setExpenseCategories(data.categories || []);
-      console.log('API Response:', data); // Add this line
+      console.log('API Response:', data);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (err) {
       setError('Failed To Fetch Expense Categories');
@@ -83,7 +82,7 @@ export default function ExpenseCategoryList() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, page, debouncedSearchTerm]);
 
   const handleDelete = async (categoryId: string) => {
     try {
@@ -153,7 +152,7 @@ export default function ExpenseCategoryList() {
       setExpenseCategories([]);
       setIsLoading(false);
     }
-  }, [debouncedSearchTerm, page, authStatus]);
+  }, [debouncedSearchTerm, page, authStatus, fetchExpenseCategories]);
 
   useEffect(() => {
     return () => {

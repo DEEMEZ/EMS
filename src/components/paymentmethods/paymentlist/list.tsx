@@ -3,7 +3,7 @@
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import PaymentmethodsForm from '@/components/paymentmethods/paymentform/form';
-import { IPaymentmethods } from '@/types/paymentmethods';
+import { IPaymentMethodResponse } from '@/types/paymentmethods';
 import { AnimatePresence, motion } from 'framer-motion';
 import _ from 'lodash';
 import {
@@ -28,7 +28,7 @@ export default function PaymentmethodsList() {
   const isAuthLoading = authStatus === 'loading';
 
   // Data state
-  const [paymentMethods, setPaymentMethods] = useState<IPaymentmethods[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<IPaymentMethodResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -39,7 +39,7 @@ export default function PaymentmethodsList() {
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPaymentMethod, setEditingPaymentMethod] = useState<IPaymentmethods | null>(null);
+  const [editingPaymentMethod, setEditingPaymentMethod] = useState<IPaymentMethodResponse | null>(null);
 
   const debouncedSearch = useMemo(
     () => _.debounce((value: string) => {
@@ -59,7 +59,6 @@ export default function PaymentmethodsList() {
       setIsLoading(true);
       setError('');
 
-      // Only fetch if authenticated
       if (!isAuthenticated) {
         setIsLoading(false);
         return;
@@ -72,14 +71,17 @@ export default function PaymentmethodsList() {
       });
 
       const response = await fetch(`/api/paymentmethods?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed To Fetch Payment Methods');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch payment methods');
+      }
 
       const data = await response.json();
       setPaymentMethods(data.sources);
       setTotalPages(data.pagination.totalPages);
     } catch (err) {
-      setError('Failed To Fetch Payment Methods');
-      console.error('Error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch payment methods');
+      console.error('Fetch error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -87,34 +89,40 @@ export default function PaymentmethodsList() {
 
   const handleDelete = async (paymentMethodId: string) => {
     try {
-      // Check authentication first
       if (!isAuthenticated) {
         setError('You must be signed in to delete a payment method');
         return;
       }
 
+      if (!paymentMethodId) {
+        setError('Invalid payment method ID');
+        return;
+      }
+
       setIsDeleting(paymentMethodId);
-      const response = await fetch(`/api/paymentmethods`, {
+      const response = await fetch(`/api/paymentmethods?id=${paymentMethodId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ _id: paymentMethodId }),
       });
 
-      if (!response.ok) throw new Error('Failed To Delete Payment Method');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete payment method');
+      }
 
+      // Optimistic update
+      setPaymentMethods(prev => prev.filter(method => method._id !== paymentMethodId));
+      
+      // Refetch to ensure consistency
       await fetchPaymentMethods();
     } catch (err) {
-      setError('Failed To Delete Payment Method');
-      console.error('Error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete payment method');
+      console.error('Delete error:', err);
     } finally {
       setIsDeleting(null);
     }
   };
 
-  const openModal = (paymentMethod?: IPaymentmethods) => {
-    // Check authentication first
+  const openModal = (paymentMethod?: IPaymentMethodResponse) => {
     if (!isAuthenticated) {
       setError('You must be signed in to manage payment methods');
       return;
@@ -127,6 +135,7 @@ export default function PaymentmethodsList() {
   const closeModal = () => {
     setEditingPaymentMethod(null);
     setIsModalOpen(false);
+    setError('');
   };
 
   const handleSuccess = () => {
@@ -138,7 +147,6 @@ export default function PaymentmethodsList() {
     if (authStatus === 'authenticated') {
       fetchPaymentMethods();
     } else if (authStatus === 'unauthenticated') {
-      // Clear payment methods if user is not authenticated
       setPaymentMethods([]);
       setIsLoading(false);
     }
@@ -246,7 +254,7 @@ export default function PaymentmethodsList() {
         </div>
       )}
 
-      {/* Payment Methods Table - Only show when authenticated and not loading */}
+      {/* Payment Methods Table */}
       {isAuthenticated && !isLoading && !isAuthLoading && (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
@@ -260,29 +268,30 @@ export default function PaymentmethodsList() {
               </thead>
               <tbody>
                 <AnimatePresence>
-                  {paymentMethods.map((paymentMethod, index) => (
+                  {paymentMethods.map((paymentMethod) => (
                     <motion.tr
                       key={paymentMethod._id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
                       className="border-b border-gray-100 hover:bg-gray-50"
                     >
                       <td className="px-6 py-4">{paymentMethod.name}</td>
-                      <td className="px-6 py-4">{paymentMethod.description}</td>
+                      <td className="px-6 py-4">{paymentMethod.description || '-'}</td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => openModal(paymentMethod)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            aria-label="Edit payment method"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(paymentMethod._id!)}
+                            onClick={() => handleDelete(paymentMethod._id)}
                             disabled={isDeleting === paymentMethod._id}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            aria-label="Delete payment method"
                           >
                             {isDeleting === paymentMethod._id ? (
                               <LoadingSpinner size="sm" />
@@ -304,7 +313,9 @@ export default function PaymentmethodsList() {
             <div className="flex flex-col items-center justify-center py-12">
               <div className="text-center">
                 <h3 className="text-lg font-medium text-gray-900">No Payment Methods Found</h3>
-                <p className="text-gray-500 mt-1">Get started by creating a new payment method.</p>
+                <p className="text-gray-500 mt-1">
+                  {debouncedSearchTerm ? 'No results match your search' : 'Get started by creating a new payment method'}
+                </p>
                 <button
                   onClick={() => openModal()}
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -320,13 +331,14 @@ export default function PaymentmethodsList() {
           {paymentMethods.length > 0 && (
             <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
               <div className="text-sm text-gray-500">
-                Showing {paymentMethods.length} Payment Methods
+                Showing {paymentMethods.length} of {totalPages * 10} Payment Methods
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
                   disabled={page === 1}
                   className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Previous page"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -334,9 +346,10 @@ export default function PaymentmethodsList() {
                   Page {page} of {totalPages}
                 </span>
                 <button
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                  onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={page === totalPages}
                   className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Next page"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
@@ -354,7 +367,7 @@ export default function PaymentmethodsList() {
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign in to Manage Payment Methods</h2>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            You need to be signed in to view and manage your payment methods. Please sign in to continue.
+            You need to be signed in to view and manage your payment methods.
           </p>
           <Link
             href="/auth/signin"
@@ -382,6 +395,7 @@ export default function PaymentmethodsList() {
               <button
                 onClick={closeModal}
                 className="p-2 hover:bg-gray-100 rounded-lg"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>

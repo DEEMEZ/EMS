@@ -6,12 +6,38 @@ import { LoadingSpinner } from '@/components/loadiingspinner';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Banknote, Building, CheckCircle, CreditCard, List, Save, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ExpenseFormProps {
   initialData?: any;
   onCancel?: () => void;
   onSuccess?: () => void;
+}
+
+interface Organization {
+  _id: string;
+  name: string;
+}
+
+interface ExpenseCategory {
+  _id: string;
+  name: string;
+  description?: string;
+}
+
+interface Transaction {
+  _id: string;
+  amount: number;
+  type: string;
+  transactionDate: string;
+  description?: string;
+}
+
+interface Bank {
+  _id: string;
+  name: string;
+  accountNumber: string;
+  branch: string;
 }
 
 export default function ExpenseForm({ initialData, onCancel, onSuccess }: ExpenseFormProps) {
@@ -23,11 +49,96 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     bankId: initialData?.bankId || '',
   });
 
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+  const [isLoadingBanks, setIsLoadingBanks] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated';
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrganizations();
+      fetchExpenseCategories();
+      fetchExpenseTransactions();
+      fetchBanks();
+    }
+  }, [isAuthenticated]);
+
+  const fetchOrganizations = async () => {
+    setIsLoadingOrgs(true);
+    try {
+      const response = await fetch('/api/organization');
+      if (response.ok) {
+        const data = await response.json();
+        setOrganizations(data.organizations);
+      } else {
+        setError('Failed to load organizations');
+      }
+    } catch (err) {
+      setError('Failed to load organizations');
+    } finally {
+      setIsLoadingOrgs(false);
+    }
+  };
+
+  const fetchExpenseCategories = async () => {
+    setIsLoadingCategories(true);
+    try {
+      const response = await fetch('/api/expensecategories');
+      if (response.ok) {
+        const data = await response.json();
+        setExpenseCategories(data.categories || []);
+      } else {
+        setError('Failed to load expense categories');
+      }
+    } catch (err) {
+      setError('Failed to load expense categories');
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
+
+  const fetchExpenseTransactions = async () => {
+    setIsLoadingTransactions(true);
+    try {
+      const response = await fetch('/api/transactions?type=Expense');
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data.transactions || []);
+      } else {
+        setError('Failed to load transactions');
+      }
+    } catch (err) {
+      setError('Failed to load transactions');
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  };
+
+  const fetchBanks = async () => {
+    setIsLoadingBanks(true);
+    try {
+      const response = await fetch('/api/bank');
+      if (response.ok) {
+        const data = await response.json();
+        setBanks(data.banks || []);
+      } else {
+        setError('Failed to load banks');
+      }
+    } catch (err) {
+      setError('Failed to load banks');
+    } finally {
+      setIsLoadingBanks(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +153,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     }
 
     if (formData.paymentMethod === 'Transfer' && !formData.bankId) {
-      setError('Bank ID is required for Transfer payment method.');
+      setError('Bank is required for Transfer payment method.');
       setIsSubmitting(false);
       return;
     }
@@ -128,52 +239,85 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
         </AnimatePresence>
 
         <div className="space-y-4">
-          {/* Transaction ID Field */}
+          {/* Transaction Field - Dropdown (Expense type only) */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
               <CreditCard className="w-4 h-4" />
-              Transaction ID
+              Transaction
             </label>
-            <input
-              type="text"
-              required
-              value={formData.transactionId}
-              onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Transaction ID"
-            />
+            {isLoadingTransactions ? (
+              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <select
+                required
+                value={formData.transactionId}
+                onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select an expense transaction</option>
+                {transactions.map((transaction) => (
+                  <option key={transaction._id} value={transaction._id}>
+                    {transaction.description || `Expense: $${transaction.amount}`} - {new Date(transaction.transactionDate).toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
-          {/* Expense Category ID Field */}
+          {/* Expense Category Field - Dropdown */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
               <List className="w-4 h-4" />
-              Expense Category ID
+              Expense Category
             </label>
-            <input
-              type="text"
-              required
-              value={formData.expensecategoriesId}
-              onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Expense Category ID"
-            />
+            {isLoadingCategories ? (
+              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <select
+                required
+                value={formData.expensecategoriesId}
+                onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select an expense category</option>
+                {expenseCategories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.name} {category.description && `- ${category.description}`}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
-          {/* Organization ID Field */}
+          {/* Organization Field - Dropdown */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
               <Building className="w-4 h-4" />
-              Organization ID
+              Organization
             </label>
-            <input
-              type="text"
-              required
-              value={formData.orgId}
-              onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Organization ID"
-            />
+            {isLoadingOrgs ? (
+              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <select
+                required
+                value={formData.orgId}
+                onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select an organization</option>
+                {organizations.map((org) => (
+                  <option key={org._id} value={org._id}>
+                    {org.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Payment Method Field */}
@@ -194,21 +338,32 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
             </select>
           </div>
 
-          {/* Bank ID Field (Conditional) */}
+          {/* Bank Field - Dropdown (Conditional) */}
           {formData.paymentMethod === 'Transfer' && (
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
                 <Banknote className="w-4 h-4" />
-                Bank ID
+                Bank Account
               </label>
-              <input
-                type="text"
-                required
-                value={formData.bankId}
-                onChange={(e) => setFormData({ ...formData, bankId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter Bank ID"
-              />
+              {isLoadingBanks ? (
+                <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
+                  <LoadingSpinner size="sm" />
+                </div>
+              ) : (
+                <select
+                  required
+                  value={formData.bankId}
+                  onChange={(e) => setFormData({ ...formData, bankId: e.target.value })}
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="">Select a bank account</option>
+                  {banks.map((bank) => (
+                    <option key={bank._id} value={bank._id}>
+                      {bank.name} ({bank.accountNumber}) - {bank.branch}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
         </div>
@@ -227,7 +382,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
           )}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isLoadingOrgs || isLoadingCategories || isLoadingTransactions || isLoadingBanks}
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (

@@ -2,7 +2,7 @@ import { LoadingSpinner } from '@/components/loadiingspinner';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Link, Save, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface BudgetData {
   _id?: string;
@@ -12,6 +12,13 @@ interface BudgetData {
   spentAmount: number;
   startDate: string;
   endDate: string;
+}
+
+interface ExpenseCategory {
+  _id: string;
+  name: string;
+  description?: string;
+  userId: string;
 }
 
 interface BudgetFormProps {
@@ -34,9 +41,44 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
     endDate: initialData?.endDate || '',
   });
 
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [categoriesError, setCategoriesError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  useEffect(() => {
+    const fetchExpenseCategories = async () => {
+      if (!isAuthenticated) return;
+      
+      setIsLoadingCategories(true);
+      setCategoriesError('');
+      try {
+        const response = await fetch('/api/expensecategories');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.categories || !Array.isArray(data.categories)) {
+          throw new Error('Invalid data format received');
+        }
+        
+        setExpenseCategories(data.categories);
+      } catch (error) {
+        console.error('Error fetching expense categories:', error);
+        setCategoriesError('Failed to load expense categories. Please try again later.');
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    fetchExpenseCategories();
+  }, [isAuthenticated, retryCount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,11 +92,25 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
       return;
     }
 
+    // Validate numeric fields
+    const monthlyLimitNum = typeof formData.monthlyLimit === 'string' 
+      ? parseFloat(formData.monthlyLimit) 
+      : formData.monthlyLimit;
+    
+    if (isNaN(monthlyLimitNum)) {
+      setErrorMessage('Please enter a valid number for monthly limit');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (isNaN(formData.spentAmount)) {
+      setErrorMessage('Please enter a valid number for spent amount');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const monthlyLimit = typeof formData.monthlyLimit === 'string' 
-        ? parseFloat(formData.monthlyLimit) 
-        : formData.monthlyLimit;
-      const remainingBudget = monthlyLimit - formData.spentAmount;
+      const remainingBudget = monthlyLimitNum - formData.spentAmount;
 
       const response = await fetch('/api/budgets', {
         method: initialData ? 'PUT' : 'POST',
@@ -63,7 +119,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
         },
         body: JSON.stringify({
           ...formData,
-          monthlyLimit,
+          monthlyLimit: monthlyLimitNum,
           remainingBudget,
           _id: initialData?._id,
         }),
@@ -87,7 +143,8 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
         const errorData = await response.json();
         setErrorMessage(errorData.error || 'Error saving budget. Please check the input data.');
       }
-    } catch {
+    } catch (error) {
+      console.error('Error saving budget:', error);
       setErrorMessage('Failed to save budget. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -166,7 +223,6 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
             )}
           </AnimatePresence>
 
-          {/* Form Fields */}
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-gray-700">User ID</label>
@@ -179,15 +235,37 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Expense Category ID</label>
-              <input
-                type="text"
-                required
-                value={formData.expensecategoriesId}
-                onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter expense category ID"
-              />
+              <label className="text-sm font-medium text-gray-700">Expense Category</label>
+              {isLoadingCategories ? (
+                <div className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm bg-gray-100">
+                  <LoadingSpinner size="sm" />
+                  <span className="ml-2">Loading categories...</span>
+                </div>
+              ) : categoriesError ? (
+                <div className="mt-1 p-2 text-red-500 text-sm bg-red-50 rounded-md">
+                  {categoriesError}
+                  <button
+                    onClick={() => setRetryCount(retryCount + 1)}
+                    className="ml-2 text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <select
+                  required
+                  value={formData.expensecategoriesId}
+                  onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
+                  className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="">Select an expense category</option>
+                  {expenseCategories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>
@@ -195,10 +273,12 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
               <input
                 type="number"
                 required
-                value={formData.monthlyLimit}
+                value={formData.monthlyLimit === '' ? '' : formData.monthlyLimit}
                 onChange={(e) => setFormData({ ...formData, monthlyLimit: e.target.value })}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter monthly limit"
+                min="0"
+                step="0.01"
               />
             </div>
 
@@ -207,10 +287,15 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
               <input
                 type="number"
                 required
-                value={formData.spentAmount}
-                onChange={(e) => setFormData({ ...formData, spentAmount: parseFloat(e.target.value) })}
+                value={isNaN(formData.spentAmount) ? '' : formData.spentAmount}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  setFormData({ ...formData, spentAmount: isNaN(value) ? 0 : value });
+                }}
                 className="mt-1 block w-full rounded-xl border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter spent amount"
+                min="0"
+                step="0.01"
               />
             </div>
 
@@ -237,7 +322,6 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="flex justify-end items-center gap-3 pt-6 border-t">
             {onCancel && (
               <button

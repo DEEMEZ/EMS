@@ -18,6 +18,8 @@ export default function SignUp() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -28,6 +30,13 @@ export default function SignUp() {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    // Validate all fields are filled
+    if (!formData.fullname || !formData.email || !formData.password || !formData.confirmPassword || !formData.phone) {
+      setError("All fields are required");
+      setLoading(false);
+      return;
+    }
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
@@ -69,17 +78,17 @@ export default function SignUp() {
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6 p-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center">Create an Account</h1>
-        
+
         {error && (
           <div className="p-3 bg-red-100 text-red-600 rounded-md">
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="fullname" className="block text-sm font-medium">
-              Full Name
+              Full Name *
             </label>
             <input
               id="fullname"
@@ -91,10 +100,10 @@ export default function SignUp() {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
-          
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium">
-              Email
+              Email *
             </label>
             <input
               id="email"
@@ -106,10 +115,10 @@ export default function SignUp() {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
-          
+
           <div>
             <label htmlFor="phone" className="block text-sm font-medium">
-              Phone (Optional)
+              Phone *
             </label>
             <input
               id="phone"
@@ -117,49 +126,64 @@ export default function SignUp() {
               type="tel"
               value={formData.phone}
               onChange={handleChange}
+              required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
-          
-          <div>
+
+          <div className="relative">
             <label htmlFor="password" className="block text-sm font-medium">
-              Password
+              Password *
             </label>
             <input
               id="password"
               name="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={formData.password}
               onChange={handleChange}
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2 top-8 text-sm text-gray-600"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
           </div>
-          
-          <div>
+
+          <div className="relative">
             <label htmlFor="confirmPassword" className="block text-sm font-medium">
-              Confirm Password
+              Confirm Password *
             </label>
             <input
               id="confirmPassword"
               name="confirmPassword"
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               value={formData.confirmPassword}
               onChange={handleChange}
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-2 top-8 text-sm text-gray-600"
+            >
+              {showConfirmPassword ? "Hide" : "Show"}
+            </button>
           </div>
-          
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm"
+            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm disabled:bg-blue-400"
           >
             {loading ? "Creating Account..." : "Sign Up"}
           </button>
         </form>
-        
+
         <div className="text-center">
           <p className="text-sm">
             Already have an account?{" "}

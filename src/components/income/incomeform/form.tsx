@@ -6,12 +6,31 @@ import { LoadingSpinner } from '@/components/loadiingspinner';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Building, CheckCircle, CreditCard, List, Save, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface IncomeFormProps {
   initialData?: any;
   onCancel?: () => void;
   onSuccess?: () => void;
+}
+
+interface Organization {
+  _id: string;
+  name: string;
+}
+
+interface IncomeSource {
+  _id: string;
+  name: string;
+  description?: string;
+}
+
+interface Transaction {
+  _id: string;
+  amount: number;
+  type: string;
+  transactionDate: string;
+  description?: string;
 }
 
 export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeFormProps) {
@@ -21,11 +40,76 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
     orgId: initialData?.orgId || '',
   });
 
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
+  const [isLoadingIncomeSources, setIsLoadingIncomeSources] = useState(false);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated';
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrganizations();
+      fetchIncomeSources();
+      fetchIncomeTransactions();
+    }
+  }, [isAuthenticated]);
+
+  const fetchOrganizations = async () => {
+    setIsLoadingOrgs(true);
+    try {
+      const response = await fetch('/api/organization');
+      if (response.ok) {
+        const data = await response.json();
+        setOrganizations(data.organizations);
+      } else {
+        setError('Failed to load organizations');
+      }
+    } catch (err) {
+      setError('Failed to load organizations');
+    } finally {
+      setIsLoadingOrgs(false);
+    }
+  };
+
+  const fetchIncomeSources = async () => {
+    setIsLoadingIncomeSources(true);
+    try {
+      const response = await fetch('/api/incomesources');
+      if (response.ok) {
+        const data = await response.json();
+        setIncomeSources(data.sources || []);
+      } else {
+        setError('Failed to load income sources');
+      }
+    } catch (err) {
+      setError('Failed to load income sources');
+    } finally {
+      setIsLoadingIncomeSources(false);
+    }
+  };
+
+  const fetchIncomeTransactions = async () => {
+    setIsLoadingTransactions(true);
+    try {
+      const response = await fetch('/api/transactions?type=Income');
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data.transactions || []);
+      } else {
+        setError('Failed to load transactions');
+      }
+    } catch (err) {
+      setError('Failed to load transactions');
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,52 +202,85 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
         </AnimatePresence>
 
         <div className="space-y-4">
-          {/* Transaction ID Field */}
+          {/* Transaction Field - Dropdown */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
               <CreditCard className="w-4 h-4" />
-              Transaction ID
+              Transaction
             </label>
-            <input
-              type="text"
-              required
-              value={formData.transactionId}
-              onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Transaction ID"
-            />
+            {isLoadingTransactions ? (
+              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <select
+                required
+                value={formData.transactionId}
+                onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select a transaction</option>
+                {transactions.map((transaction) => (
+                  <option key={transaction._id} value={transaction._id}>
+                    {transaction.description || `Income: $${transaction.amount}`} - {new Date(transaction.transactionDate).toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
-          {/* Income Source ID Field */}
+          {/* Income Source Field - Dropdown */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
               <List className="w-4 h-4" />
-              Income Source ID
+              Income Source
             </label>
-            <input
-              type="text"
-              required
-              value={formData.incomeSourceId}
-              onChange={(e) => setFormData({ ...formData, incomeSourceId: e.target.value })}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Income Source ID"
-            />
+            {isLoadingIncomeSources ? (
+              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <select
+                required
+                value={formData.incomeSourceId}
+                onChange={(e) => setFormData({ ...formData, incomeSourceId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select an income source</option>
+                {incomeSources.map((source) => (
+                  <option key={source._id} value={source._id}>
+                    {source.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
-          {/* Organization ID Field */}
+          {/* Organization Field - Dropdown */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
               <Building className="w-4 h-4" />
-              Organization ID
+              Organization
             </label>
-            <input
-              type="text"
-              required
-              value={formData.orgId}
-              onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Organization ID"
-            />
+            {isLoadingOrgs ? (
+              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <select
+                required
+                value={formData.orgId}
+                onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select an organization</option>
+                {organizations.map((org) => (
+                  <option key={org._id} value={org._id}>
+                    {org.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 
@@ -181,7 +298,7 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
           )}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isLoadingOrgs || isLoadingIncomeSources || isLoadingTransactions}
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (

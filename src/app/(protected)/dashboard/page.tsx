@@ -2,7 +2,6 @@
 
 import React from "react";
 import Navbar from "@/components/navbar";
-import Sidebar from "@/components/sidebar";
 import StockLevelsChart from "@/components/charts/StockLevelsChart";
 import InventoryValueChart from "@/components/charts/InventoryValueChart";
 import PriceHistogram from "@/components/charts/PriceHistogram";
@@ -12,8 +11,6 @@ import StatsSection from "@/components/StatsSection";
 const Dashboard = () => {
   return (
     <div className="flex">
-      {/* Sidebar */}
-      <Sidebar />
 
       {/* Main Content */}
       <div className="flex-1 p-6">

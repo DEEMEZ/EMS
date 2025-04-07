@@ -87,6 +87,11 @@ export default function SignIn() {
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
+          <div className="text-right text-sm">
+  <Link href="/auth/forgot-password" className="text-blue-600 hover:underline">
+    Forgot Password?
+  </Link>
+</div>
           
           <button
             type="submit"

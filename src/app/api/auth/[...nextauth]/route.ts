@@ -1,9 +1,9 @@
 // src/app/api/auth/[...nextauth]/route.ts
+import dbConnect from "@/lib/mongodb";
+import User from "@/models/user";
+import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import dbConnect from "@/lib/mongodb"; // Make sure this path is correct for your project
-import User from "@/models/user";
 
 const handler = NextAuth({
   providers: [
@@ -13,37 +13,27 @@ const handler = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
-        try {
-          await dbConnect();
-          
-          // Find user by email
-          const user = await User.findOne({ email: credentials?.email });
-          if (!user) {
-            throw new Error("No user found with this email");
-          }
-          
-          // Check password
-          const isPasswordCorrect = await bcrypt.compare(
-            credentials?.password || "", 
-            user.password
-          );
-          
-          if (!isPasswordCorrect) {
-            throw new Error("Invalid credentials");
-          }
-          
-          // Important: Return user with MongoDB _id converted to string
-          return {
-            id: user._id.toString(),
-            name: user.fullname,
-            email: user.email,
-          };
-        } catch (error) {
-          console.error("Authentication error:", error);
-          throw error;
-        }
-      }
+     async authorize(credentials) {
+  try {
+    await dbConnect();
+    const user = await User.findOne({ email: credentials?.email });
+    
+    if (!user) throw new Error("No user found");
+    if (!user.isVerified) throw new Error("Please verify your email first");
+    
+    const isValid = await bcrypt.compare(credentials?.password || "", user.password);
+    if (!isValid) throw new Error("Invalid credentials");
+    
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.fullname
+    };
+  } catch (error) {
+    console.error("Auth error:", error);
+    throw error;
+  }
+}
     })
   ],
   session: {
@@ -51,22 +41,16 @@ const handler = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    // Save the user ID to the token when signing in
     async jwt({ token, user }) {
       if (user) {
-        // When user signs in, we get the ID from the user object
-        console.log("JWT callback - user:", user);
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
       }
       return token;
     },
-    // Copy data from the token to the session when creating a session
     async session({ session, token }) {
-      console.log("Session callback - token:", token);
       if (token && session.user) {
-        // Add the user ID from the token to the session
         session.user.id = token.id;
       }
       return session;
@@ -74,8 +58,10 @@ const handler = NextAuth({
   },
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/signin", 
   },
-  debug: true, // Enable debug mode to see more detailed logs
+  debug: true,
 });
 
 export { handler as GET, handler as POST };
+

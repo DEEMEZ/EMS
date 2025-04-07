@@ -12,6 +12,8 @@ import {
   Receipt,
   Settings,
   Tags,
+  Trash2,
+  User,
   Wallet
 } from 'lucide-react';
 
@@ -19,6 +21,7 @@ export interface SubNavItem {
   title: string;
   href: string;
   icon?: React.ComponentType;
+  destructive?: boolean; // Added for delete action styling
 }
 
 export interface NavItem {
@@ -80,7 +83,7 @@ export const navigationConfig: NavItem[] = [
     title: 'Transactions',
     icon: ArrowRightLeft,
     subItems: [
-       {
+      {
         title: 'Transactions',
         href: '/transactions/transaction/list',
         icon: ArrowRightLeft,
@@ -95,7 +98,7 @@ export const navigationConfig: NavItem[] = [
         href: '/transactions/expense/list',
         icon: Receipt,
       },
-       {
+      {
         title: 'Budgets',
         href: '/transactions/budgets/list',
         icon: Wallet,
@@ -125,12 +128,29 @@ export const navigationConfig: NavItem[] = [
         title: 'Transaction Reports',
         href: '/reports/transaction',
         icon: ArrowRightLeft,
-      }
-      ,{
+      },
+      {
         title: 'Organization Report',
         href: '/reports/organization',
         icon: Building2,  
       }      
+    ],
+  },
+  {
+    title: 'Account',
+    icon: User,
+    subItems: [
+      {
+        title: 'Profile Settings',
+        href: '/account/profile',
+        icon: Settings,
+      },
+      {
+        title: 'Delete Account',
+        href: '/account/delete',
+        icon: Trash2,
+        destructive: true
+      }
     ],
   }
 ];

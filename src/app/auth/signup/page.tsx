@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 // src/app/auth/signup/page.tsx
 "use client";
 
@@ -31,14 +30,24 @@ export default function SignUp() {
     setLoading(true);
     setError("");
 
-    // Validate all fields are filled
-    if (!formData.fullname || !formData.email || !formData.password || !formData.confirmPassword || !formData.phone) {
-      setError("All fields are required");
+    if (!formData.fullname || !formData.email || !formData.password || !formData.confirmPassword) {
+      setError("All required fields must be filled");
       setLoading(false);
       return;
     }
 
-    // Validate passwords match
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError("Please enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
@@ -55,7 +64,7 @@ export default function SignUp() {
           fullname: formData.fullname,
           email: formData.email,
           password: formData.password,
-          phone: formData.phone,
+          phone: formData.phone || "",
         }),
       });
 
@@ -65,8 +74,7 @@ export default function SignUp() {
         throw new Error(data.message || "Failed to create account");
       }
 
-      // Redirect to sign in page on success
-      router.push("/auth/signin?success=Account created successfully");
+      router.push(`/auth/verify?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {
       setError(err.message || "Failed to create account");
     } finally {
@@ -75,19 +83,27 @@ export default function SignUp() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
       <div className="w-full max-w-md space-y-6 p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center">Create an Account</h1>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Create an Account</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link href="/auth/signin" className="font-medium text-blue-600 hover:text-blue-500">
+              Sign in
+            </Link>
+          </p>
+        </div>
 
         {error && (
-          <div className="p-3 bg-red-100 text-red-600 rounded-md">
+          <div className="p-3 text-sm text-red-700 bg-red-100 rounded-md">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="fullname" className="block text-sm font-medium">
+            <label htmlFor="fullname" className="block text-sm font-medium text-gray-700">
               Full Name *
             </label>
             <input
@@ -97,13 +113,13 @@ export default function SignUp() {
               value={formData.fullname}
               onChange={handleChange}
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email *
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email Address *
             </label>
             <input
               id="email"
@@ -112,13 +128,13 @@ export default function SignUp() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium">
-              Phone *
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              Phone Number
             </label>
             <input
               id="phone"
@@ -126,13 +142,12 @@ export default function SignUp() {
               type="tel"
               value={formData.phone}
               onChange={handleChange}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div className="relative">
-            <label htmlFor="password" className="block text-sm font-medium">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password *
             </label>
             <input
@@ -142,19 +157,20 @@ export default function SignUp() {
               value={formData.password}
               onChange={handleChange}
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              minLength={6}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-8 text-sm text-gray-600"
+              className="absolute right-2 top-8 text-sm font-medium text-blue-600 hover:text-blue-500"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
 
           <div className="relative">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
               Confirm Password *
             </label>
             <input
@@ -164,34 +180,37 @@ export default function SignUp() {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              minLength={6}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-2 top-8 text-sm text-gray-600"
+              className="absolute right-2 top-8 text-sm font-medium text-blue-600 hover:text-blue-500"
             >
               {showConfirmPassword ? "Hide" : "Show"}
             </button>
           </div>
 
+         
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm disabled:bg-blue-400"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Creating Account..." : "Sign Up"}
+            {loading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Creating Account...
+              </>
+            ) : "Sign Up"}
           </button>
         </form>
 
-        <div className="text-center">
-          <p className="text-sm">
-            Already have an account?{" "}
-            <Link href="/auth/signin" className="text-blue-600 hover:underline">
-              Sign In
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );

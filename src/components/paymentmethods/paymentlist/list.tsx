@@ -19,8 +19,7 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
 export default function PaymentmethodsList() {
   // Authentication state
   const { data: session, status: authStatus } = useSession();
@@ -54,38 +53,38 @@ export default function PaymentmethodsList() {
     debouncedSearch(value);
   };
 
-  const fetchPaymentMethods = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
+  const fetchPaymentMethods = useCallback(async () => {
+  try {
+    setIsLoading(true);
+    setError('');
 
-      if (!isAuthenticated) {
-        setIsLoading(false);
-        return;
-      }
-
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '10',
-        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-      });
-
-      const response = await fetch(`/api/paymentmethods?${params.toString()}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch payment methods');
-      }
-
-      const data = await response.json();
-      setPaymentMethods(data.sources);
-      setTotalPages(data.pagination.totalPages);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch payment methods');
-      console.error('Fetch error:', err);
-    } finally {
+    if (!isAuthenticated) {
       setIsLoading(false);
+      return;
     }
-  };
+
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: '10',
+      ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+    });
+
+    const response = await fetch(`/api/paymentmethods?${params.toString()}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch payment methods');
+    }
+
+    const data = await response.json();
+    setPaymentMethods(data.sources);
+    setTotalPages(data.pagination.totalPages);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to fetch payment methods');
+    console.error('Fetch error:', err);
+  } finally {
+    setIsLoading(false);
+  }
+}, [isAuthenticated, page, debouncedSearchTerm]);
 
   const handleDelete = async (paymentMethodId: string) => {
     try {
@@ -143,14 +142,14 @@ export default function PaymentmethodsList() {
     fetchPaymentMethods();
   };
 
-  useEffect(() => {
+   useEffect(() => {
     if (authStatus === 'authenticated') {
       fetchPaymentMethods();
     } else if (authStatus === 'unauthenticated') {
       setPaymentMethods([]);
       setIsLoading(false);
     }
-  }, [debouncedSearchTerm, page, authStatus]);
+ }, [fetchPaymentMethods, authStatus]);
 
   useEffect(() => {
     return () => {

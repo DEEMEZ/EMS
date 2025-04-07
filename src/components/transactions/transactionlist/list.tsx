@@ -8,7 +8,7 @@ import _ from 'lodash';
 import { AlertCircle, Edit, LogIn, Plus, Search, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function TransactionList() {
   // Authentication state
@@ -43,36 +43,36 @@ export default function TransactionList() {
     debouncedSearch(value);
   };
 
-  const fetchTransactions = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
+  const fetchTransactions = useCallback(async () => {
+  try {
+    setIsLoading(true);
+    setError('');
 
-      // Only fetch if authenticated
-      if (!isAuthenticated) {
-        setIsLoading(false);
-        return;
-      }
-
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '10',
-        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-      });
-
-      const response = await fetch(`/api/transactions?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed To Fetch Transactions');
-
-      const data = await response.json();
-      setTransactions(data.transactions);
-      setTotalPages(data.pagination.totalPages);
-    } catch (err) {
-      setError('Failed To Fetch Transactions. Please Try Again.');
-      console.error('Error:', err);
-    } finally {
+    // Only fetch if authenticated
+    if (!isAuthenticated) {
       setIsLoading(false);
+      return;
     }
-  };
+
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: '10',
+      ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+    });
+
+    const response = await fetch(`/api/transactions?${params.toString()}`);
+    if (!response.ok) throw new Error('Failed To Fetch Transactions');
+
+    const data = await response.json();
+    setTransactions(data.transactions);
+    setTotalPages(data.pagination.totalPages);
+  } catch (err) {
+    setError('Failed To Fetch Transactions. Please Try Again.');
+    console.error('Error:', err);
+  } finally {
+    setIsLoading(false);
+  }
+}, [isAuthenticated, page, debouncedSearchTerm]);  
 
   const handleDelete = async (transactionId: string) => {
     try {
@@ -124,14 +124,14 @@ export default function TransactionList() {
   };
 
   useEffect(() => {
-    if (authStatus === 'authenticated') {
-      fetchTransactions();
-    } else if (authStatus === 'unauthenticated') {
-      // Clear transactions if user is not authenticated
-      setTransactions([]);
-      setIsLoading(false);
-    }
-  }, [debouncedSearchTerm, page, authStatus]);
+  if (authStatus === 'authenticated') {
+    fetchTransactions();
+  } else if (authStatus === 'unauthenticated') {
+    // Clear transactions if user is not authenticated
+    setTransactions([]);
+    setIsLoading(false);
+  }
+}, [fetchTransactions, authStatus]); 
 
   useEffect(() => {
     return () => {

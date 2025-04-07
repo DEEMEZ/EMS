@@ -3,9 +3,9 @@ import mongoose from 'mongoose';
 const incomeSchema = new mongoose.Schema(
   {
     userId: {
-      type: String, // Keeping as String to align with token.id or token.sub
+      type: String,
       required: true,
-      index: true // Adding index for optimized queries
+      // Removed index: true
     },
     transactionId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -31,6 +31,9 @@ const incomeSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+// Add index here if needed
+incomeSchema.index({ userId: 1 });
 
 incomeSchema.pre(['find', 'findOne'], function (next) {
   this.populate('transactionId', 'amount type transactionDate');

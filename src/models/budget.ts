@@ -3,10 +3,10 @@ import mongoose from 'mongoose';
 const budgetSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId, // Change to ObjectId
-      ref: 'User', // Reference the User model
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
-      index: true,
+      // Removed index: true
     },
     expensecategoriesId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -48,7 +48,7 @@ budgetSchema.virtual('calculatedRemainingBudget').get(function () {
   return this.monthlyLimit - this.spentAmount;
 });
 
-// Add index for common query patterns
+// All indexes declared here
 budgetSchema.index({ userId: 1, expensecategoriesId: 1 });
 budgetSchema.index({ startDate: -1 });
 budgetSchema.index({ endDate: -1 });

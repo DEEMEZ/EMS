@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import IncomeForm from "@/components/income/incomeform/form"; // ✅ Import the missing IncomeForm
+import IncomeForm from "@/components/income/incomeform/form";
 import { LoadingSpinner } from "@/components/loadiingspinner";
 import { AnimatePresence, motion } from "framer-motion";
 import _ from "lodash";
 import { AlertCircle, Edit, Plus, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function IncomeList() {
   const [incomes, setIncomes] = useState<any[]>([]);
@@ -35,7 +35,7 @@ export default function IncomeList() {
     debouncedSearch(value);
   };
 
-  const fetchIncomes = async () => {
+  const fetchIncomes = useCallback(async () => {
     try {
       setIsLoading(true);
       setError("");
@@ -57,7 +57,7 @@ export default function IncomeList() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, debouncedSearchTerm]);
 
   const handleDelete = async (incomeId: string) => {
     try {
@@ -96,7 +96,7 @@ export default function IncomeList() {
 
   useEffect(() => {
     fetchIncomes();
-  }, [debouncedSearchTerm, page]);
+  }, [fetchIncomes]);
 
   useEffect(() => {
     return () => {
@@ -149,7 +149,13 @@ export default function IncomeList() {
           </thead>
           <tbody>
             <AnimatePresence>
-              {incomes.length > 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <LoadingSpinner size="lg" />
+                  </td>
+                </tr>
+              ) : incomes.length > 0 ? (
                 incomes.map((income, index) => (
                   <motion.tr
                     key={income._id}
@@ -159,12 +165,12 @@ export default function IncomeList() {
                     transition={{ delay: index * 0.1 }}
                     className="border-b border-gray-100 hover:bg-gray-50"
                   >
-                   <td className="px-6 py-4">{income.transactionId?.type ?? "Unknown"}</td>
-<td className="px-6 py-4">
-  {income.transactionId?.transactionDate 
-    ? new Date(income.transactionId.transactionDate).toLocaleDateString() 
-    : "Unknown"}
-</td>
+                    <td className="px-6 py-4">{income.transactionId?.type ?? "Unknown"}</td>
+                    <td className="px-6 py-4">
+                      {income.transactionId?.transactionDate 
+                        ? new Date(income.transactionId.transactionDate).toLocaleDateString() 
+                        : "Unknown"}
+                    </td>
                     <td className="px-6 py-4">{income.transactionAmount ?? "N/A"}</td>
                     <td className="px-6 py-4">{income.incomeSourceId?.name || "Unknown"}</td>
                     <td className="px-6 py-4">{income.orgId?.name || "Unknown"}</td>
@@ -190,34 +196,35 @@ export default function IncomeList() {
         </table>
       </div>
 
-{isModalOpen && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden"
-    >
-      <div className="flex justify-between items-center px-6 py-4 border-b">
-        <h2 className="text-xl font-semibold">
-          {editingIncome ? 'Edit Income' : 'New Income'}
-        </h2>
-        <button
-          onClick={closeModal}
-          className="p-2 hover:bg-gray-100 rounded-lg"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      <div className="p-6 max-h-[70vh] overflow-y-auto"> {/* Added scrollable area */}
-        <IncomeForm
-          initialData={editingIncome}
-          onCancel={closeModal}
-          onSuccess={handleSuccess}
-        />
-      </div>
-    </motion.div>
-  </div>
-)}    </div>
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden"
+          >
+            <div className="flex justify-between items-center px-6 py-4 border-b">
+              <h2 className="text-xl font-semibold">
+                {editingIncome ? 'Edit Income' : 'New Income'}
+              </h2>
+              <button
+                onClick={closeModal}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 max-h-[70vh] overflow-y-auto">
+              <IncomeForm
+                initialData={editingIncome}
+                onCancel={closeModal}
+                onSuccess={handleSuccess}
+              />
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
   );
 }

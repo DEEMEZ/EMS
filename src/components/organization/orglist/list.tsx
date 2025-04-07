@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function OrganizationList() {
   // Authentication state
@@ -64,7 +64,7 @@ export default function OrganizationList() {
   };
   
   // Fetch Organizations
-  const fetchOrganizations = async () => {
+ const fetchOrganizations = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -104,7 +104,8 @@ export default function OrganizationList() {
     } finally {
       setIsLoading(false);
     }
-  };
+
+ }, [authStatus, page, debouncedSearchTerm, selectedStatus]);
 
   // Delete Organization
   const handleDelete = async (orgId: string) => {
@@ -166,7 +167,7 @@ export default function OrganizationList() {
   };
 
   // Effect Hooks
-  useEffect(() => {
+   useEffect(() => {
     if (authStatus === 'authenticated') {
       fetchOrganizations();
     } else if (authStatus === 'unauthenticated') {
@@ -174,8 +175,8 @@ export default function OrganizationList() {
       setOrganizations([]);
       setIsLoading(false);
     }
-  }, [debouncedSearchTerm, selectedStatus, page, authStatus]);
-  
+ }, [fetchOrganizations, authStatus]);
+
   useEffect(() => {
     return () => {
       debouncedSearch.cancel();
@@ -270,9 +271,9 @@ export default function OrganizationList() {
           </div>
 
           <button
-            onClick={fetchOrganizations}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 text-white transition-colors"
-            disabled={!isAuthenticated}
+          onClick={() => fetchOrganizations()}
+    className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 text-white transition-colors"
+    disabled={!isAuthenticated}
           >
             <RefreshCw className="w-5 h-5" />
             Refresh

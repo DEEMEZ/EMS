@@ -1,24 +1,29 @@
 'use client';
 
 import { IUser } from "@/types/user";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function UserList({ onEdit }: { onEdit: (user: IUser) => void }) {
   const [users, setUsers] = useState<IUser[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/users?search=${search}`);
+      const data = await res.json();
+      setUsers(data.users);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [search]); // Include search as a dependency
+
   useEffect(() => {
     fetchUsers();
-  }, [search]);
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    const res = await fetch(`/api/users?search=${search}`);
-    const data = await res.json();
-    setUsers(data.users);
-    setLoading(false);
-  };
+  }, [fetchUsers]); // Now includes fetchUsers in dependencies
 
   return (
     <div className="p-4 bg-white shadow rounded-lg overflow-x-auto">
@@ -51,7 +56,7 @@ export default function UserList({ onEdit }: { onEdit: (user: IUser) => void }) 
                 <td className="p-2 text-left">
                   <button 
                     onClick={() => onEdit(user)} 
-                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                    className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
                   >
                     Edit
                   </button>

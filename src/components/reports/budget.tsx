@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { AlertCircle, LogIn } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Bar, BarChart, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -34,7 +34,7 @@ const BudgetAnalysisTable = () => {
   const safeStartDate = startDate ?? undefined;
   const safeEndDate = endDate ?? undefined;
 
-  const fetchBudgets = async () => {
+ const fetchBudgets = useCallback(async () => {
     if (!isAuthenticated) {
       setError("Authentication required");
       return;
@@ -69,13 +69,14 @@ const BudgetAnalysisTable = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated, startDate, endDate]);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchBudgets();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchBudgets]);
+
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
 

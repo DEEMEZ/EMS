@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { AlertCircle, LogIn } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Bar, BarChart, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -40,52 +40,52 @@ const OrganizationAnalysisTable = () => {
   const safeStartDate = startDate ?? undefined;
   const safeEndDate = endDate ?? undefined;
 
-  const fetchOrganizations = async () => {
-    if (!isAuthenticated) {
-      setError("Authentication required");
-      return;
+ const fetchOrganizations = useCallback(async () => {
+  if (!isAuthenticated) {
+    setError("Authentication required");
+    return;
+  }
+
+  if (!startDate || !endDate) {
+    setError("Please select both start and end dates");
+    return;
+  }
+
+  if (startDate > endDate) {
+    setError("Start date must be before end date");
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+
+  try {
+    const start = format(startDate, "yyyy-MM-dd");
+    const end = format(endDate, "yyyy-MM-dd");
+
+    const response = await fetch(`/api/reports/organization?startDate=${start}&endDate=${end}`);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to fetch organization data");
     }
 
-    if (!startDate || !endDate) {
-      setError("Please select both start and end dates");
-      return;
-    }
+    const result = await response.json();
+    setData(Array.isArray(result) ? result : []);
+  } catch (error) {
+    console.error("Error fetching organizations:", error);
+    setError(error instanceof Error ? error.message : "Failed to fetch organization analysis");
+    setData([]);
+  } finally {
+    setLoading(false);
+  }
+}, [isAuthenticated, startDate, endDate]);  
 
-    if (startDate > endDate) {
-      setError("Start date must be before end date");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const start = format(startDate, "yyyy-MM-dd");
-      const end = format(endDate, "yyyy-MM-dd");
-
-      const response = await fetch(`/api/reports/organization?startDate=${start}&endDate=${end}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch organization data");
-      }
-
-      const result = await response.json();
-      setData(Array.isArray(result) ? result : []);
-    } catch (error) {
-      console.error("Error fetching organizations:", error);
-      setError(error instanceof Error ? error.message : "Failed to fetch organization analysis");
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchOrganizations();
-    }
-  }, [isAuthenticated]);
+ useEffect(() => {
+  if (isAuthenticated) {
+    fetchOrganizations();
+  }
+ }, [isAuthenticated, fetchOrganizations]);  // Add fetchOrganizations to dependencies
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
   const incomeData = data.filter((item) => item.type === "Income");

@@ -6,15 +6,16 @@ const transactionSchema = new mongoose.Schema(
       type: Number, 
       required: true 
     },
-    userId: { // Reference to User model
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true
+      required: true,
+      // Removed index: true
     },
-    userTokenId: { // Store token user ID as a string
+    userTokenId: {
       type: String,
       required: true,
-      index: true
+      // Removed index: true
     },
     type: {
       type: String,
@@ -47,7 +48,7 @@ const transactionSchema = new mongoose.Schema(
   }
 );
 
-// Indexing for optimized queries
+// Single index declaration
 transactionSchema.index({ userTokenId: 1, transactionDate: -1 });
 
 export default mongoose.models.Transaction || mongoose.model('Transaction', transactionSchema);

@@ -8,7 +8,7 @@ import _ from 'lodash';
 import { AlertCircle, Edit, Plus, Search, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function BudgetList() {
   const { data: session, status: authStatus } = useSession();
@@ -43,7 +43,7 @@ export default function BudgetList() {
     debouncedSearch(value);
   };
 
-  const fetchBudgets = async () => {
+  const fetchBudgets = useCallback(async () => {
     if (!isAuthenticated) {
       setBudgets([]);
       setIsLoading(false);
@@ -72,7 +72,7 @@ export default function BudgetList() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, page, debouncedSearchTerm]);
 
   const handleDelete = async (budgetId: string) => {
     try {
@@ -119,7 +119,7 @@ export default function BudgetList() {
     if (isAuthenticated) {
       fetchBudgets();
     }
-  }, [debouncedSearchTerm, page, isAuthenticated]);
+  }, [fetchBudgets, isAuthenticated]);
 
   useEffect(() => {
     return () => {

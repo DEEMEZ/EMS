@@ -8,7 +8,7 @@ import { debounce } from 'lodash';
 import { AlertCircle, LogIn } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Bar, BarChart, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -35,50 +35,54 @@ const IncomeAnalysisTable = () => {
   const safeStartDate = startDate ?? undefined;
   const safeEndDate = endDate ?? undefined;
 
-  // Debounced fetch function
-  const fetchIncomes = useCallback(debounce(async () => {
-    if (!isAuthenticated) {
-      setError("Authentication required");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const start = startDate ? format(startDate, "yyyy-MM-dd") : "";
-      const end = endDate ? format(endDate, "yyyy-MM-dd") : "";
-
-      const response = await fetch(`/api/reports/income-analysis?startDate=${start}&endDate=${end}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to fetch income analysis");
+  // Create a debounced function using useMemo
+  const debouncedFetchIncomes = useMemo(() => {
+    return debounce(async (start: Date | null, end: Date | null) => {
+      if (!isAuthenticated) {
+        setError("Authentication required");
+        return;
       }
 
-      const result = await response.json();
-      setData(result);
-    } catch (error) {
-      console.error("Error Fetching Incomes:", error);
-      setError(error instanceof Error ? error.message : "Failed to fetch income analysis. Please try again.");
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, 500), [isAuthenticated, startDate, endDate]);
+      setLoading(true);
+      setError("");
+
+      try {
+        const startStr = start ? format(start, "yyyy-MM-dd") : "";
+        const endStr = end ? format(end, "yyyy-MM-dd") : "";
+
+        const response = await fetch(
+          `/api/reports/income-analysis?startDate=${startStr}&endDate=${endStr}`
+        );
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to fetch income analysis");
+        }
+
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error("Error Fetching Incomes:", error);
+        setError(error instanceof Error ? error.message : "Failed to fetch income analysis. Please try again.");
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 500);
+  }, [isAuthenticated]);
 
   // Cleanup debounce on unmount
   useEffect(() => {
     return () => {
-      fetchIncomes.cancel();
+      debouncedFetchIncomes.cancel();
     };
-  }, [fetchIncomes]);
+  }, [debouncedFetchIncomes]);
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchIncomes();
+      debouncedFetchIncomes(startDate, endDate);
     }
-  }, [isAuthenticated, fetchIncomes]);
+  }, [isAuthenticated, startDate, endDate, debouncedFetchIncomes]);
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
 
@@ -133,7 +137,7 @@ const IncomeAnalysisTable = () => {
               placeholderText="End Date"
               className="border rounded p-2"
             />
-            <Button onClick={fetchIncomes} disabled={loading}>
+            <Button onClick={() => debouncedFetchIncomes(startDate, endDate)} disabled={loading}>
               {loading ? "Loading..." : "Filter"}
             </Button>
           </div>
@@ -143,7 +147,7 @@ const IncomeAnalysisTable = () => {
               <AlertCircle className="w-5 h-5 text-red-400" />
               <p className="text-red-700">{error}</p>
               <button
-                onClick={fetchIncomes}
+                onClick={() => debouncedFetchIncomes(startDate, endDate)}
                 className="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
               >
                 Retry

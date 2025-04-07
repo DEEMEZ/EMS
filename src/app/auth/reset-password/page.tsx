@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/app/auth/reset-password/page.tsx
 "use client";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 
-export default function ResetPassword() {
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
   const [otp, setOtp] = useState("");
@@ -72,5 +72,13 @@ export default function ResetPassword() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={<div className="max-w-md mx-auto p-4">Loading password reset form...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { AlertCircle, LogIn } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Bar, BarChart, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -39,57 +39,56 @@ const TransactionAnalysisTable = () => {
   const safeStartDate = startDate ?? undefined;
   const safeEndDate = endDate ?? undefined;
 
-  const fetchTransactions = async () => {
-    if (!isAuthenticated) {
-      setError("Authentication required");
-      return;
+const fetchTransactions = useCallback(async () => {
+  if (!isAuthenticated) {
+    setError("Authentication required");
+    return;
+  }
+
+  if (!startDate || !endDate) {
+    setError("Please select both start and end dates");
+    return;
+  }
+
+  if (startDate > endDate) {
+    setError("Start date must be before end date");
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+
+  try {
+    const start = format(startDate, "yyyy-MM-dd");
+    const end = format(endDate, "yyyy-MM-dd");
+
+    const response = await fetch(`/api/reports/transaction?startDate=${start}&endDate=${end}`);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to fetch transaction data");
     }
 
-    if (!startDate || !endDate) {
-      setError("Please select both start and end dates");
-      return;
-    }
+    const result = await response.json();
+    const processedData = result.map((item: TransactionAnalysis, index: number) => ({
+      ...item,
+      _id: item._id || `temp-id-${index}-${Date.now()}`
+    }));
+    setData(processedData);
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    setError(error instanceof Error ? error.message : "Failed to fetch transactions");
+    setData([]);
+  } finally {
+    setLoading(false);
+  }
+}, [isAuthenticated, startDate, endDate]);  
 
-    if (startDate > endDate) {
-      setError("Start date must be before end date");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const start = format(startDate, "yyyy-MM-dd");
-      const end = format(endDate, "yyyy-MM-dd");
-
-      const response = await fetch(`/api/reports/transaction?startDate=${start}&endDate=${end}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch transaction data");
-      }
-
-      const result = await response.json();
-      // Ensure all items have unique _id values
-      const processedData = result.map((item: TransactionAnalysis, index: number) => ({
-        ...item,
-        _id: item._id || `temp-id-${index}-${Date.now()}` // Fallback for missing IDs
-      }));
-      setData(processedData);
-    } catch (error) {
-      console.error("Error fetching transactions:", error);
-      setError(error instanceof Error ? error.message : "Failed to fetch transactions");
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchTransactions();
-    }
-  }, [isAuthenticated]);
+ useEffect(() => {
+  if (isAuthenticated) {
+    fetchTransactions();
+  }
+ }, [isAuthenticated, fetchTransactions]);  // Add fetchTransactions to dependencies
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/app/api/auth/forgot-password/route.ts
 import { sendEmail } from "@/lib/email";
 import dbConnect from "@/lib/mongodb";

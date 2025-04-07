@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { AlertCircle, LogIn } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Bar, BarChart, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -35,50 +35,50 @@ const ExpenseAnalysisTable = () => {
   const safeStartDate = startDate ?? undefined;
   const safeEndDate = endDate ?? undefined;
 
-  const fetchExpenses = async () => {
-    if (!isAuthenticated) {
-      setError("Authentication required");
-      return;
+ const fetchExpenses = useCallback(async () => {
+  if (!isAuthenticated) {
+    setError("Authentication required");
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+
+  try {
+    const start = startDate ? format(startDate, "yyyy-MM-dd") : "";
+    const end = endDate ? format(endDate, "yyyy-MM-dd") : "";
+
+    const response = await fetch(`/api/reports/expense-analysis?startDate=${start}&endDate=${end}`);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to fetch expense analysis");
     }
 
-    setLoading(true);
-    setError("");
+    const result = await response.json();
 
-    try {
-      const start = startDate ? format(startDate, "yyyy-MM-dd") : "";
-      const end = endDate ? format(endDate, "yyyy-MM-dd") : "";
-
-      const response = await fetch(`/api/reports/expense-analysis?startDate=${start}&endDate=${end}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to fetch expense analysis");
-      }
-
-      const result = await response.json();
-
-      if (!Array.isArray(result)) {
-        throw new Error("Invalid data format received from server");
-      }
-
-      setData(result.map(item => ({
-        ...item,
-        banksUsed: item.banksUsed || []
-      })));
-    } catch (error) {
-      console.error("Error Fetching Expenses:", error);
-      setError(error instanceof Error ? error.message : "Failed to fetch expense analysis. Please try again.");
-      setData([]);
-    } finally {
-      setLoading(false);
+    if (!Array.isArray(result)) {
+      throw new Error("Invalid data format received from server");
     }
-  };
+
+    setData(result.map(item => ({
+      ...item,
+      banksUsed: item.banksUsed || []
+    })));
+  } catch (error) {
+    console.error("Error Fetching Expenses:", error);
+    setError(error instanceof Error ? error.message : "Failed to fetch expense analysis. Please try again.");
+    setData([]);
+  } finally {
+    setLoading(false);
+  }
+}, [isAuthenticated, startDate, endDate]);  // Include all dependencies
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchExpenses();
-    }
-  }, [isAuthenticated]);
+  if (isAuthenticated) {
+    fetchExpenses();
+  }
+ }, [isAuthenticated, fetchExpenses]); 
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
 

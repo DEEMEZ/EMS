@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-no-undef */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
@@ -10,7 +9,7 @@ import _ from 'lodash';
 import { AlertCircle, ChevronLeft, ChevronRight, Edit, LogIn, Plus, Search, Trash2, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function TagsList() {
   // Authentication state
@@ -45,36 +44,36 @@ export default function TagsList() {
     debouncedSearch(value);
   };
 
-  const fetchTags = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
+  const fetchTags = useCallback(async () => {
+  try {
+    setIsLoading(true);
+    setError('');
 
-      // Only fetch if authenticated
-      if (!isAuthenticated) {
-        setIsLoading(false);
-        return;
-      }
-
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '10',
-        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-      });
-
-      const response = await fetch(`/api/tags?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed To Fetch Tags');
-
-      const data = await response.json();
-      setTags(data.tags);
-      setTotalPages(data.pagination.totalPages);
-    } catch (err) {
-      setError('Failed To Fetch Tags');
-      console.error('Error:', err);
-    } finally {
+    // Only fetch if authenticated
+    if (!isAuthenticated) {
       setIsLoading(false);
+      return;
     }
-  };
+
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: '10',
+      ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+    });
+
+    const response = await fetch(`/api/tags?${params.toString()}`);
+    if (!response.ok) throw new Error('Failed To Fetch Tags');
+
+    const data = await response.json();
+    setTags(data.tags);
+    setTotalPages(data.pagination.totalPages);
+  } catch (err) {
+    setError('Failed To Fetch Tags');
+    console.error('Error:', err);
+  } finally {
+    setIsLoading(false);
+  }
+}, [isAuthenticated, page, debouncedSearchTerm]);  // Include all dependencies
 
   const handleDelete = async (tagId: string) => {
     try {
@@ -124,14 +123,14 @@ export default function TagsList() {
   };
 
   useEffect(() => {
-    if (authStatus === 'authenticated') {
-      fetchTags();
-    } else if (authStatus === 'unauthenticated') {
-      // Clear tags if user is not authenticated
-      setTags([]);
-      setIsLoading(false);
-    }
-  }, [debouncedSearchTerm, page, authStatus]);
+  if (authStatus === 'authenticated') {
+    fetchTags();
+  } else if (authStatus === 'unauthenticated') {
+    // Clear tags if user is not authenticated
+    setTags([]);
+    setIsLoading(false);
+  }
+}, [fetchTags, authStatus]);  // Add fetchTags to dependencies
 
   useEffect(() => {
     return () => {

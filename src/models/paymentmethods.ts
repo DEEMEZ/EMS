@@ -5,7 +5,7 @@ const PaymentMethodSchema = new mongoose.Schema(
     userId: {
       type: String,
       required: true,
-      index: true
+      // Removed index: true
     },
     name: {
       type: String,
@@ -43,13 +43,11 @@ const PaymentMethodSchema = new mongoose.Schema(
   }
 );
 
-// Index for faster queries
-PaymentMethodSchema.index({ userId: 1, name: 1 });
-
-// Prevent duplicate payment methods per user
+// Single index declaration with unique constraint
 PaymentMethodSchema.index(
   { userId: 1, name: 1 },
-  { unique: true, partialFilterExpression: { name: { $exists: true } } }
+  { unique: true, partialFilterExpression: { name: { $exists: true } }
+}
 );
 
 const PaymentMethodModel =

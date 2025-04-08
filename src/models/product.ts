@@ -21,6 +21,19 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Please provide product category'],
     trim: true,
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'User'
+  },
+  modifiedBy: {
+    type: String,
+    default: 'System'
+  },
+  modifiedDate: {
+    type: Date,
+    default: Date.now
+  },
   createdAt: {
     type: Date,
     default: Date.now,

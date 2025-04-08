@@ -11,6 +11,7 @@ import {
   PieChart,
   Receipt,
   Settings,
+  Shirt,
   Tags,
   Trash2,
   User,
@@ -45,6 +46,11 @@ export const navigationConfig: NavItem[] = [
         title: 'Organization',
         href: '/organization/list',
         icon: Building2,
+      },
+       {
+        title: 'Products',
+        href: '/product/list',
+        icon: Shirt,
       }
     ],
   },

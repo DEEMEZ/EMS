@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { IProduct } from '@/types';
+import { useEffect, useState } from 'react';
 
 interface ProductListProps {
   refreshTrigger: number;

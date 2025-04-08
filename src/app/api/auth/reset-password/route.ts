@@ -7,11 +7,18 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     await dbConnect();
-    const { email, otp } = await req.json();
+    const { email, otp, newPassword } = await req.json();
 
-    if (!email || !otp || otp.length !== 6) {
+    if (!email || !otp || otp.length !== 6 || !newPassword) {
       return NextResponse.json(
-        { error: "Valid email and 6-digit OTP required" },
+        { error: "Valid email, 6-digit OTP and new password are required" },
+        { status: 400 }
+      );
+    }
+
+    if (newPassword.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters" },
         { status: 400 }
       );
     }
@@ -37,7 +44,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(otp, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     await User.findByIdAndUpdate(user._id, {
       password: hashedPassword,
       isVerified: true, 
@@ -48,8 +55,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { 
         message: "Password reset successfully",
-        note: "Your email has also been verified",
-        temporaryPassword: otp 
+        note: "Your email has also been verified"
       },
       { status: 200 }
     );

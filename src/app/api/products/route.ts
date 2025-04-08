@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/utils/dbconnect';
 import Product from '@/models/product';
+import dbConnect from '@/utils/dbconnect';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {

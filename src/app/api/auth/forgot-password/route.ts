@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         <div>
           <h2>Password Reset</h2>
           <p>Your OTP is: <strong>${otp}</strong></p>
-          <p>This OTP will expire in 15 minutes and will be your new password.</p>
+          <p>This OTP will expire in 15 minutes.</p>
           <p>Note: This will also verify your email address.</p>
         </div>
       `

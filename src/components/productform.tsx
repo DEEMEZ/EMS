@@ -2,8 +2,8 @@
 // src/components/productform.tsx
 'use client';
 
-import { useState } from 'react';
 import { IProduct } from '@/types';
+import { useState } from 'react';
 
 interface ProductFormProps {
   onProductUpdate: () => void;

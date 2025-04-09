@@ -1,29 +1,27 @@
 'use client';
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
-import { IExpenseCategories } from '@/types/expensecategories';
+import { IProduct } from '@/types';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle, Save, X } from 'lucide-react';
+import { CheckCircle, Package, Save, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
-interface ExpenseCategoryFormProps {
-  initialData?: IExpenseCategories;
+interface ProductFormProps {
+  initialData?: IProduct;
   onCancel?: () => void;
   onSuccess?: () => void;
 }
 
-export default function ExpenseCategoryForm({
-  initialData,
-  onCancel,
-  onSuccess,
-}: ExpenseCategoryFormProps) {
+export default function ProductForm({ initialData, onCancel, onSuccess }: ProductFormProps) {
   const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
 
-  const [formData, setFormData] = useState<IExpenseCategories>({
+  const [formData, setFormData] = useState<IProduct>({
     name: initialData?.name || '',
-    description: initialData?.description || '',
+    quantity: initialData?.quantity || 0,
+    price: initialData?.price || 0,
+    category: initialData?.category || '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,10 +30,9 @@ export default function ExpenseCategoryForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Check if user is authenticated
+    
     if (!isAuthenticated) {
-      setError('You must be signed in to create or update expense categories');
+      setError('You must be signed in to manage products');
       return;
     }
 
@@ -44,7 +41,7 @@ export default function ExpenseCategoryForm({
     setSuccessMessage('');
 
     try {
-      const response = await fetch('/api/expenseCategories', {
+      const response = await fetch('/api/products', {
         method: initialData?._id ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,9 +50,9 @@ export default function ExpenseCategoryForm({
       });
 
       if (response.ok) {
-        const successMsg = initialData?._id
-          ? 'Expense Category Updated Successfully!'
-          : 'Expense Category Created Successfully!';
+        const successMsg = initialData?._id 
+          ? 'Product updated successfully!' 
+          : 'Product created successfully!';
         setSuccessMessage(successMsg);
 
         setTimeout(() => setSuccessMessage(''), 3000);
@@ -69,20 +66,51 @@ export default function ExpenseCategoryForm({
         if (!initialData) {
           setFormData({
             name: '',
-            description: '',
+            quantity: 0,
+            price: 0,
+            category: '',
           });
         }
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Failed To Save Expense Category');
+        setError(errorData.error || 'Failed to save product');
       }
-    } catch (error) {
-      setError('Failed To Save Expense Category');
-      console.error('Error:', error);
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to save product. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Not authenticated state
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center py-6">
+        <Package className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h2>
+        <p className="text-gray-600 mb-4">
+          You need to be signed in to manage products.
+        </p>
+        <div className="flex justify-center gap-3">
+          <button
+            onClick={() => window.location.href = '/auth/signin'}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Sign In
+          </button>
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -92,7 +120,7 @@ export default function ExpenseCategoryForm({
     >
       <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl">
         <h2 className="text-xl font-semibold text-white">
-          {initialData?._id ? 'Update Expense Category' : 'Create New Expense Category'}
+          {initialData?._id ? 'Update Product' : 'Create New Product'}
         </h2>
       </div>
 
@@ -123,31 +151,65 @@ export default function ExpenseCategoryForm({
         </AnimatePresence>
 
         <div className="space-y-4">
+          {/* Name Field */}
           <div>
-            <label className="text-sm font-medium text-gray-700">Name</label>
+            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
+              <Package className="w-4 h-4" />
+              Product Name
+            </label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Expense Category Name"
+              placeholder="Enter product name"
             />
           </div>
 
+          {/* Quantity and Price Fields - Side by side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700">Quantity</label>
+              <input
+                type="number"
+                required
+                min="0"
+                value={formData.quantity}
+                onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700">Price</label>
+              <input
+                type="number"
+                required
+                min="0"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Category Field */}
           <div>
-            <label className="text-sm font-medium text-gray-700">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
+            <label className="text-sm font-medium text-gray-700">Category</label>
+            <input
+              type="text"
+              required
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter Expense Category Description (Optional)"
+              placeholder="Enter product category"
             />
           </div>
         </div>
 
+        {/* Form Actions */}
         <div className="flex justify-end items-center gap-3 pt-6 border-t">
           {onCancel && (
             <button
@@ -161,7 +223,7 @@ export default function ExpenseCategoryForm({
           )}
           <button
             type="submit"
-            disabled={isSubmitting || !isAuthenticated}
+            disabled={isSubmitting}
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (

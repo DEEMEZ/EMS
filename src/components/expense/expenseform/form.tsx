@@ -92,7 +92,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
   const fetchExpenseCategories = async () => {
     setIsLoadingCategories(true);
     try {
-      const response = await fetch('/api/expensecategories');
+      const response = await fetch('/api/expenseCategories');
       if (response.ok) {
         const data = await response.json();
         setExpenseCategories(data.categories || []);

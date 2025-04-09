@@ -56,7 +56,7 @@ export default function BudgetForm({ initialData, onCancel, onSuccess }: BudgetF
       setIsLoadingCategories(true);
       setCategoriesError('');
       try {
-        const response = await fetch('/api/expensecategories');
+        const response = await fetch('/api/expenseCategories');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch: ${response.status}`);

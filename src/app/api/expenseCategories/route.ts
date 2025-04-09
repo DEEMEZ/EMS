@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: unknown) {
-    console.error('Error in GET /api/expensecategories:', error);
+    console.error('Error in GET /api/expenseCategories:', error);
     return NextResponse.json(
       { error: (error as Error).message || 'Failed To Fetch Expense Categories' },
       { status: 500 }
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
       category: savedCategory
     }, { status: 201 });
   } catch (error: unknown) {
-    console.error('Error in POST /api/expensecategories:', error);
+    console.error('Error in POST /api/expenseCategories:', error);
 
     // Handle duplicate key error
     if ((error as { code?: number }).code === 11000) {
@@ -234,7 +234,7 @@ export async function PUT(request: NextRequest) {
       category
     });
   } catch (error: unknown) {
-    console.error('Error in PUT /api/expensecategories:', error);
+    console.error('Error in PUT /api/expenseCategories:', error);
 
     // Handle duplicate key error
     if ((error as { code?: number }).code === 11000) {
@@ -306,7 +306,7 @@ export async function DELETE(request: NextRequest) {
       success: true
     });
   } catch (error: unknown) {
-    console.error('Error in DELETE /api/expensecategories:', error);
+    console.error('Error in DELETE /api/expenseCategories:', error);
     return NextResponse.json(
       { error: (error as Error).message || 'Failed To Delete Expense Category' },
       { status: 500 }

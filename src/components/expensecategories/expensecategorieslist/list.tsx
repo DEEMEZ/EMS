@@ -61,7 +61,7 @@ export default function ExpenseCategoryList() {
         ...(debouncedSearchTerm && { search: debouncedSearchTerm })
       });
       
-      const response = await fetch(`/api/expensecategories?${params.toString()}`);
+      const response = await fetch(`/api/expenseCategories?${params.toString()}`);
       
       if (!response.ok) {
         // Handle authentication errors
@@ -93,7 +93,7 @@ export default function ExpenseCategoryList() {
       }
       
       setIsDeleting(categoryId);
-      const response = await fetch(`/api/expensecategories`, {
+      const response = await fetch(`/api/expenseCategories`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

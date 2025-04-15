@@ -32,8 +32,10 @@ const PaymentMethodSchema = new mongoose.Schema(
     toJSON: {
       transform: function (doc, ret) {
         ret._id = ret._id.toString();
-        ret.createdAt = ret.createdAt.toISOString();
-        ret.updatedAt = ret.updatedAt.toISOString();
+        // Check if createdAt exists before calling toISOString
+        ret.createdAt = ret.createdAt ? ret.createdAt.toISOString() : null;
+        // Check if updatedAt exists before calling toISOString
+        ret.updatedAt = ret.updatedAt ? ret.updatedAt.toISOString() : null;
         if (ret.modifiedDate) {
           ret.modifiedDate = ret.modifiedDate.toISOString();
         }
@@ -46,8 +48,7 @@ const PaymentMethodSchema = new mongoose.Schema(
 // Single index declaration with unique constraint
 PaymentMethodSchema.index(
   { userId: 1, name: 1 },
-  { unique: true, partialFilterExpression: { name: { $exists: true } }
-}
+  { unique: true, partialFilterExpression: { name: { $exists: true } } }
 );
 
 const PaymentMethodModel =

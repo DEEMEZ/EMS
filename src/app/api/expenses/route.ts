@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Bank from '@/models/bank';
 import Expense from '@/models/expense';
 import ExpenseCategories from '@/models/expenseCategory';
 import Organization from '@/models/organization';
@@ -22,7 +21,6 @@ interface ExpenseDocument {
   expensecategoriesId: string;
   orgId: string;
   paymentMethod: string;
-  bankId?: string;
   transactionAmount: number;
 }
 
@@ -70,7 +68,7 @@ export async function GET(request: NextRequest) {
       })
       .populate('expensecategoriesId', 'name')
       .populate('orgId', 'name')
-      .populate('bankId', 'name')
+      .populate('paymentMethod', 'name') // Added this line to populate paymentMethod name
       .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)
@@ -122,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json();
-    const { transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
+    const { transactionId, expensecategoriesId, orgId, paymentMethod } = data;
 
     const transactionExists = await Transaction.findById(transactionId);
     if (!transactionExists) {
@@ -139,17 +137,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid Organization ID.' }, { status: 400 });
     }
 
-    if (paymentMethod === 'Transfer' && !bankId) {
-      return NextResponse.json({ error: 'bankId is required for Transfer.' }, { status: 400 });
-    }
-
-    if (bankId) {
-      const bankExists = await Bank.findById(bankId);
-      if (!bankExists) {
-        return NextResponse.json({ error: 'Invalid Bank ID.' }, { status: 400 });
-      }
-    }
-
     const transactionAmount = transactionExists.amount;
 
     const expense = await Expense.create({
@@ -157,7 +144,6 @@ export async function POST(request: NextRequest) {
       expensecategoriesId,
       orgId,
       paymentMethod,
-      bankId: paymentMethod === 'Transfer' ? bankId : null,
       transactionAmount,
       userId,
     });
@@ -193,7 +179,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = await request.json();
-    const { _id, transactionId, expensecategoriesId, orgId, paymentMethod, bankId } = data;
+    const { _id, transactionId, expensecategoriesId, orgId, paymentMethod } = data;
 
     const expense = await Expense.findById(_id).lean<ExpenseDocument>();
     if (!expense) {
@@ -205,10 +191,6 @@ export async function PUT(request: NextRequest) {
         { error: 'You do not have permission to modify this expense' },
         { status: 403 }
       );
-    }
-
-    if (paymentMethod === 'Transfer' && !bankId) {
-      return NextResponse.json({ error: 'bankId is required for Transfer.' }, { status: 400 });
     }
 
     const transaction = await Transaction.findById(transactionId);
@@ -224,7 +206,6 @@ export async function PUT(request: NextRequest) {
         expensecategoriesId,
         orgId,
         paymentMethod,
-        bankId: paymentMethod === 'Transfer' ? bankId : null,
         transactionAmount,
         userId,
       },

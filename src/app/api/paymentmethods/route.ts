@@ -1,59 +1,63 @@
 import Paymentmethods from '@/models/paymentmethods';
 import dbConnect from '@/utils/dbconnect';
-import { Types, isValidObjectId } from 'mongoose';
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
-
-interface TokenPayload {
-  id?: string;
-  sub?: string;
-  name?: string;
-  email?: string;
-}
-
-interface PaymentMethodDocument {
-  _id: Types.ObjectId;
-  userId: string;
-  name: string;
-  description?: string;
-  modifiedBy?: string;
-  modifiedDate?: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-// Helper function to ensure we have a valid user ID
-function getValidUserId(token: TokenPayload): string {
-  const userId = token.id || token.sub;
-  if (!userId) {
-    throw new Error('Authentication required');
-  }
-  return userId;
-}
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request }) as TokenPayload;
+    console.log('Database connected successfully');
+    const token = await getToken({ req: request });
+
+    console.log('Token:', token);
+    console.log('Token ID:', token?.id, 'Token Sub:', token?.sub);
 
     if (!token?.id && !token?.sub) {
+      console.log('No valid token found, returning empty response');
       return NextResponse.json({
         sources: [],
         pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
       });
     }
 
-    const userId = getValidUserId(token);
+    const userId = token.id || token.sub;
+    if (!userId) {
+      console.log('userId is undefined, returning error response');
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 401 }
+      );
+    }
+
+    console.log('Fetching payment methods for userId:', userId);
+
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const search = searchParams.get('search') || '';
+    const forDropdown = searchParams.get('forDropdown') === 'true';
+
+    if (forDropdown) {
+      try {
+        const paymentMethods = await Paymentmethods.find({ userId })
+          .sort({ createdAt: -1 })
+          .select('_id name');
+
+        console.log('Payment Methods for Dropdown (before transform):', paymentMethods);
+        const transformedPaymentMethods = paymentMethods.map(method => method.toJSON());
+        console.log('Payment Methods for Dropdown (after transform):', transformedPaymentMethods);
+        return NextResponse.json(transformedPaymentMethods);
+      } catch (queryError) {
+        console.error('Error querying payment methods:', queryError);
+        return NextResponse.json(
+          { error: 'Failed to query payment methods' },
+          { status: 500 }
+        );
+      }
+    }
 
     const query = search
-      ? { 
-          userId,
-          name: { $regex: search, $options: 'i' } 
-        }
+      ? { userId, name: { $regex: search, $options: 'i' } }
       : { userId };
 
     const skip = (page - 1) * limit;
@@ -70,19 +74,15 @@ export async function GET(request: NextRequest) {
       pagination: {
         total,
         page,
-        limit,
         totalPages: Math.ceil(total / limit),
       },
     });
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('Error in GET /api/paymentmethods:', error.message, error.stack);
-      return NextResponse.json(
-        { error: error.message || 'Failed To Fetch Payment Methods' },
-        { status: error.message === 'Authentication required' ? 401 : 500 }
-      );
+    } else {
+      console.error('Unexpected error in GET /api/paymentmethods:', error);
     }
-    console.error('Unexpected error in GET /api/paymentmethods:', error);
     return NextResponse.json(
       { error: 'Failed To Fetch Payment Methods' },
       { status: 500 }
@@ -93,16 +93,25 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request }) as TokenPayload;
-    const userId = getValidUserId(token);
-    const data = await request.json();
+    const token = await getToken({ req: request });
 
-    if (!data.name) {
+    if (!token?.id && !token?.sub) {
       return NextResponse.json(
-        { error: 'Payment method name is required' },
-        { status: 400 }
+        { error: 'Authentication required' },
+        { status: 401 }
       );
     }
+
+    const userId = token.id || token.sub;
+    if (!userId) {
+      console.log('userId is undefined, returning error response');
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 401 }
+      );
+    }
+
+    const data = await request.json();
 
     const newPaymentMethod = await Paymentmethods.create({
       ...data,
@@ -115,12 +124,9 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('Error in POST /api/paymentmethods:', error.message, error.stack);
-      return NextResponse.json(
-        { error: error.message || 'Failed To Create Payment Method' },
-        { status: error.message === 'Authentication required' ? 401 : 500 }
-      );
+    } else {
+      console.error('Unexpected error in POST /api/paymentmethods:', error);
     }
-    console.error('Unexpected error in POST /api/paymentmethods:', error);
     return NextResponse.json(
       { error: 'Failed To Create Payment Method' },
       { status: 500 }
@@ -131,26 +137,28 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request }) as TokenPayload;
-    const userId = getValidUserId(token);
+    const token = await getToken({ req: request });
+
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
+    if (!userId) {
+      console.log('userId is undefined, returning error response');
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 401 }
+      );
+    }
+
     const data = await request.json();
     const { _id, ...updateData } = data;
 
-    if (!_id) {
-      return NextResponse.json(
-        { error: 'Payment Method ID is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!isValidObjectId(_id)) {
-      return NextResponse.json(
-        { error: 'Invalid Payment Method ID' },
-        { status: 400 }
-      );
-    }
-
-    const existingPaymentMethod = await Paymentmethods.findById(_id).lean<PaymentMethodDocument>();
+    const existingPaymentMethod = await Paymentmethods.findById(_id);
 
     if (!existingPaymentMethod) {
       return NextResponse.json(
@@ -159,7 +167,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (existingPaymentMethod.userId !== userId) {
+    if (existingPaymentMethod.userId && existingPaymentMethod.userId.toString() !== userId.toString()) {
       return NextResponse.json(
         { error: 'You do not have permission to modify this payment method' },
         { status: 403 }
@@ -170,6 +178,7 @@ export async function PUT(request: NextRequest) {
       _id,
       {
         ...updateData,
+        userId,
         modifiedBy: token.name || 'System',
         modifiedDate: new Date()
       },
@@ -180,12 +189,9 @@ export async function PUT(request: NextRequest) {
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('Error in PUT /api/paymentmethods:', error.message, error.stack);
-      return NextResponse.json(
-        { error: error.message || 'Failed To Update Payment Method' },
-        { status: error.message === 'Authentication required' ? 401 : 500 }
-      );
+    } else {
+      console.error('Unexpected error in PUT /api/paymentmethods:', error);
     }
-    console.error('Unexpected error in PUT /api/paymentmethods:', error);
     return NextResponse.json(
       { error: 'Failed To Update Payment Method' },
       { status: 500 }
@@ -196,26 +202,35 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await dbConnect();
-    const token = await getToken({ req: request }) as TokenPayload;
-    const userId = getValidUserId(token);
-    const searchParams = request.nextUrl.searchParams;
-    const _id = searchParams.get('id');
+    const token = await getToken({ req: request });
+
+    if (!token?.id && !token?.sub) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = token.id || token.sub;
+    if (!userId) {
+      console.log('userId is undefined, returning error response');
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 401 }
+      );
+    }
+
+    const data = await request.json();
+    const { _id } = data;
 
     if (!_id) {
       return NextResponse.json(
-        { error: 'Payment Method ID is required' },
+        { error: 'Payment Method ID Is Required' },
         { status: 400 }
       );
     }
 
-    if (!isValidObjectId(_id)) {
-      return NextResponse.json(
-        { error: 'Invalid Payment Method ID' },
-        { status: 400 }
-      );
-    }
-
-    const existingPaymentMethod = await Paymentmethods.findById(_id).lean<PaymentMethodDocument>();
+    const existingPaymentMethod = await Paymentmethods.findById(_id);
 
     if (!existingPaymentMethod) {
       return NextResponse.json(
@@ -224,7 +239,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    if (existingPaymentMethod.userId !== userId) {
+    if (existingPaymentMethod.userId && existingPaymentMethod.userId.toString() !== userId.toString()) {
       return NextResponse.json(
         { error: 'You do not have permission to delete this payment method' },
         { status: 403 }
@@ -233,19 +248,13 @@ export async function DELETE(request: NextRequest) {
 
     await Paymentmethods.findByIdAndDelete(_id);
 
-    return NextResponse.json({ 
-      success: true,
-      message: 'Payment Method Deleted Successfully' 
-    });
+    return NextResponse.json({ message: 'Payment Method Deleted Successfully' });
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('Error in DELETE /api/paymentmethods:', error.message, error.stack);
-      return NextResponse.json(
-        { error: error.message || 'Failed To Delete Payment Method' },
-        { status: error.message === 'Authentication required' ? 401 : 500 }
-      );
+    } else {
+      console.error('Unexpected error in DELETE /api/paymentmethods:', error);
     }
-    console.error('Unexpected error in DELETE /api/paymentmethods:', error);
     return NextResponse.json(
       { error: 'Failed To Delete Payment Method' },
       { status: 500 }

@@ -44,35 +44,35 @@ export default function TransactionList() {
   };
 
   const fetchTransactions = useCallback(async () => {
-  try {
-    setIsLoading(true);
-    setError('');
+    try {
+      setIsLoading(true);
+      setError('');
 
-    // Only fetch if authenticated
-    if (!isAuthenticated) {
+      // Only fetch if authenticated
+      if (!isAuthenticated) {
+        setIsLoading(false);
+        return;
+      }
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+      });
+
+      const response = await fetch(`/api/transactions?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed To Fetch Transactions');
+
+      const data = await response.json();
+      setTransactions(data.transactions);
+      setTotalPages(data.pagination.totalPages);
+    } catch (err) {
+      setError('Failed To Fetch Transactions. Please Try Again.');
+      console.error('Error:', err);
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: '10',
-      ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-    });
-
-    const response = await fetch(`/api/transactions?${params.toString()}`);
-    if (!response.ok) throw new Error('Failed To Fetch Transactions');
-
-    const data = await response.json();
-    setTransactions(data.transactions);
-    setTotalPages(data.pagination.totalPages);
-  } catch (err) {
-    setError('Failed To Fetch Transactions. Please Try Again.');
-    console.error('Error:', err);
-  } finally {
-    setIsLoading(false);
-  }
-}, [isAuthenticated, page, debouncedSearchTerm]);  
+  }, [isAuthenticated, page, debouncedSearchTerm]);  
 
   const handleDelete = async (transactionId: string) => {
     try {
@@ -124,14 +124,14 @@ export default function TransactionList() {
   };
 
   useEffect(() => {
-  if (authStatus === 'authenticated') {
-    fetchTransactions();
-  } else if (authStatus === 'unauthenticated') {
-    // Clear transactions if user is not authenticated
-    setTransactions([]);
-    setIsLoading(false);
-  }
-}, [fetchTransactions, authStatus]); 
+    if (authStatus === 'authenticated') {
+      fetchTransactions();
+    } else if (authStatus === 'unauthenticated') {
+      // Clear transactions if user is not authenticated
+      setTransactions([]);
+      setIsLoading(false);
+    }
+  }, [fetchTransactions, authStatus]); 
 
   useEffect(() => {
     return () => {
@@ -268,7 +268,7 @@ export default function TransactionList() {
                       <td className="px-6 py-4">{new Date(transaction.transactionDate).toLocaleDateString()}</td>
                       <td className="px-6 py-4">{transaction.description}</td>
                       <td className="px-6 py-4 font-semibold">
-                        ${typeof transaction.amount === 'number' ? transaction.amount.toFixed(2) : '0.00'}
+                        PKR {typeof transaction.amount === 'number' ? transaction.amount.toFixed(2) : '0.00'} {/* Changed $ to PKR */}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">

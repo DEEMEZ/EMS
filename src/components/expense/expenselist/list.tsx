@@ -70,14 +70,17 @@ export default function ExpenseList() {
           setError('You must be signed in to view expenses');
           return;
         }
-        throw new Error('Failed To Fetch Expenses');
+        // Set error state instead of throwing
+        const errorData = await response.json();
+        setError(errorData.error || `Failed to fetch expenses (Status: ${response.status})`);
+        return;
       }
 
       const data = await response.json();
       setExpenses(data.expenses || []);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (err) {
-      setError('Failed To Fetch Expenses');
+      setError('Failed to fetch expenses: Network error');
       console.error('Error:', err);
     } finally {
       setIsLoading(false);
@@ -269,7 +272,6 @@ export default function ExpenseList() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Payment Method</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Bank</th>
                   <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
@@ -293,8 +295,7 @@ export default function ExpenseList() {
                       <td className="px-6 py-4">{expense.transactionId?.amount ?? 'N/A'}</td>
                       <td className="px-6 py-4">{expense.expensecategoriesId?.name || 'Unknown'}</td>
                       <td className="px-6 py-4">{expense.orgId?.name || 'Unknown'}</td>
-                      <td className="px-6 py-4">{expense.paymentMethod || 'Unknown'}</td>
-                      <td className="px-6 py-4">{expense.bankId?.name || 'N/A'}</td>
+                      <td className="px-6 py-4">{expense.paymentMethod?.name || 'Unknown'}</td> {/* Updated to display paymentMethod name */}
                       <td className="px-6 py-4 flex justify-end gap-2">
                         <button
                           onClick={() => openModal(expense)}

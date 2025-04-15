@@ -33,11 +33,9 @@ interface Transaction {
   description?: string;
 }
 
-interface Bank {
+interface PaymentMethod {
   _id: string;
   name: string;
-  accountNumber: string;
-  branch: string;
 }
 
 export default function ExpenseForm({ initialData, onCancel, onSuccess }: ExpenseFormProps) {
@@ -46,17 +44,16 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     expensecategoriesId: initialData?.expensecategoriesId || '',
     orgId: initialData?.orgId || '',
     paymentMethod: initialData?.paymentMethod || '',
-    bankId: initialData?.bankId || '',
   });
 
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [banks, setBanks] = useState<Bank[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
-  const [isLoadingBanks, setIsLoadingBanks] = useState(false);
+  const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -68,22 +65,43 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
       fetchOrganizations();
       fetchExpenseCategories();
       fetchExpenseTransactions();
-      fetchBanks();
+      fetchPaymentMethods();
     }
   }, [isAuthenticated]);
 
   const fetchOrganizations = async () => {
     setIsLoadingOrgs(true);
     try {
-      const response = await fetch('/api/organization');
+      if (!isAuthenticated || !session) {
+        setError('Authentication required to load organizations');
+        setIsLoadingOrgs(false);
+        return;
+      }
+
+      console.log('Fetching organizations, Session:', session, 'Status:', status);
+      const response = await fetch('/api/organization', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Ensure session cookie is sent
+      });
+      console.log('Organizations Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
       if (response.ok) {
         const data = await response.json();
-        setOrganizations(data.organizations);
+        console.log('Fetched Organizations:', data);
+        setOrganizations(data.organizations || []);
       } else {
-        setError('Failed to load organizations');
+        const errorData = await response.json();
+        console.log('Organizations Error Response:', errorData);
+        setError(errorData.error || `Failed to load organizations (Status: ${response.status})`);
       }
     } catch (err) {
-      setError('Failed to load organizations');
+      console.error('Network error fetching organizations:', err);
+      setError('Failed to load organizations: Network error');
     } finally {
       setIsLoadingOrgs(false);
     }
@@ -92,15 +110,36 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
   const fetchExpenseCategories = async () => {
     setIsLoadingCategories(true);
     try {
-      const response = await fetch('/api/expenseCategories');
+      if (!isAuthenticated || !session) {
+        setError('Authentication required to load expense categories');
+        setIsLoadingCategories(false);
+        return;
+      }
+
+      console.log('Fetching expense categories, Session:', session, 'Status:', status);
+      const response = await fetch('/api/expenseCategories', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Ensure session cookie is sent
+      });
+      console.log('Expense Categories Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched Expense Categories:', data);
         setExpenseCategories(data.categories || []);
       } else {
-        setError('Failed to load expense categories');
+        const errorData = await response.json();
+        console.log('Expense Categories Error Response:', errorData);
+        setError(errorData.error || `Failed to load expense categories (Status: ${response.status})`);
       }
     } catch (err) {
-      setError('Failed to load expense categories');
+      console.error('Network error fetching expense categories:', err);
+      setError('Failed to load expense categories: Network error');
     } finally {
       setIsLoadingCategories(false);
     }
@@ -109,34 +148,80 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
   const fetchExpenseTransactions = async () => {
     setIsLoadingTransactions(true);
     try {
-      const response = await fetch('/api/transactions?type=Expense');
+      if (!isAuthenticated || !session) {
+        setError('Authentication required to load transactions');
+        setIsLoadingTransactions(false);
+        return;
+      }
+
+      console.log('Fetching transactions, Session:', session, 'Status:', status);
+      const response = await fetch('/api/transactions?type=Expense', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Ensure session cookie is sent
+      });
+      console.log('Transactions Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched Transactions:', data);
         setTransactions(data.transactions || []);
       } else {
-        setError('Failed to load transactions');
+        const errorData = await response.json();
+        console.log('Transactions Error Response:', errorData);
+        setError(errorData.error || `Failed to load transactions (Status: ${response.status})`);
       }
     } catch (err) {
-      setError('Failed to load transactions');
+      console.error('Network error fetching transactions:', err);
+      setError('Failed to load transactions: Network error');
     } finally {
       setIsLoadingTransactions(false);
     }
   };
 
-  const fetchBanks = async () => {
-    setIsLoadingBanks(true);
+  const fetchPaymentMethods = async () => {
+    setIsLoadingPaymentMethods(true);
     try {
-      const response = await fetch('/api/bank');
+      if (!isAuthenticated || !session) {
+        setError('Authentication required to load payment methods');
+        setIsLoadingPaymentMethods(false);
+        return;
+      }
+
+      console.log('Fetching payment methods, Session:', session, 'Status:', status);
+      const response = await fetch('/api/paymentmethods?forDropdown=true', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Ensure session cookie is sent
+      });
+      console.log('Payment Methods Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
       if (response.ok) {
         const data = await response.json();
-        setBanks(data.banks || []);
+        console.log('Fetched Payment Methods:', data);
+        if (data.length === 0) {
+          setError('No payment methods found. Please add a payment method.');
+        } else {
+          setPaymentMethods(data);
+        }
       } else {
-        setError('Failed to load banks');
+        const errorData = await response.json();
+        console.log('Payment Methods Error Response:', errorData);
+        setError(errorData.error || `Failed to load payment methods (Status: ${response.status})`);
       }
     } catch (err) {
-      setError('Failed to load banks');
+      console.error('Network error fetching payment methods:', err);
+      setError('Failed to load payment methods: Network error');
     } finally {
-      setIsLoadingBanks(false);
+      setIsLoadingPaymentMethods(false);
     }
   };
 
@@ -148,12 +233,6 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
 
     if (!isAuthenticated) {
       setError('Authentication required');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (formData.paymentMethod === 'Transfer' && !formData.bankId) {
-      setError('Bank is required for Transfer payment method.');
       setIsSubmitting(false);
       return;
     }
@@ -187,7 +266,6 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
             expensecategoriesId: '',
             orgId: '',
             paymentMethod: '',
-            bankId: '',
           });
         }
       } else {
@@ -320,52 +398,32 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
             )}
           </div>
 
-          {/* Payment Method Field */}
+          {/* Payment Method Field - Dropdown */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
               <Banknote className="w-4 h-4" />
               Payment Method
             </label>
-            <select
-              required
-              value={formData.paymentMethod}
-              onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="">Select Payment Method</option>
-              <option value="Cash">Cash</option>
-              <option value="Transfer">Transfer</option>
-            </select>
+            {isLoadingPaymentMethods ? (
+              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <select
+                required
+                value={formData.paymentMethod}
+                onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select Payment Method</option>
+                {paymentMethods.map((method) => (
+                  <option key={method._id} value={method._id}>
+                    {method.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
-
-          {/* Bank Field - Dropdown (Conditional) */}
-          {formData.paymentMethod === 'Transfer' && (
-            <div>
-              <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
-                <Banknote className="w-4 h-4" />
-                Bank Account
-              </label>
-              {isLoadingBanks ? (
-                <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
-                  <LoadingSpinner size="sm" />
-                </div>
-              ) : (
-                <select
-                  required
-                  value={formData.bankId}
-                  onChange={(e) => setFormData({ ...formData, bankId: e.target.value })}
-                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="">Select a bank account</option>
-                  {banks.map((bank) => (
-                    <option key={bank._id} value={bank._id}>
-                      {bank.name} ({bank.accountNumber}) - {bank.branch}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Form Actions */}
@@ -382,7 +440,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
           )}
           <button
             type="submit"
-            disabled={isSubmitting || isLoadingOrgs || isLoadingCategories || isLoadingTransactions || isLoadingBanks}
+            disabled={isSubmitting || isLoadingOrgs || isLoadingCategories || isLoadingTransactions || isLoadingPaymentMethods}
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (

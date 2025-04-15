@@ -3,9 +3,9 @@ import mongoose from 'mongoose';
 const expenseSchema = new mongoose.Schema(
   {
     userId: {
-      type: String, // Keeping as String to align with token.id or token.sub
+      type: String,
       required: true,
-      index: true // Adding index for optimized queries
+      index: true
     },
     transactionId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -23,34 +23,42 @@ const expenseSchema = new mongoose.Schema(
       required: true
     },
     paymentMethod: {
-      type: String,
-      enum: ['Cash', 'Transfer'],
+      // Updated to reference a PaymentMethod document
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'PaymentMethod',
       required: true
     },
-    bankId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Bank',
-      default: null 
+    transactionAmount: {
+      type: Number,
+      required: false
     },
-    transactionAmount: { 
-      type: Number, 
-      required: false 
+    modifiedBy: {
+      type: String,
+      default: 'System'
+    },
+    modifiedDate: {
+      type: Date,
+      default: Date.now
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+      transform: function (doc, ret) {
+        ret._id = ret._id.toString();
+        ret.createdAt = ret.createdAt ? ret.createdAt.toISOString() : null;
+        ret.updatedAt = ret.updatedAt ? ret.updatedAt.toISOString() : null;
+        if (ret.modifiedDate) {
+          ret.modifiedDate = ret.modifiedDate.toISOString();
+        }
+        return ret;
+      }
+    }
   }
 );
 
 expenseSchema.pre(['find', 'findOne'], function (next) {
   this.populate('transactionId', 'amount type transactionDate');
-  next();
-});
-
-expenseSchema.pre('save', function (next) {
-  if (this.paymentMethod === 'Transfer' && !this.bankId) {
-    return next(new Error('bankId is required when paymentMethod is Transfer.'));
-  }
   next();
 });
 

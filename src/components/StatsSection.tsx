@@ -87,7 +87,7 @@ const StatsSection = () => {
       <div className="bg-green-50 border border-green-100 p-4 rounded-lg shadow-sm">
         <h3 className="text-sm font-medium text-green-800">Inventory Value</h3>
         <p className="text-2xl font-bold text-green-600">
-          ${stats.totalInventoryValue.toFixed(2)}
+          PKR{stats.totalInventoryValue.toFixed(2)}
         </p>
       </div>
 
@@ -95,7 +95,7 @@ const StatsSection = () => {
       <div className="bg-amber-50 border border-amber-100 p-4 rounded-lg shadow-sm">
         <h3 className="text-sm font-medium text-amber-800">Avg. Price</h3>
         <p className="text-2xl font-bold text-amber-600">
-          ${stats.averagePrice.toFixed(2)}
+          PKR{stats.averagePrice.toFixed(2)}
         </p>
       </div>
 

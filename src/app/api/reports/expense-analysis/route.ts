@@ -88,6 +88,16 @@ export async function GET(request: NextRequest) {
         },
       },
       { $unwind: "$category" },
+      // Lookup payment method information
+      {
+        $lookup: {
+          from: "paymentmethods",
+          localField: "paymentMethod",
+          foreignField: "_id",
+          as: "paymentMethodData",
+        },
+      },
+      { $unwind: { path: "$paymentMethodData", preserveNullAndEmptyArrays: true } },
       // Lookup bank information
       {
         $lookup: {
@@ -104,7 +114,15 @@ export async function GET(request: NextRequest) {
           _id: "$expensecategoriesId",
           category: { $first: "$category.name" },
           totalAmount: { $sum: "$transaction.amount" }, // Using transaction amount here
-          paymentMethods: { $addToSet: "$paymentMethod" },
+          paymentMethods: { 
+            $addToSet: {
+              $cond: [
+                { $ifNull: ["$paymentMethodData", false] },
+                "$paymentMethodData.name",
+                null
+              ]
+            }
+          },
           banksUsed: { 
             $addToSet: {
               $cond: [
@@ -116,9 +134,16 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      // Filter out null banks
+      // Filter out null values in paymentMethods and banksUsed
       {
         $addFields: {
+          paymentMethods: {
+            $filter: {
+              input: "$paymentMethods",
+              as: "method",
+              cond: { $ne: ["$$method", null] }
+            }
+          },
           banksUsed: {
             $filter: {
               input: "$banksUsed",

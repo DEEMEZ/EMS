@@ -222,7 +222,11 @@ export default function IncomeForm({ initialData, onCancel, onSuccess }: IncomeF
                 <option value="">Select a transaction</option>
                 {transactions.map((transaction) => (
                   <option key={transaction._id} value={transaction._id}>
-                    {transaction.description || `Income: $${transaction.amount}`} - {new Date(transaction.transactionDate).toLocaleDateString()}
+                    {transaction.type} -{' '}
+                    {typeof transaction.amount === 'number' && transaction.amount >= 0
+                      ? `${transaction.amount.toFixed(2)} PKR`
+                      : '0.00 PKR'}{' '}
+                    - {new Date(transaction.transactionDate).toLocaleDateString()}
                   </option>
                 ))}
               </select>

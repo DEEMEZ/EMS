@@ -172,8 +172,16 @@ const ExpenseAnalysisTable = () => {
                   data.map((expense) => (
                     <TableRow key={expense._id}>
                       <TableCell>{expense.category}</TableCell>
-                      <TableCell>${expense.totalAmount.toFixed(2)}</TableCell>
-                      <TableCell>{expense.paymentMethods.join(", ")}</TableCell>
+                      <TableCell>
+                        {typeof expense.totalAmount === 'number'
+                          ? `${expense.totalAmount.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {expense.paymentMethods.length > 0
+                          ? expense.paymentMethods.join(", ")
+                          : "N/A"}
+                      </TableCell>
                       <TableCell>
                         {expense.banksUsed.length > 0 ? expense.banksUsed.join(", ") : "N/A"}
                       </TableCell>
@@ -198,7 +206,7 @@ const ExpenseAnalysisTable = () => {
                   <BarChart data={data}>
                     <XAxis dataKey="category" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`$${value}`, "Amount"]} />
+                    <Tooltip formatter={(value) => [`${value} PKR`, "Amount"]} />
                     <Legend />
                     <Bar dataKey="totalAmount" name="Amount" fill="#8884d8">
                       {data.map((_, index) => (
@@ -226,7 +234,7 @@ const ExpenseAnalysisTable = () => {
                         <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`$${value}`, "Amount"]} />
+                    <Tooltip formatter={(value) => [`${value} PKR`, "Amount"]} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

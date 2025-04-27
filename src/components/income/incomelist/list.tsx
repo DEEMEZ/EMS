@@ -9,8 +9,21 @@ import _ from "lodash";
 import { AlertCircle, Edit, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+// Define the IIncome interface to type the incomes data
+interface IIncome {
+  _id: string;
+  transactionId?: {
+    type: 'Income' | 'Expense';
+    transactionDate: string;
+    amount: number;
+  };
+  incomeSourceId?: { name: string };
+  orgId?: { name: string };
+  transactionAmount: number;
+}
+
 export default function IncomeList() {
-  const [incomes, setIncomes] = useState<any[]>([]);
+  const [incomes, setIncomes] = useState<IIncome[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -19,7 +32,7 @@ export default function IncomeList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingIncome, setEditingIncome] = useState<any | null>(null);
+  const [editingIncome, setEditingIncome] = useState<IIncome | null>(null);
 
   const debouncedSearch = useMemo(
     () =>
@@ -50,8 +63,8 @@ export default function IncomeList() {
       if (!response.ok) throw new Error("Failed To Fetch Incomes");
 
       const data = await response.json();
-      setIncomes(data.incomes);
-      setTotalPages(data.pagination.totalPages);
+      setIncomes(data.incomes || []);
+      setTotalPages(data.pagination?.totalPages || 1);
     } catch (err) {
       setError("Failed To Fetch Incomes");
     } finally {
@@ -79,7 +92,7 @@ export default function IncomeList() {
     }
   };
 
-  const openModal = (income?: any) => {
+  const openModal = (income?: IIncome) => {
     setEditingIncome(income || null);
     setIsModalOpen(true);
   };
@@ -156,7 +169,7 @@ export default function IncomeList() {
                   </td>
                 </tr>
               ) : incomes.length > 0 ? (
-                incomes.map((income, index) => (
+                incomes.map((income: IIncome, index: number) => (
                   <motion.tr
                     key={income._id}
                     initial={{ opacity: 0, y: 20 }}
@@ -171,7 +184,11 @@ export default function IncomeList() {
                         ? new Date(income.transactionId.transactionDate).toLocaleDateString() 
                         : "Unknown"}
                     </td>
-                    <td className="px-6 py-4">{income.transactionAmount ?? "N/A"}</td>
+                    <td className="px-6 py-4">
+                      {typeof income.transactionAmount === 'number'
+                        ? `${income.transactionAmount.toFixed(2)} PKR`
+                        : 'N/A'}
+                    </td>
                     <td className="px-6 py-4">{income.incomeSourceId?.name || "Unknown"}</td>
                     <td className="px-6 py-4">{income.orgId?.name || "Unknown"}</td>
                     <td className="px-6 py-4">

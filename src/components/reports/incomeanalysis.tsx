@@ -175,7 +175,11 @@ const IncomeAnalysisTable = () => {
                   data.map((income) => (
                     <TableRow key={income._id}>
                       <TableCell>{income.incomeSource}</TableCell>
-                      <TableCell>${income.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {typeof income.totalAmount === 'number'
+                          ? `${income.totalAmount.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </TableCell>
                       <TableCell>
                         {income.organizations.length > 0 ? income.organizations.join(", ") : "N/A"}
                       </TableCell>
@@ -200,7 +204,7 @@ const IncomeAnalysisTable = () => {
                   <BarChart data={data}>
                     <XAxis dataKey="incomeSource" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`$${value}`, "Amount"]} />
+                    <Tooltip formatter={(value) => [`${value} PKR`, "Amount"]} />
                     <Legend />
                     <Bar dataKey="totalAmount" name="Amount" fill="#8884d8">
                       {data.map((_, index) => (
@@ -228,7 +232,7 @@ const IncomeAnalysisTable = () => {
                         <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`$${value}`, "Amount"]} />
+                    <Tooltip formatter={(value) => [`${value} PKR`, "Amount"]} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

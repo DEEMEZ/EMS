@@ -39,56 +39,56 @@ const TransactionAnalysisTable = () => {
   const safeStartDate = startDate ?? undefined;
   const safeEndDate = endDate ?? undefined;
 
-const fetchTransactions = useCallback(async () => {
-  if (!isAuthenticated) {
-    setError("Authentication required");
-    return;
-  }
-
-  if (!startDate || !endDate) {
-    setError("Please select both start and end dates");
-    return;
-  }
-
-  if (startDate > endDate) {
-    setError("Start date must be before end date");
-    return;
-  }
-
-  setLoading(true);
-  setError("");
-
-  try {
-    const start = format(startDate, "yyyy-MM-dd");
-    const end = format(endDate, "yyyy-MM-dd");
-
-    const response = await fetch(`/api/reports/transaction?startDate=${start}&endDate=${end}`);
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to fetch transaction data");
+  const fetchTransactions = useCallback(async () => {
+    if (!isAuthenticated) {
+      setError("Authentication required");
+      return;
     }
 
-    const result = await response.json();
-    const processedData = result.map((item: TransactionAnalysis, index: number) => ({
-      ...item,
-      _id: item._id || `temp-id-${index}-${Date.now()}`
-    }));
-    setData(processedData);
-  } catch (error) {
-    console.error("Error fetching transactions:", error);
-    setError(error instanceof Error ? error.message : "Failed to fetch transactions");
-    setData([]);
-  } finally {
-    setLoading(false);
-  }
-}, [isAuthenticated, startDate, endDate]);  
+    if (!startDate || !endDate) {
+      setError("Please select both start and end dates");
+      return;
+    }
 
- useEffect(() => {
-  if (isAuthenticated) {
-    fetchTransactions();
-  }
- }, [isAuthenticated, fetchTransactions]);  // Add fetchTransactions to dependencies
+    if (startDate > endDate) {
+      setError("Start date must be before end date");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const start = format(startDate, "yyyy-MM-dd");
+      const end = format(endDate, "yyyy-MM-dd");
+
+      const response = await fetch(`/api/reports/transaction?startDate=${start}&endDate=${end}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch transaction data");
+      }
+
+      const result = await response.json();
+      const processedData = result.map((item: TransactionAnalysis, index: number) => ({
+        ...item,
+        _id: item._id || `temp-id-${index}-${Date.now()}`
+      }));
+      setData(processedData);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch transactions");
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated, startDate, endDate]);  
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchTransactions();
+    }
+  }, [isAuthenticated, fetchTransactions]);  // Add fetchTransactions to dependencies
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
 
@@ -186,7 +186,11 @@ const fetchTransactions = useCallback(async () => {
                   data.map((transaction, index) => (
                     <TableRow key={generateKey(transaction, index)}>
                       <TableCell className="capitalize">{transaction.type || transaction._id}</TableCell>
-                      <TableCell>${transaction.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {typeof transaction.totalAmount === 'number'
+                          ? `${transaction.totalAmount.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </TableCell>
                       <TableCell>{transaction.count}</TableCell>
                     </TableRow>
                   ))
@@ -212,7 +216,7 @@ const fetchTransactions = useCallback(async () => {
                     <Tooltip 
                       formatter={(value) => {
                         const numValue = typeof value === 'number' ? value : 0;
-                        return [`$${numValue.toFixed(2)}`, ""];
+                        return [`${numValue.toFixed(2)} PKR`, ""];
                       }}
                       labelFormatter={(label) => `Type: ${label}`}
                     />
@@ -252,7 +256,7 @@ const fetchTransactions = useCallback(async () => {
                     <Tooltip 
                       formatter={(value) => {
                         const numValue = typeof value === 'number' ? value : 0;
-                        return [`$${numValue.toFixed(2)}`, ""];
+                        return [`${numValue.toFixed(2)} PKR`, ""];
                       }}
                     />
                   </PieChart>

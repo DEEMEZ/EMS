@@ -233,9 +233,21 @@ export default function BudgetList() {
                     >
                       <td className="px-6 py-4">{budget.userId?.fullname || 'Unknown User'}</td>
                       <td className="px-6 py-4">{budget.expensecategoriesId?.name || 'Unknown Category'}</td>
-                      <td className="px-6 py-4">{budget.monthlyLimit}</td>
-                      <td className="px-6 py-4">{budget.spentAmount}</td>
-                      <td className="px-6 py-4">{budget.remainingBudget}</td>
+                      <td className="px-6 py-4">
+                        {typeof budget.monthlyLimit === 'number'
+                          ? `${budget.monthlyLimit.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {typeof budget.spentAmount === 'number'
+                          ? `${budget.spentAmount.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {typeof budget.remainingBudget === 'number'
+                          ? `${budget.remainingBudget.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </td>
                       <td className="px-6 py-4">{new Date(budget.startDate).toLocaleDateString()}</td>
                       <td className="px-6 py-4">{new Date(budget.endDate).toLocaleDateString()}</td>
                       <td className="px-6 py-4">

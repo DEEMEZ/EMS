@@ -34,7 +34,7 @@ const BudgetAnalysisTable = () => {
   const safeStartDate = startDate ?? undefined;
   const safeEndDate = endDate ?? undefined;
 
- const fetchBudgets = useCallback(async () => {
+  const fetchBudgets = useCallback(async () => {
     if (!isAuthenticated) {
       setError("Authentication required");
       return;
@@ -76,7 +76,6 @@ const BudgetAnalysisTable = () => {
       fetchBudgets();
     }
   }, [isAuthenticated, fetchBudgets]);
-
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
 
@@ -174,12 +173,22 @@ const BudgetAnalysisTable = () => {
                   data.map((budget) => (
                     <TableRow key={budget._id}>
                       <TableCell>{budget.category}</TableCell>
-                      <TableCell>${budget.monthlyLimit.toFixed(2)}</TableCell>
-                      <TableCell>${budget.totalSpent.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {typeof budget.monthlyLimit === 'number'
+                          ? `${budget.monthlyLimit.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {typeof budget.totalSpent === 'number'
+                          ? `${budget.totalSpent.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </TableCell>
                       <TableCell
                         className={budget.remainingBudget < 0 ? "text-red-500 font-bold" : "text-green-500 font-bold"}
                       >
-                        ${budget.remainingBudget.toFixed(2)}
+                        {typeof budget.remainingBudget === 'number'
+                          ? `${budget.remainingBudget.toFixed(2)} PKR`
+                          : 'N/A'}
                       </TableCell>
                     </TableRow>
                   ))
@@ -199,42 +208,42 @@ const BudgetAnalysisTable = () => {
               <div className="bg-gray-100 p-4 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-center mb-2">Monthly Limit vs Total Spent</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data}>
-  <XAxis dataKey="category" />
-  <YAxis />
-  <Tooltip 
-    formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
-    labelFormatter={(label) => `Category: ${label}`}
-  />
-  <Legend />
-  <Bar dataKey="monthlyLimit" fill="#8884d8" name="Monthly Limit" />
-  <Bar dataKey="totalSpent" fill="#ff7f50" name="Total Spent" />
-</BarChart>
+                  <BarChart data={data}>
+                    <XAxis dataKey="category" />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value: number) => [`${value.toFixed(2)} PKR`, ""]}
+                      labelFormatter={(label) => `Category: ${label}`}
+                    />
+                    <Legend />
+                    <Bar dataKey="monthlyLimit" fill="#8884d8" name="Monthly Limit" />
+                    <Bar dataKey="totalSpent" fill="#ff7f50" name="Total Spent" />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="bg-gray-100 p-4 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-center mb-2">Budget Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
-               <PieChart>
-  <Pie
-    data={data}
-    dataKey="monthlyLimit"
-    nameKey="category"
-    cx="50%"
-    cy="50%"
-    outerRadius={100}
-    fill="#82ca9d"
-    label={({ category, percent }) => `${category}: ${(percent * 100).toFixed(0)}%`}
-  >
-    {data.map((_, index) => (
-      <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-    ))}
-  </Pie>
-  <Tooltip 
-    formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
-  />
-</PieChart>
+                  <PieChart>
+                    <Pie
+                      data={data}
+                      dataKey="monthlyLimit"
+                      nameKey="category"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      fill="#82ca9d"
+                      label={({ category, percent }) => `${category}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {data.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [`${value.toFixed(2)} PKR`, ""]}
+                    />
+                  </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>

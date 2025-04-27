@@ -2,6 +2,7 @@
 import Expense from '@/models/expense';
 import ExpenseCategories from '@/models/expenseCategory';
 import Organization from '@/models/organization';
+import PaymentMethod from '@/models/paymentmethods'; // Add this import
 import Transaction from '@/models/transaction';
 import dbConnect from '@/utils/dbconnect';
 import { getToken } from 'next-auth/jwt';
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
     if (!token?.id && !token?.sub) {
       return NextResponse.json({
         expenses: [],
-        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
       });
     }
 
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({
         expenses: [],
-        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
       });
     }
 
@@ -64,19 +65,19 @@ export async function GET(request: NextRequest) {
     const expenses = await Expense.find(query)
       .populate({
         path: 'transactionId',
-        select: 'amount type transactionDate'
+        select: 'amount type transactionDate',
       })
       .populate('expensecategoriesId', 'name')
       .populate('orgId', 'name')
-      .populate('paymentMethod', 'name') // Added this line to populate paymentMethod name
+      .populate('paymentMethod', 'name') // This should now work
       .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)
       .select('-__v');
 
-    const expensesWithAmount = expenses.map(expense => ({
+    const expensesWithAmount = expenses.map((expense) => ({
       ...expense.toObject(),
-      transactionAmount: expense.transactionId?.amount || 0
+      transactionAmount: expense.transactionId?.amount || 0,
     }));
 
     const total = await Expense.countDocuments(query);
@@ -135,6 +136,11 @@ export async function POST(request: NextRequest) {
     const orgExists = await Organization.findById(orgId);
     if (!orgExists) {
       return NextResponse.json({ error: 'Invalid Organization ID.' }, { status: 400 });
+    }
+
+    const paymentMethodExists = await PaymentMethod.findById(paymentMethod);
+    if (!paymentMethodExists) {
+      return NextResponse.json({ error: 'Invalid Payment Method ID.' }, { status: 400 });
     }
 
     const transactionAmount = transactionExists.amount;
@@ -197,6 +203,22 @@ export async function PUT(request: NextRequest) {
     if (!transaction) {
       return NextResponse.json({ error: 'Invalid Transaction ID.' }, { status: 400 });
     }
+
+    const expenseCategoryExists = await ExpenseCategories.findById(expensecategoriesId);
+    if (!expenseCategoryExists) {
+      return NextResponse.json({ error: 'Invalid Expense Category ID.' }, { status: 400 });
+    }
+
+    const orgExists = await Organization.findById(orgId);
+    if (!orgExists) {
+      return NextResponse.json({ error: 'Invalid Organization ID.' }, { status: 400 });
+    }
+
+    const paymentMethodExists = await PaymentMethod.findById(paymentMethod);
+    if (!paymentMethodExists) {
+      return NextResponse.json({ error: 'Invalid Payment Method ID.' }, { status: 400 });
+    }
+
     const transactionAmount = transaction.amount;
 
     const updatedExpense = await Expense.findByIdAndUpdate(

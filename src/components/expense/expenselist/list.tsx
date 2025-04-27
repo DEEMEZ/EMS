@@ -11,14 +11,39 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+// Define the IExpense interface to type the expenses data
+interface IExpense {
+  _id: string;
+  userId: string;
+  transactionId?: {
+    type: 'Income' | 'Expense';
+    transactionDate: string;
+    amount: number;
+  };
+  expensecategoriesId?: { name: string };
+  orgId?: { name: string };
+  paymentMethod?: { name: string };
+  transactionAmount: number;
+}
+
+// Define the props for ExpenseForm to fix type issues
+interface ExpenseFormProps {
+  initialData?: IExpense;
+  onCancel: () => void;
+  onSuccess: () => void;
+}
+
 export default function ExpenseList() {
   // Authentication state
   const { data: session, status: authStatus } = useSession();
   const isAuthenticated = authStatus === 'authenticated';
   const isAuthLoading = authStatus === 'loading';
 
+  // State to track if the component is mounted (hydrated)
+  const [isMounted, setIsMounted] = useState(false);
+
   // Data state
-  const [expenses, setExpenses] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<IExpense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -29,7 +54,12 @@ export default function ExpenseList() {
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<any | null>(null);
+  const [editingExpense, setEditingExpense] = useState<IExpense | null>(null);
+
+  // Set isMounted to true after the component mounts
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const debouncedSearch = useMemo(
     () =>
@@ -126,7 +156,7 @@ export default function ExpenseList() {
     }
   };
 
-  const openModal = (expense?: any) => {
+  const openModal = (expense?: IExpense) => {
     // Check authentication first
     if (!isAuthenticated) {
       setError('You must be signed in to manage expenses');
@@ -162,6 +192,11 @@ export default function ExpenseList() {
       debouncedSearch.cancel();
     };
   }, [debouncedSearch]);
+
+  // If the component is not mounted, return null to skip rendering during SSR
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -277,7 +312,7 @@ export default function ExpenseList() {
               </thead>
               <tbody>
                 <AnimatePresence>
-                  {expenses.map((expense, index) => (
+                  {expenses.map((expense: IExpense, index: number) => (
                     <motion.tr
                       key={expense._id}
                       initial={{ opacity: 0, y: 20 }}
@@ -292,10 +327,14 @@ export default function ExpenseList() {
                           ? new Date(expense.transactionId.transactionDate).toLocaleDateString()
                           : 'Unknown'}
                       </td>
-                      <td className="px-6 py-4">{expense.transactionId?.amount ?? 'N/A'}</td>
+                      <td className="px-6 py-4">
+                        {typeof expense.transactionAmount === 'number'
+                          ? `${expense.transactionAmount.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </td>
                       <td className="px-6 py-4">{expense.expensecategoriesId?.name || 'Unknown'}</td>
                       <td className="px-6 py-4">{expense.orgId?.name || 'Unknown'}</td>
-                      <td className="px-6 py-4">{expense.paymentMethod?.name || 'Unknown'}</td> {/* Updated to display paymentMethod name */}
+                      <td className="px-6 py-4">{expense.paymentMethod?.name || 'Unknown'}</td>
                       <td className="px-6 py-4 flex justify-end gap-2">
                         <button
                           onClick={() => openModal(expense)}

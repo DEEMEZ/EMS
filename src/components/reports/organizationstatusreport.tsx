@@ -40,52 +40,52 @@ const OrganizationAnalysisTable = () => {
   const safeStartDate = startDate ?? undefined;
   const safeEndDate = endDate ?? undefined;
 
- const fetchOrganizations = useCallback(async () => {
-  if (!isAuthenticated) {
-    setError("Authentication required");
-    return;
-  }
-
-  if (!startDate || !endDate) {
-    setError("Please select both start and end dates");
-    return;
-  }
-
-  if (startDate > endDate) {
-    setError("Start date must be before end date");
-    return;
-  }
-
-  setLoading(true);
-  setError("");
-
-  try {
-    const start = format(startDate, "yyyy-MM-dd");
-    const end = format(endDate, "yyyy-MM-dd");
-
-    const response = await fetch(`/api/reports/organization?startDate=${start}&endDate=${end}`);
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to fetch organization data");
+  const fetchOrganizations = useCallback(async () => {
+    if (!isAuthenticated) {
+      setError("Authentication required");
+      return;
     }
 
-    const result = await response.json();
-    setData(Array.isArray(result) ? result : []);
-  } catch (error) {
-    console.error("Error fetching organizations:", error);
-    setError(error instanceof Error ? error.message : "Failed to fetch organization analysis");
-    setData([]);
-  } finally {
-    setLoading(false);
-  }
-}, [isAuthenticated, startDate, endDate]);  
+    if (!startDate || !endDate) {
+      setError("Please select both start and end dates");
+      return;
+    }
 
- useEffect(() => {
-  if (isAuthenticated) {
-    fetchOrganizations();
-  }
- }, [isAuthenticated, fetchOrganizations]);  // Add fetchOrganizations to dependencies
+    if (startDate > endDate) {
+      setError("Start date must be before end date");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const start = format(startDate, "yyyy-MM-dd");
+      const end = format(endDate, "yyyy-MM-dd");
+
+      const response = await fetch(`/api/reports/organization?startDate=${start}&endDate=${end}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch organization data");
+      }
+
+      const result = await response.json();
+      setData(Array.isArray(result) ? result : []);
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch organization analysis");
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated, startDate, endDate]);  
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrganizations();
+    }
+  }, [isAuthenticated, fetchOrganizations]);  // Add fetchOrganizations to dependencies
 
   const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#ffbb28"];
   const incomeData = data.filter((item) => item.type === "Income");
@@ -184,7 +184,11 @@ const OrganizationAnalysisTable = () => {
                       <TableCell>{org.orgName}</TableCell>
                       <TableCell>{org.status}</TableCell>
                       <TableCell className="capitalize">{org.type}</TableCell>
-                      <TableCell>${org.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {typeof org.totalAmount === 'number'
+                          ? `${org.totalAmount.toFixed(2)} PKR`
+                          : 'N/A'}
+                      </TableCell>
                       <TableCell>{org.count}</TableCell>
                     </TableRow>
                   ))
@@ -201,113 +205,113 @@ const OrganizationAnalysisTable = () => {
 
           {data.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {incomeData.length > 0 && (
-  <>
-    <div className="bg-gray-100 p-4 rounded-lg shadow">
-      <h3 className="text-lg font-semibold text-center mb-2">Income by Organization</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={incomeData}>
-          <XAxis dataKey="orgName" />
-          <YAxis />
-          <Tooltip 
-            formatter={(value) => {
-              const numValue = typeof value === 'number' ? value : 0;
-              return [`$${numValue.toFixed(2)}`, ""];
-            }}
-            labelFormatter={(label) => `Org: ${label}`}
-          />
-          <Legend />
-          <Bar dataKey="totalAmount" name="Total Income">
-            {incomeData.map((_, index) => (
-              <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+              {incomeData.length > 0 && (
+                <>
+                  <div className="bg-gray-100 p-4 rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-center mb-2">Income by Organization</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={incomeData}>
+                        <XAxis dataKey="orgName" />
+                        <YAxis />
+                        <Tooltip 
+                          formatter={(value) => {
+                            const numValue = typeof value === 'number' ? value : 0;
+                            return [`${numValue.toFixed(2)} PKR`, ""];
+                          }}
+                          labelFormatter={(label) => `Org: ${label}`}
+                        />
+                        <Legend />
+                        <Bar dataKey="totalAmount" name="Total Income">
+                          {incomeData.map((_, index) => (
+                            <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
 
-    <div className="bg-gray-100 p-4 rounded-lg shadow">
-      <h3 className="text-lg font-semibold text-center mb-2">Income Distribution</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={incomeData}
-            dataKey="totalAmount"
-            nameKey="orgName"
-            cx="50%"
-            cy="50%"
-            outerRadius={100}
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-          >
-            {incomeData.map((_, index) => (
-              <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
-            ))}
-          </Pie>
-          <Tooltip 
-            formatter={(value) => {
-              const numValue = typeof value === 'number' ? value : 0;
-              return [`$${numValue.toFixed(2)}`, ""];
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
-  </>
-)}
+                  <div className="bg-gray-100 p-4 rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-center mb-2">Income Distribution</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={incomeData}
+                          dataKey="totalAmount"
+                          nameKey="orgName"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                        >
+                          {incomeData.map((_, index) => (
+                            <Cell key={`cell-income-${index}`} fill={colors[index % colors.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => {
+                            const numValue = typeof value === 'number' ? value : 0;
+                            return [`${numValue.toFixed(2)} PKR`, ""];
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
 
-{expenseData.length > 0 && (
-  <>
-    <div className="bg-gray-100 p-4 rounded-lg shadow">
-      <h3 className="text-lg font-semibold text-center mb-2">Expenses by Organization</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={expenseData}>
-          <XAxis dataKey="orgName" />
-          <YAxis />
-          <Tooltip 
-            formatter={(value) => {
-              const numValue = typeof value === 'number' ? value : 0;
-              return [`$${numValue.toFixed(2)}`, ""];
-            }}
-            labelFormatter={(label) => `Org: ${label}`}
-          />
-          <Legend />
-          <Bar dataKey="totalAmount" name="Total Expenses">
-            {expenseData.map((_, index) => (
-              <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+              {expenseData.length > 0 && (
+                <>
+                  <div className="bg-gray-100 p-4 rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-center mb-2">Expenses by Organization</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={expenseData}>
+                        <XAxis dataKey="orgName" />
+                        <YAxis />
+                        <Tooltip 
+                          formatter={(value) => {
+                            const numValue = typeof value === 'number' ? value : 0;
+                            return [`${numValue.toFixed(2)} PKR`, ""];
+                          }}
+                          labelFormatter={(label) => `Org: ${label}`}
+                        />
+                        <Legend />
+                        <Bar dataKey="totalAmount" name="Total Expenses">
+                          {expenseData.map((_, index) => (
+                            <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
 
-    <div className="bg-gray-100 p-4 rounded-lg shadow">
-      <h3 className="text-lg font-semibold text-center mb-2">Expense Distribution</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={expenseData}
-            dataKey="totalAmount"
-            nameKey="orgName"
-            cx="50%"
-            cy="50%"
-            outerRadius={100}
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-          >
-            {expenseData.map((_, index) => (
-              <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
-            ))}
-          </Pie>
-          <Tooltip 
-            formatter={(value) => {
-              const numValue = typeof value === 'number' ? value : 0;
-              return [`$${numValue.toFixed(2)}`, ""];
-            }}
-          />
-                  </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </>
-            )}
+                  <div className="bg-gray-100 p-4 rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-center mb-2">Expense Distribution</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={expenseData}
+                          dataKey="totalAmount"
+                          nameKey="orgName"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                        >
+                          {expenseData.map((_, index) => (
+                            <Cell key={`cell-expense-${index}`} fill={colors[index % colors.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => {
+                            const numValue = typeof value === 'number' ? value : 0;
+                            return [`${numValue.toFixed(2)} PKR`, ""];
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </>

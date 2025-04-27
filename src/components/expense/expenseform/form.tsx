@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
@@ -6,7 +5,7 @@ import { LoadingSpinner } from '@/components/loadiingspinner';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Banknote, Building, CheckCircle, CreditCard, List, Save, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface ExpenseFormProps {
   initialData?: any;
@@ -60,16 +59,7 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated';
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchOrganizations();
-      fetchExpenseCategories();
-      fetchExpenseTransactions();
-      fetchPaymentMethods();
-    }
-  }, [isAuthenticated]);
-
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     setIsLoadingOrgs(true);
     try {
       if (!isAuthenticated || !session) {
@@ -78,25 +68,18 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
         return;
       }
 
-      console.log('Fetching organizations, Session:', session, 'Status:', status);
       const response = await fetch('/api/organization', {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Ensure session cookie is sent
+        credentials: 'include',
       });
-      console.log('Organizations Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
+
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched Organizations:', data);
         setOrganizations(data.organizations || []);
       } else {
         const errorData = await response.json();
-        console.log('Organizations Error Response:', errorData);
         setError(errorData.error || `Failed to load organizations (Status: ${response.status})`);
       }
     } catch (err) {
@@ -105,9 +88,9 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     } finally {
       setIsLoadingOrgs(false);
     }
-  };
+  }, [isAuthenticated, session]);
 
-  const fetchExpenseCategories = async () => {
+  const fetchExpenseCategories = useCallback(async () => {
     setIsLoadingCategories(true);
     try {
       if (!isAuthenticated || !session) {
@@ -116,25 +99,18 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
         return;
       }
 
-      console.log('Fetching expense categories, Session:', session, 'Status:', status);
       const response = await fetch('/api/expenseCategories', {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Ensure session cookie is sent
+        credentials: 'include',
       });
-      console.log('Expense Categories Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
+
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched Expense Categories:', data);
         setExpenseCategories(data.categories || []);
       } else {
         const errorData = await response.json();
-        console.log('Expense Categories Error Response:', errorData);
         setError(errorData.error || `Failed to load expense categories (Status: ${response.status})`);
       }
     } catch (err) {
@@ -143,9 +119,9 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     } finally {
       setIsLoadingCategories(false);
     }
-  };
+  }, [isAuthenticated, session]);
 
-  const fetchExpenseTransactions = async () => {
+  const fetchExpenseTransactions = useCallback(async () => {
     setIsLoadingTransactions(true);
     try {
       if (!isAuthenticated || !session) {
@@ -154,25 +130,18 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
         return;
       }
 
-      console.log('Fetching transactions, Session:', session, 'Status:', status);
       const response = await fetch('/api/transactions?type=Expense', {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Ensure session cookie is sent
+        credentials: 'include',
       });
-      console.log('Transactions Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
+
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched Transactions:', data);
         setTransactions(data.transactions || []);
       } else {
         const errorData = await response.json();
-        console.log('Transactions Error Response:', errorData);
         setError(errorData.error || `Failed to load transactions (Status: ${response.status})`);
       }
     } catch (err) {
@@ -181,9 +150,9 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     } finally {
       setIsLoadingTransactions(false);
     }
-  };
+  }, [isAuthenticated, session]);
 
-  const fetchPaymentMethods = async () => {
+  const fetchPaymentMethods = useCallback(async () => {
     setIsLoadingPaymentMethods(true);
     try {
       if (!isAuthenticated || !session) {
@@ -192,21 +161,15 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
         return;
       }
 
-      console.log('Fetching payment methods, Session:', session, 'Status:', status);
       const response = await fetch('/api/paymentmethods?forDropdown=true', {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Ensure session cookie is sent
+        credentials: 'include',
       });
-      console.log('Payment Methods Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
+
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched Payment Methods:', data);
         if (data.length === 0) {
           setError('No payment methods found. Please add a payment method.');
         } else {
@@ -214,7 +177,6 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
         }
       } else {
         const errorData = await response.json();
-        console.log('Payment Methods Error Response:', errorData);
         setError(errorData.error || `Failed to load payment methods (Status: ${response.status})`);
       }
     } catch (err) {
@@ -223,7 +185,16 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
     } finally {
       setIsLoadingPaymentMethods(false);
     }
-  };
+  }, [isAuthenticated, session]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrganizations();
+      fetchExpenseCategories();
+      fetchExpenseTransactions();
+      fetchPaymentMethods();
+    }
+  }, [isAuthenticated, fetchOrganizations, fetchExpenseCategories, fetchExpenseTransactions, fetchPaymentMethods]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -277,7 +248,6 @@ export default function ExpenseForm({ initialData, onCancel, onSuccess }: Expens
       setIsSubmitting(false);
     }
   };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

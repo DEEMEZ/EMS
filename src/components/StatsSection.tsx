@@ -3,7 +3,7 @@
 
 import { LoadingSpinner } from '@/components/loadiingspinner';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const StatsSection = () => {
   const { data: session, status } = useSession();
@@ -16,7 +16,7 @@ const StatsSection = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -38,16 +38,16 @@ const StatsSection = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [status]);
 
   useEffect(() => {
     fetchStats();
-  }, [status]);
+  }, [fetchStats, status]);
 
   // Refresh stats when products change (you might want to call this from parent)
-  const refreshStats = () => {
+  const refreshStats = useCallback(() => {
     fetchStats();
-  };
+  }, [fetchStats]);
 
   if (isLoading) {
     return (

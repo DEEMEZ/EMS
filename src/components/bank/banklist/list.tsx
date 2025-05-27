@@ -239,7 +239,7 @@ export default function BankList() {
             <p className="text-red-700">{error}</p>
             <button 
               onClick={() => setError('')}
-              className="ml-auto p-1 text-red-400 hover:text-red-600"
+              className="ml-auto p-1 text-red-400 hover:text-red-рио600"
             >
               <X className="w-4 h-4" />
             </button>
@@ -266,104 +266,119 @@ export default function BankList() {
 
       {/* Banks Table - Only show when authenticated and not loading */}
       {isAuthenticated && !isLoading && !isAuthLoading && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Bank Name</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Account Number</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Branch</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {banks.map((bank, index) => (
-                    <motion.tr
-                      key={bank._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">{bank.name}</td>
-                      <td className="px-6 py-4">{bank.accountNumber}</td>
-                      <td className="px-6 py-4">{bank.branch}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openModal(bank)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(bank._id!)}
-                            disabled={isDeleting === bank._id}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            {isDeleting === bank._id ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+        <>
+          {/* Instructions Section */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <li><strong>Purpose:</strong> This page allows you to manage your bank listings.</li>
+              <li><strong>Add a New Bank:</strong> Click the "New Bank" button, fill in the bank name, account number, and branch, then click "Save".</li>
+              <li><strong>Edit a Bank:</strong> Click the Edit (pencil) button in the Actions column to modify an existing bank.</li>
+              <li><strong>Delete a Bank:</strong> Click the Delete (trash) button in the Actions column to remove a bank.</li>
+              <li><strong>Search Banks:</strong> Use the search bar to find banks by name.</li>
+              <li><strong>Navigate Pages:</strong> Use the pagination controls at the bottom to navigate through pages of banks.</li>
+            </ul>
           </div>
 
-          {/* Empty State */}
-          {banks.length === 0 && !isLoading && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900">No Banks Found</h3>
-                <p className="text-gray-500 mt-1">Get started by creating a new bank.</p>
-                <button
-                  onClick={() => openModal()}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  <Plus className="w-5 h-5" />
-                  New Bank
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Bank Name</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Account Number</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Branch</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {banks.map((bank, index) => (
+                      <motion.tr
+                        key={bank._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4">{bank.name}</td>
+                        <td className="px-6 py-4">{bank.accountNumber}</td>
+                        <td className="px-6 py-4">{bank.branch}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => openModal(bank)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(bank._id!)}
+                              disabled={isDeleting === bank._id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {isDeleting === bank._id ? (
+                                <LoadingSpinner size="sm" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
-          )}
 
-          {/* Pagination */}
-          {banks.length > 0 && (
-            <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-              <div className="text-sm text-gray-500">
-                Showing {banks.length} Banks
+            {/* Empty State */}
+            {banks.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-gray-900">No Banks Found</h3>
+                  <p className="text-gray-500 mt-1">Get started by creating a new bank.</p>
+                  <button
+                    onClick={() => openModal()}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Bank
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={page === 1}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page === totalPages}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+            )}
+
+            {/* Pagination */}
+            {banks.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Showing {banks.length} Banks
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Not Authenticated State */}

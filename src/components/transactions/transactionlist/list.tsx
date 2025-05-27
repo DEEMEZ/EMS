@@ -230,112 +230,127 @@ export default function TransactionList() {
 
       {/* Transactions Table - Only show when authenticated and not loading */}
       {isAuthenticated && !isLoading && !isAuthLoading && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Type</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Description</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {transactions.map((transaction, index) => (
-                    <motion.tr
-                      key={transaction._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">
-                        {transaction.userId && typeof transaction.userId === 'object' ? (
-                          <div>
-                            <p className="font-semibold">{transaction.userId.fullname || 'Unknown User'}</p>
-                            <p className="text-sm text-gray-500">{transaction.userId.email || 'No email'}</p>
-                          </div>
-                        ) : (
-                          'Unknown User'
-                        )}
-                      </td>
-                      <td className="px-6 py-4">{transaction.type}</td>
-                      <td className="px-6 py-4">{new Date(transaction.transactionDate).toLocaleDateString()}</td>
-                      <td className="px-6 py-4">{transaction.description}</td>
-                      <td className="px-6 py-4 font-semibold">
-                        PKR {typeof transaction.amount === 'number' ? transaction.amount.toFixed(2) : '0.00'} {/* Changed $ to PKR */}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openModal(transaction)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            aria-label="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(transaction._id!)}
-                            disabled={isDeleting === transaction._id}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                            aria-label="Delete"
-                          >
-                            {isDeleting === transaction._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+        <>
+          {/* Instructions Section */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <li><strong>Purpose:</strong> This page allows you to manage your transactions.</li>
+              <li><strong>Add a New Transaction:</strong> Click the "New Transaction" button, fill in the user ID, amount, transaction type, date, and description (optional), then click "Create".</li>
+              <li><strong>Edit a Transaction:</strong> Click the Edit (pencil) button in the Actions column to modify an existing transaction.</li>
+              <li><strong>Delete a Transaction:</strong> Click the Delete (trash) button in the Actions column to remove a transaction.</li>
+              <li><strong>Search Transactions:</strong> Use the search bar to find transactions.</li>
+              <li><strong>Navigate Pages:</strong> Use the "Previous" and "Next" buttons at the bottom to navigate through pages of transactions.</li>
+            </ul>
           </div>
 
-          {/* Empty State */}
-          {transactions.length === 0 && !isLoading && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900">No Transactions Found</h3>
-                <p className="text-gray-500 mt-1">Get started by creating a new transaction.</p>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Type</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Date</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Description</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {transactions.map((transaction, index) => (
+                      <motion.tr
+                        key={transaction._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4">
+                          {transaction.userId && typeof transaction.userId === 'object' ? (
+                            <div>
+                              <p className="font-semibold">{transaction.userId.fullname || 'Unknown User'}</p>
+                              <p className="text-sm text-gray-500">{transaction.userId.email || 'No email'}</p>
+                            </div>
+                          ) : (
+                            'Unknown User'
+                          )}
+                        </td>
+                        <td className="px-6 py-4">{transaction.type}</td>
+                        <td className="px-6 py-4">{new Date(transaction.transactionDate).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">{transaction.description}</td>
+                        <td className="px-6 py-4 font-semibold">
+                          PKR {typeof transaction.amount === 'number' ? transaction.amount.toFixed(2) : '0.00'} {/* Changed $ to PKR */}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => openModal(transaction)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              aria-label="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(transaction._id!)}
+                              disabled={isDeleting === transaction._id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              aria-label="Delete"
+                            >
+                              {isDeleting === transaction._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Empty State */}
+            {transactions.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-gray-900">No Transactions Found</h3>
+                  <p className="text-gray-500 mt-1">Get started by creating a new transaction.</p>
+                  <button
+                    onClick={() => openModal()}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Transaction
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {transactions.length > 0 && (
+              <div className="flex justify-between items-center p-4 border-t border-gray-100">
                 <button
-                  onClick={() => openModal()}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
                 >
-                  <Plus className="w-5 h-5" />
-                  New Transaction
+                  Previous
+                </button>
+                <span className="text-sm text-gray-600">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+                >
+                  Next
                 </button>
               </div>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {transactions.length > 0 && (
-            <div className="flex justify-between items-center p-4 border-t border-gray-100">
-              <button
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                disabled={page === 1}
-                className="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="text-sm text-gray-600">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                disabled={page === totalPages}
-                className="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Not Authenticated State */}

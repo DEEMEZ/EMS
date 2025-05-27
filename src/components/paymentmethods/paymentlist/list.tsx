@@ -20,6 +20,7 @@ import {
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
 export default function PaymentmethodsList() {
   // Authentication state
   const { data: session, status: authStatus } = useSession();
@@ -54,37 +55,37 @@ export default function PaymentmethodsList() {
   };
 
   const fetchPaymentMethods = useCallback(async () => {
-  try {
-    setIsLoading(true);
-    setError('');
+    try {
+      setIsLoading(true);
+      setError('');
 
-    if (!isAuthenticated) {
+      if (!isAuthenticated) {
+        setIsLoading(false);
+        return;
+      }
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+      });
+
+      const response = await fetch(`/api/paymentmethods?${params.toString()}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch payment methods');
+      }
+
+      const data = await response.json();
+      setPaymentMethods(data.sources);
+      setTotalPages(data.pagination.totalPages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch payment methods');
+      console.error('Fetch error:', err);
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: '10',
-      ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-    });
-
-    const response = await fetch(`/api/paymentmethods?${params.toString()}`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch payment methods');
-    }
-
-    const data = await response.json();
-    setPaymentMethods(data.sources);
-    setTotalPages(data.pagination.totalPages);
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Failed to fetch payment methods');
-    console.error('Fetch error:', err);
-  } finally {
-    setIsLoading(false);
-  }
-}, [isAuthenticated, page, debouncedSearchTerm]);
+  }, [isAuthenticated, page, debouncedSearchTerm]);
 
   const handleDelete = async (paymentMethodId: string) => {
     try {
@@ -142,14 +143,14 @@ export default function PaymentmethodsList() {
     fetchPaymentMethods();
   };
 
-   useEffect(() => {
+  useEffect(() => {
     if (authStatus === 'authenticated') {
       fetchPaymentMethods();
     } else if (authStatus === 'unauthenticated') {
       setPaymentMethods([]);
       setIsLoading(false);
     }
- }, [fetchPaymentMethods, authStatus]);
+  }, [fetchPaymentMethods, authStatus]);
 
   useEffect(() => {
     return () => {
@@ -255,107 +256,122 @@ export default function PaymentmethodsList() {
 
       {/* Payment Methods Table */}
       {isAuthenticated && !isLoading && !isAuthLoading && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Name</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Description</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {paymentMethods.map((paymentMethod) => (
-                    <motion.tr
-                      key={paymentMethod._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">{paymentMethod.name}</td>
-                      <td className="px-6 py-4">{paymentMethod.description || '-'}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openModal(paymentMethod)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            aria-label="Edit payment method"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(paymentMethod._id)}
-                            disabled={isDeleting === paymentMethod._id}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                            aria-label="Delete payment method"
-                          >
-                            {isDeleting === paymentMethod._id ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+        <>
+          {/* Instructions Section */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <li><strong>Purpose:</strong> This page allows you to manage your payment methods.</li>
+              <li><strong>Add a New Payment Method:</strong> Click the "New Payment Method" button, fill in the name and description (optional), then click "Create".</li>
+              <li><strong>Edit a Payment Method:</strong> Click the Edit (pencil) button in the Actions column to modify an existing payment method.</li>
+              <li><strong>Delete a Payment Method:</strong> Click the Delete (trash) button in the Actions column to remove a payment method.</li>
+              <li><strong>Search Payment Methods:</strong> Use the search bar to find payment methods by name.</li>
+              <li><strong>Navigate Pages:</strong> Use the pagination controls at the bottom to navigate through pages of payment methods.</li>
+            </ul>
           </div>
 
-          {/* Empty State */}
-          {paymentMethods.length === 0 && !isLoading && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900">No Payment Methods Found</h3>
-                <p className="text-gray-500 mt-1">
-                  {debouncedSearchTerm ? 'No results match your search' : 'Get started by creating a new payment method'}
-                </p>
-                <button
-                  onClick={() => openModal()}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  <Plus className="w-5 h-5" />
-                  New Payment Method
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Name</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Description</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {paymentMethods.map((paymentMethod) => (
+                      <motion.tr
+                        key={paymentMethod._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4">{paymentMethod.name}</td>
+                        <td className="px-6 py-4">{paymentMethod.description || '-'}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => openModal(paymentMethod)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              aria-label="Edit payment method"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(paymentMethod._id)}
+                              disabled={isDeleting === paymentMethod._id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              aria-label="Delete payment method"
+                            >
+                              {isDeleting === paymentMethod._id ? (
+                                <LoadingSpinner size="sm" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
-          )}
 
-          {/* Pagination */}
-          {paymentMethods.length > 0 && (
-            <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-              <div className="text-sm text-gray-500">
-                Showing {paymentMethods.length} of {totalPages * 10} Payment Methods
+            {/* Empty State */}
+            {paymentMethods.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-gray-900">No Payment Methods Found</h3>
+                  <p className="text-gray-500 mt-1">
+                    {debouncedSearchTerm ? 'No results match your search' : 'Get started by creating a new payment method'}
+                  </p>
+                  <button
+                    onClick={() => openModal()}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Payment Method
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
-                  disabled={page === 1}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={page === totalPages}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Next page"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+            )}
+
+            {/* Pagination */}
+            {paymentMethods.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Showing {paymentMethods.length} of {totalPages * 10} Payment Methods
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Not Authenticated State */}

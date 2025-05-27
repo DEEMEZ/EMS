@@ -1,465 +1,459 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+"use client";
 
-import { LoadingSpinner } from '@/components/loadiingspinner';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Banknote, Building, CheckCircle, CreditCard, List, Save, X } from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import { useCallback, useEffect, useState } from 'react';
+import IncomeForm from "@/components/income/incomeform/form";
+import { LoadingSpinner } from "@/components/loadiingspinner";
+import { AnimatePresence, motion } from "framer-motion";
+import _ from "lodash";
+import { AlertCircle, ChevronLeft, ChevronRight, Edit, LogIn, Plus, Search, Trash2, X } from "lucide-react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 
-interface ExpenseFormProps {
-  initialData?: any;
-  onCancel?: () => void;
-  onSuccess?: () => void;
-}
-
-interface Organization {
+// Define the IIncome interface to type the incomes data
+interface IIncome {
   _id: string;
-  name: string;
+  transactionId?: {
+    type: 'Income' | 'Expense';
+    transactionDate: string;
+    amount: number;
+  };
+  incomeSourceId?: { name: string };
+  orgId?: { name: string };
+  transactionAmount: number;
 }
 
-interface ExpenseCategory {
-  _id: string;
-  name: string;
-  description?: string;
+// Define the API response interface
+interface IncomesResponse {
+  incomes: IIncome[];
+  pagination?: {
+    totalPages: number;
+  };
 }
 
-interface Transaction {
-  _id: string;
-  amount: number;
-  type: string;
-  transactionDate: string;
-  description?: string;
-}
+export default function IncomeList() {
+  const { data: session, status: authStatus } = useSession();
+  const isAuthenticated = authStatus === 'authenticated';
+  const isAuthLoading = authStatus === 'loading';
 
-interface PaymentMethod {
-  _id: string;
-  name: string;
-}
-
-export default function ExpenseForm({ initialData, onCancel, onSuccess }: ExpenseFormProps) {
-  const [formData, setFormData] = useState({
-    transactionId: initialData?.transactionId || '',
-    expensecategoriesId: initialData?.expensecategoriesId || '',
-    orgId: initialData?.orgId || '',
-    paymentMethod: initialData?.paymentMethod || '',
-  });
-
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
-  const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const { data: session, status } = useSession();
-  const isAuthenticated = status === 'authenticated';
-
-  const fetchOrganizations = useCallback(async () => {
-    setIsLoadingOrgs(true);
-    try {
-      if (!isAuthenticated || !session) {
-        setError('Authentication required to load organizations');
-        setIsLoadingOrgs(false);
-        return;
-      }
-
-      console.log('Fetching organizations, Session:', session, 'Status:', status);
-      const response = await fetch('/api/organization', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      console.log('Organizations Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Fetched Organizations:', data);
-        setOrganizations(data.organizations || []);
-      } else {
-        const errorData = await response.json();
-        console.log('Organizations Error Response:', errorData);
-        setError(errorData.error || `Failed to load organizations (Status: ${response.status})`);
-      }
-    } catch (err) {
-      console.error('Network error fetching organizations:', err);
-      setError('Failed to load organizations: Network error');
-    } finally {
-      setIsLoadingOrgs(false);
-    }
-  }, [isAuthenticated, session, status]);
-
-  const fetchExpenseCategories = useCallback(async () => {
-    setIsLoadingCategories(true);
-    try {
-      if (!isAuthenticated || !session) {
-        setError('Authentication required to load expense categories');
-        setIsLoadingCategories(false);
-        return;
-      }
-
-      console.log('Fetching expense categories, Session:', session, 'Status:', status);
-      const response = await fetch('/api/expenseCategories', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      console.log('Expense Categories Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Fetched Expense Categories:', data);
-        setExpenseCategories(data.categories || []);
-      } else {
-        const errorData = await response.json();
-        console.log('Expense Categories Error Response:', errorData);
-        setError(errorData.error || `Failed to load expense categories (Status: ${response.status})`);
-      }
-    } catch (err) {
-      console.error('Network error fetching expense categories:', err);
-      setError('Failed to load expense categories: Network error');
-    } finally {
-      setIsLoadingCategories(false);
-    }
-  }, [isAuthenticated, session, status]);
-
-  const fetchExpenseTransactions = useCallback(async () => {
-    setIsLoadingTransactions(true);
-    try {
-      if (!isAuthenticated || !session) {
-        setError('Authentication required to load transactions');
-        setIsLoadingTransactions(false);
-        return;
-      }
-
-      console.log('Fetching transactions, Session:', session, 'Status:', status);
-      const response = await fetch('/api/transactions?type=Expense', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      console.log('Transactions Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Fetched Transactions:', data);
-        setTransactions(data.transactions || []);
-      } else {
-        const errorData = await response.json();
-        console.log('Transactions Error Response:', errorData);
-        setError(errorData.error || `Failed to load transactions (Status: ${response.status})`);
-      }
-    } catch (err) {
-      console.error('Network error fetching transactions:', err);
-      setError('Failed to load transactions: Network error');
-    } finally {
-      setIsLoadingTransactions(false);
-    }
-  }, [isAuthenticated, session, status]);
-
-  const fetchPaymentMethods = useCallback(async () => {
-    setIsLoadingPaymentMethods(true);
-    try {
-      if (!isAuthenticated || !session) {
-        setError('Authentication required to load payment methods');
-        setIsLoadingPaymentMethods(false);
-        return;
-      }
-
-      console.log('Fetching payment methods, Session:', session, 'Status:', status);
-      const response = await fetch('/api/paymentmethods?forDropdown=true', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      console.log('Payment Methods Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Fetched Payment Methods:', data);
-        if (data.length === 0) {
-          setError('No payment methods found. Please add a payment method.');
-        } else {
-          setPaymentMethods(data);
-        }
-      } else {
-        const errorData = await response.json();
-        console.log('Payment Methods Error Response:', errorData);
-        setError(errorData.error || `Failed to load payment methods (Status: ${response.status})`);
-      }
-    } catch (err) {
-      console.error('Network error fetching payment methods:', err);
-      setError('Failed to load payment methods: Network error');
-    } finally {
-      setIsLoadingPaymentMethods(false);
-    }
-  }, [isAuthenticated, session, status]);
+  const [isMounted, setIsMounted] = useState(false);
+  const [incomes, setIncomes] = useState<IIncome[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingIncome, setEditingIncome] = useState<IIncome | null>(null);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchOrganizations();
-      fetchExpenseCategories();
-      fetchExpenseTransactions();
-      fetchPaymentMethods();
-    }
-  }, [isAuthenticated, fetchExpenseCategories, fetchExpenseTransactions, fetchOrganizations, fetchPaymentMethods]);
+    setIsMounted(true);
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsSubmitting(true);
-    setSuccessMessage('');
+  const debouncedSearch = useMemo(
+    () =>
+      _.debounce((value: string) => {
+        setDebouncedSearchTerm(value);
+        setPage(1);
+      }, 500),
+    []
+  );
 
-    if (!isAuthenticated) {
-      setError('Authentication required');
-      setIsSubmitting(false);
-      return;
-    }
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    debouncedSearch(value);
+  };
 
+  const fetchIncomes = useCallback(async () => {
     try {
-      const response = await fetch('/api/expenses', {
-        method: initialData ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...formData, _id: initialData?._id }),
+      setIsLoading(true);
+      setError("");
+
+      if (!isAuthenticated) {
+        setIsLoading(false);
+        return;
+      }
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
       });
 
-      if (response.ok) {
-        const successMsg = initialData
-          ? 'Expense Updated Successfully!'
-          : 'Expense Created Successfully!';
-        setSuccessMessage(successMsg);
-
-        setTimeout(() => setSuccessMessage(''), 3000);
-
-        if (onSuccess) {
-          setTimeout(() => {
-            onSuccess();
-          }, 1000);
+      const response = await fetch(`/api/incomes?${params.toString()}`);
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("You must be signed in to view incomes");
+          return;
         }
-
-        if (!initialData) {
-          setFormData({
-            transactionId: '',
-            expensecategoriesId: '',
-            orgId: '',
-            paymentMethod: '',
-          });
-        }
-      } else {
-        setError('Failed to save expense. Please check the input data.');
+        const errorText = await response.text();
+        setError(`Failed to fetch incomes (Status: ${response.status}) - ${errorText}`);
+        return;
       }
-    } catch {
-      setError('Failed to save expense');
+
+      const data = await response.json() as IncomesResponse;
+      const newIncomes = [...data.incomes] as IIncome[];
+      console.log("Fetched Incomes Data:", newIncomes);
+      setIncomes(newIncomes); // Remove deduplication for now, rely on API
+      setTotalPages(data.pagination?.totalPages || 1);
+    } catch (err: any) {
+      setError("Failed to fetch incomes: Network error");
+      console.error("Error:", err);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, page, debouncedSearchTerm]);
+
+  const debouncedFetchIncomes = useCallback(() => {
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+    fetchTimeoutRef.current = setTimeout(() => {
+      fetchIncomes();
+    }, 100);
+  }, [fetchIncomes]);
+
+  const handleDelete = async (incomeId: string) => {
+    try {
+      if (!isAuthenticated) {
+        setError("You must be signed in to delete an income");
+        return;
+      }
+
+      setIsDeleting(incomeId);
+      const response = await fetch(`/api/incomes`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ _id: incomeId }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("You must be signed in to delete an income");
+          return;
+        }
+        if (response.status === 403) {
+          setError("You do not have permission to delete this income");
+          return;
+        }
+        const errorText = await response.text();
+        throw new Error(`Failed To Delete Income: ${response.status} - ${errorText}`);
+      }
+
+      debouncedFetchIncomes();
+    } catch (err: any) {
+      setError(`Failed To Delete Income: ${err.message}`);
+      console.error("Error:", err);
+    } finally {
+      setIsDeleting(null);
     }
   };
 
+  const openModal = (income?: IIncome) => {
+    if (!isAuthenticated) {
+      setError("You must be signed in to manage incomes");
+      return;
+    }
+
+    setEditingIncome(income || null);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setEditingIncome(null);
+    setIsModalOpen(false);
+  };
+
+  const handleSuccess = () => {
+    closeModal();
+    debouncedFetchIncomes();
+  };
+
+  useEffect(() => {
+    if (authStatus === 'authenticated') {
+      debouncedFetchIncomes();
+    } else if (authStatus === 'unauthenticated') {
+      setIncomes([]);
+      setIsLoading(false);
+    }
+  }, [debouncedSearchTerm, page, authStatus, debouncedFetchIncomes]);
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  if (!isMounted) {
+    return null;
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-200"
-    >
-      <div className="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 rounded-t-2xl">
-        <h2 className="text-xl font-semibold text-white">
-          {initialData ? 'Update Expense' : 'Create New Expense'}
-        </h2>
-      </div>
-
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md"
-            >
-              <p className="text-red-700">{error}</p>
-            </motion.div>
-          )}
-
-          {successMessage && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2"
-            >
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <p className="text-green-700">{successMessage}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="space-y-4">
-          {/* Transaction Field - Dropdown (Expense type only) */}
-          <div>
-            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
-              <CreditCard className="w-4 h-4" />
-              Transaction
-            </label>
-            {isLoadingTransactions ? (
-              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
-                <LoadingSpinner size="sm" />
-              </div>
-            ) : (
-              <select
-                required
-                value={formData.transactionId}
-                onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Select an expense transaction</option>
-                {transactions.map((transaction) => (
-                  <option key={transaction._id} value={transaction._id}>
-                    {transaction.type} -{' '}
-                    {typeof transaction.amount === 'number' && transaction.amount >= 0
-                      ? `${transaction.amount.toFixed(2)} PKR`
-                      : '0.00 PKR'}{' '}
-                    - {new Date(transaction.transactionDate).toLocaleDateString()}
-                  </option>
-                ))}
-              </select>
-            )}
+    <div className="max-w-7xl mx-auto p-6">
+      {!isAuthenticated && !isAuthLoading && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-lg flex items-center gap-3"
+        >
+          <AlertCircle className="w-5 h-5 text-amber-400" />
+          <div className="flex-1">
+            <p className="text-amber-700">You need to sign in to manage incomes</p>
           </div>
-
-          {/* Expense Category Field - Dropdown */}
-          <div>
-            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
-              <List className="w-4 h-4" />
-              Expense Category
-            </label>
-            {isLoadingCategories ? (
-              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
-                <LoadingSpinner size="sm" />
-              </div>
-            ) : (
-              <select
-                required
-                value={formData.expensecategoriesId}
-                onChange={(e) => setFormData({ ...formData, expensecategoriesId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Select an expense category</option>
-                {expenseCategories.map((category) => (
-                  <option key={category._id} value={category._id}>
-                    {category.name} {category.description && `- ${category.description}`}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          {/* Organization Field - Dropdown */}
-          <div>
-            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
-              <Building className="w-4 h-4" />
-              Organization
-            </label>
-            {isLoadingOrgs ? (
-              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
-                <LoadingSpinner size="sm" />
-              </div>
-            ) : (
-              <select
-                required
-                value={formData.orgId}
-                onChange={(e) => setFormData({ ...formData, orgId: e.target.value })}
-                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Select an organization</option>
-                {organizations.map((org) => (
-                  <option key={org._id} value={org._id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          {/* Payment Method Field - Dropdown */}
-          <div>
-            <label className="flex items-center text-sm font-medium text-gray-700 gap-2">
-              <Banknote className="w-4 h-4" />
-              Payment Method
-            </label>
-            {isLoadingPaymentMethods ? (
-              <div className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm bg-gray-100">
-                <LoadingSpinner size="sm" />
-              </div>
-            ) : (
-              <select
-                required
-                value={formData.paymentMethod}
-                onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Select Payment Method</option>
-                {paymentMethods.map((method) => (
-                  <option key={method._id} value={method._id}>
-                    {method.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        </div>
-
-        {/* Form Actions */}
-        <div className="flex justify-end items-center gap-3 pt-6 border-t">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex items-center gap-2 px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-            >
-              <X className="w-4 h-4" />
-              Cancel
-            </button>
-          )}
-          <button
-            type="submit"
-            disabled={isSubmitting || isLoadingOrgs || isLoadingCategories || isLoadingTransactions || isLoadingPaymentMethods}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+          <Link
+            href="/auth/signin"
+            className="flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors"
           >
-            {isSubmitting ? (
-              <>
-                <LoadingSpinner size="sm" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                {initialData ? 'Update' : 'Create'}
-              </>
-            )}
-          </button>
+            <LogIn className="w-4 h-4" />
+            Sign In
+          </Link>
+        </motion.div>
+      )}
+
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl p-6 mb-6"
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Incomes</h1>
+            <p className="text-blue-200">Manage Your Incomes</p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => openModal()}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-colors"
+            disabled={!isAuthenticated}
+          >
+            <Plus className="w-5 h-5" />
+            New Income
+          </motion.button>
         </div>
-      </form>
-    </motion.div>
+
+        <div className="relative mt-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white-300" />
+          <input
+            type="text"
+            placeholder="Search Incomes..."
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/30"
+            disabled={!isAuthenticated}
+          />
+        </div>
+      </motion.div>
+
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3"
+          >
+            <AlertCircle className="w-5 h-5 text-red-400" />
+            <p className="text-red-700">{error}</p>
+            <button onClick={() => setError("")} className="ml-auto p-1 text-red-400 hover:text-red-600">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {isLoading && (
+        <div className="flex justify-center items-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
+      )}
+
+      {isAuthLoading && (
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-gray-500">Checking authentication...</p>
+          </div>
+        </div>
+      )}
+
+      {isAuthenticated && !isLoading && !isAuthLoading && (
+        <div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-sm font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="text-sm text-gray-600 list-disc list-inside leading-tight">
+              <li><strong>Purpose:</strong> This page allows you to manage your incomes.</li>
+              <li><strong>Add a New Income:</strong> Click the "New Income" button, fill in the transaction type, amount, transaction date, income source, and organization (optional), then click "Create".</li>
+              <li><strong>Edit a Transaction:</strong> Click the Edit (pencil) button in the Actions column to modify an existing transaction.</li>
+              <li><strong>Delete a Transaction:</strong> Click the Delete (trash) button in the Actions column to remove a transaction.</li>
+              <li><strong>Search Transactions:</strong> Use the search bar to find transactions.</li>
+              <li><strong>Navigate Pages:</strong> Use the "Previous" and "Next" buttons at the bottom to navigate through pages of transactions.</li>
+            </ul>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-8 py-5 text-left text-sm font-semibold text-gray-600">Transaction Type</th>
+                    <th className="px-8 py-5 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
+                    <th className="px-8 py-5 text-left text-sm font-semibold text-gray-600">Amount</th>
+                    <th className="px-8 py-5 text-left text-sm font-semibold text-gray-600">Income Source</th>
+                    <th className="px-8 py-5 text-left text-sm font-semibold text-gray-600">Organization</th>
+                    <th className="px-8 py-5 text-right text-sm font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {incomes.map((income: IIncome, index: number) => {
+                      console.log("Rendering income item:", income);
+                      return (
+                        <motion.tr
+                          key={income._id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="border-b border-gray-100 hover:bg-gray-50"
+                        >
+                          <td className="px-8 py-5">{income.transactionId?.type ?? "Unknown"}</td>
+                          <td className="px-8 py-5">
+                            {income.transactionId?.transactionDate
+                              ? new Date(income.transactionId.transactionDate).toLocaleDateString()
+                              : "Unknown"}
+                          </td>
+                          <td className="px-8 py-5">
+                            {typeof income.transactionAmount === "number"
+                              ? `${income.transactionAmount.toFixed(2)} PKR`
+                              : "N/A"}
+                          </td>
+                          <td className="px-8 py-5">{income.incomeSourceId?.name || "Unknown"}</td>
+                          <td className="px-8 py-5">{income.orgId?.name || "Unknown"}</td>
+                          <td className="px-8 py-5 flex justify-end gap-2">
+                            <button
+                              onClick={() => openModal(income)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(income._id)}
+                              disabled={isDeleting === income._id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {isDeleting === income._id ? (
+                                <LoadingSpinner size="sm" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
+
+            {incomes.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-gray-900">No Incomes Found</h3>
+                  <p className="text-gray-500 mt-1">Get started by creating a new income.</p>
+                  <button
+                    onClick={() => openModal()}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Income
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {incomes.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Showing {incomes.length} Incomes
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!isAuthenticated && !isAuthLoading && !isLoading && (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
+          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <LogIn className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign in to Manage Incomes</h2>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            You need to be signed in to view and manage your incomes. Please sign in to continue.
+          </p>
+          <Link
+            href="/auth/signin"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            <LogIn className="w-5 h-5" />
+            Sign In
+          </Link>
+        </div>
+      )}
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden"
+          >
+            <div className="flex justify-between items-center px-6 py-4 border-b">
+              <h2 className="text-xl font-semibold">
+                {editingIncome ? "Edit Income" : "New Income"}
+              </h2>
+              <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <IncomeForm
+                initialData={editingIncome || undefined}
+                onCancel={closeModal}
+                onSuccess={handleSuccess}
+              />
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
   );
 }

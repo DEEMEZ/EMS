@@ -1,45 +1,58 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-'use client';
+"use client";
 
-import IncomeSourceForm from '@/components/incomesource/incomeform/form';
-import { LoadingSpinner } from '@/components/loadiingspinner';
-import { IIncomeSources } from '@/types/incomesource';
-import { AnimatePresence, motion } from 'framer-motion';
-import _ from 'lodash';
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  LogIn,
-  Plus,
-  Search,
-  Trash2,
-  X,
-} from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import IncomeForm from "@/components/income/incomeform/form";
+import { LoadingSpinner } from "@/components/loadiingspinner";
+import { AnimatePresence, motion } from "framer-motion";
+import _ from "lodash";
+import { AlertCircle, ChevronLeft, ChevronRight, Edit, LogIn, Plus, Search, Trash2, X } from "lucide-react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 
-export default function IncomeSourceList() {
-  // Authentication state
+// Define the IIncome interface to type the incomes data
+interface IIncome {
+  _id: string;
+  transactionId?: {
+    type: 'Income' | 'Expense';
+    transactionDate: string;
+    amount: number;
+  };
+  incomeSourceId?: { name: string };
+  orgId?: { name: string };
+  transactionAmount: number;
+}
+
+// Define the API response interface
+interface IncomesResponse {
+  incomes: IIncome[];
+  pagination?: {
+    totalPages: number;
+  };
+}
+
+export default function IncomeList() {
   const { data: session, status: authStatus } = useSession();
   const isAuthenticated = authStatus === 'authenticated';
   const isAuthLoading = authStatus === 'loading';
 
-  // Data state
-  const [incomeSources, setIncomeSources] = useState<IIncomeSources[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+  const [incomes, setIncomes] = useState<IIncome[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
-  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSource, setEditingSource] = useState<IIncomeSources | null>(null);
+  const [editingIncome, setEditingIncome] = useState<IIncome | null>(null);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const debouncedSearch = useMemo(
     () =>
@@ -55,12 +68,11 @@ export default function IncomeSourceList() {
     debouncedSearch(value);
   };
 
-  const fetchIncomeSources = useCallback(async () => {
+  const fetchIncomes = useCallback(async () => {
     try {
       setIsLoading(true);
-      setError('');
+      setError("");
 
-      // Only fetch if authenticated
       if (!isAuthenticated) {
         setIsLoading(false);
         return;
@@ -68,101 +80,109 @@ export default function IncomeSourceList() {
 
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '10',
+        limit: "10",
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
       });
 
-      const response = await fetch(`/api/incomesources?${params.toString()}`);
-      
+      const response = await fetch(`/api/incomes?${params.toString()}`);
       if (!response.ok) {
-        // Handle authentication errors
         if (response.status === 401) {
-          setError('You must be signed in to view income sources');
+          setError("You must be signed in to view incomes");
           return;
         }
-        throw new Error('Failed To Fetch Income Sources');
+        const errorText = await response.text();
+        setError(`Failed to fetch incomes (Status: ${response.status}) - ${errorText}`);
+        return;
       }
 
-      const data = await response.json();
-      setIncomeSources(data.sources || []);
+      const data = await response.json() as IncomesResponse;
+      const newIncomes = [...data.incomes] as IIncome[];
+      console.log("Fetched Incomes Data:", newIncomes);
+      setIncomes(newIncomes); // Remove deduplication for now, rely on API
       setTotalPages(data.pagination?.totalPages || 1);
-    } catch (err) {
-      setError('Failed To Fetch Income Sources');
-      console.error('Error:', err);
+    } catch (err: any) {
+      setError("Failed to fetch incomes: Network error");
+      console.error("Error:", err);
     } finally {
       setIsLoading(false);
     }
   }, [isAuthenticated, page, debouncedSearchTerm]);
 
-  const handleDelete = async (sourceId: string) => {
+  const debouncedFetchIncomes = useCallback(() => {
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+    fetchTimeoutRef.current = setTimeout(() => {
+      fetchIncomes();
+    }, 100);
+  }, [fetchIncomes]);
+
+  const handleDelete = async (incomeId: string) => {
     try {
-      // Check authentication first
       if (!isAuthenticated) {
-        setError('You must be signed in to delete an income source');
+        setError("You must be signed in to delete an income");
         return;
       }
-      
-      setIsDeleting(sourceId);
-      const response = await fetch(`/api/incomesources`, {
-        method: 'DELETE',
+
+      setIsDeleting(incomeId);
+      const response = await fetch(`/api/incomes`, {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ _id: sourceId }),
+        body: JSON.stringify({ _id: incomeId }),
       });
 
       if (!response.ok) {
-        // Check for authentication or permission errors
         if (response.status === 401) {
-          setError('You must be signed in to delete an income source');
+          setError("You must be signed in to delete an income");
           return;
         }
         if (response.status === 403) {
-          setError('You do not have permission to delete this income source');
+          setError("You do not have permission to delete this income");
           return;
         }
-        throw new Error('Failed To Delete Income Source');
+        const errorText = await response.text();
+        throw new Error(`Failed To Delete Income: ${response.status} - ${errorText}`);
       }
-      
-      await fetchIncomeSources();
-    } catch (err) {
-      setError('Failed To Delete Income Source');
-      console.error('Error:', err);
+
+      debouncedFetchIncomes();
+    } catch (err: any) {
+      setError(`Failed To Delete Income: ${err.message}`);
+      console.error("Error:", err);
     } finally {
       setIsDeleting(null);
     }
   };
 
-  const openModal = (source?: IIncomeSources) => {
-    // Check authentication first
+  const openModal = (income?: IIncome) => {
     if (!isAuthenticated) {
-      setError('You must be signed in to manage income sources');
+      setError("You must be signed in to manage incomes");
       return;
     }
-    
-    setEditingSource(source || null);
+
+    setEditingIncome(income || null);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
-    setEditingSource(null);
+    setEditingIncome(null);
     setIsModalOpen(false);
   };
 
   const handleSuccess = () => {
     closeModal();
-    fetchIncomeSources();
+    debouncedFetchIncomes();
   };
 
   useEffect(() => {
     if (authStatus === 'authenticated') {
-      fetchIncomeSources();
+      debouncedFetchIncomes();
     } else if (authStatus === 'unauthenticated') {
-      // Clear income sources if user is not authenticated
-      setIncomeSources([]);
+      setIncomes([]);
       setIsLoading(false);
     }
-  }, [debouncedSearchTerm, page, authStatus, fetchIncomeSources]);
+  }, [debouncedSearchTerm, page, authStatus, debouncedFetchIncomes]);
 
   useEffect(() => {
     return () => {
@@ -170,9 +190,12 @@ export default function IncomeSourceList() {
     };
   }, [debouncedSearch]);
 
+  if (!isMounted) {
+    return null;
+  }
+
   return (
     <div className="max-w-7xl mx-auto p-6">
-      {/* Authentication Status Banner */}
       {!isAuthenticated && !isAuthLoading && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -181,7 +204,7 @@ export default function IncomeSourceList() {
         >
           <AlertCircle className="w-5 h-5 text-amber-400" />
           <div className="flex-1">
-            <p className="text-amber-700">You need to sign in to manage income sources</p>
+            <p className="text-amber-700">You need to sign in to manage incomes</p>
           </div>
           <Link
             href="/auth/signin"
@@ -200,8 +223,8 @@ export default function IncomeSourceList() {
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">Income Sources</h1>
-            <p className="text-blue-200">Manage Your Income Sources</p>
+            <h1 className="text-2xl font-bold text-white">Incomes</h1>
+            <p className="text-blue-200">Manage Your Incomes</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -211,7 +234,7 @@ export default function IncomeSourceList() {
             disabled={!isAuthenticated}
           >
             <Plus className="w-5 h-5" />
-            New Income Source
+            New Income
           </motion.button>
         </div>
 
@@ -219,7 +242,7 @@ export default function IncomeSourceList() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white-300" />
           <input
             type="text"
-            placeholder="Search Income Sources..."
+            placeholder="Search Incomes..."
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/30"
@@ -228,35 +251,29 @@ export default function IncomeSourceList() {
         </div>
       </motion.div>
 
-      {/* Error Message */}
       <AnimatePresence>
         {error && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg flex items-center gap-3"
           >
             <AlertCircle className="w-5 h-5 text-red-400" />
             <p className="text-red-700">{error}</p>
-            <button 
-              onClick={() => setError('')}
-              className="ml-auto p-1 text-red-400 hover:text-red-600"
-            >
+            <button onClick={() => setError("")} className="ml-auto p-1 text-red-400 hover:text-red-600">
               <X className="w-4 h-4" />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Loading State */}
       {isLoading && (
         <div className="flex justify-center items-center py-12">
           <LoadingSpinner size="lg" />
         </div>
       )}
 
-      {/* Authentication Loading State */}
       {isAuthLoading && (
         <div className="flex justify-center items-center py-12">
           <div className="text-center">
@@ -266,115 +283,140 @@ export default function IncomeSourceList() {
         </div>
       )}
 
-      {/* Income Sources Table - Only show when authenticated and not loading */}
       {isAuthenticated && !isLoading && !isAuthLoading && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Name</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Description</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {incomeSources.map((source, index) => (
-                    <motion.tr
-                      key={source._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">{source.name}</td>
-                      <td className="px-6 py-4">{source.description}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openModal(source)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(source._id!)}
-                            disabled={isDeleting === source._id}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            {isDeleting === source._id ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+        <div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <li><strong>Purpose:</strong> This page allows you to manage your incomes.</li>
+              <li><strong>Add a New Income:</strong> click the "New Income" button, fill in the transaction type, amount, transaction date, income source, and organization (optional), then click "Create".</li>
+              <li><strong>Edit a Transaction:</strong> Click the Edit (pencil) button in the Actions column to modify an existing transaction.</li>
+              <li><strong>Delete a Transaction:</strong> Click the Delete (trash) button in the Actions column to remove a transaction.</li>
+              <li><strong>Search Transactions:</strong> Use the search bar to find transactions.</li>
+              <li><strong>Navigate Pages:</strong> Use the "Previous" and "Next" buttons at the bottom to navigate through pages of transactions.</li>
+            </ul>
           </div>
 
-          {/* Empty State */}
-          {incomeSources.length === 0 && !isLoading && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900">No Income Sources Found</h3>
-                <p className="text-gray-500 mt-1">Get started by creating a new income source.</p>
-                <button
-                  onClick={() => openModal()}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  <Plus className="w-5 h-5" />
-                  New Income Source
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Type</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Income Source</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {incomes.map((income: IIncome, index: number) => {
+                      console.log("Rendering income item:", income);
+                      return (
+                        <motion.tr
+                          key={income._id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="border-b border-gray-100 hover:bg-gray-50"
+                        >
+                          <td className="px-6 py-4">{income.transactionId?.type ?? "Unknown"}</td>
+                          <td className="px-6 py-4">
+                            {income.transactionId?.transactionDate
+                              ? new Date(income.transactionId.transactionDate).toLocaleDateString()
+                              : "Unknown"}
+                          </td>
+                          <td className="px-6 py-4">
+                            {typeof income.transactionAmount === "number"
+                              ? `${income.transactionAmount.toFixed(2)} PKR`
+                              : "N/A"}
+                          </td>
+                          <td className="px-6 py-4">{income.incomeSourceId?.name || "Unknown"}</td>
+                          <td className="px-6 py-4">{income.orgId?.name || "Unknown"}</td>
+                          <td className="px-6 py-4 flex justify-end gap-2">
+                            <button
+                              onClick={() => openModal(income)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(income._id)}
+                              disabled={isDeleting === income._id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {isDeleting === income._id ? (
+                                <LoadingSpinner size="sm" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
-          )}
 
-          {/* Pagination */}
-          {incomeSources.length > 0 && (
-            <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-              <div className="text-sm text-gray-500">
-                Showing {incomeSources.length} Income Sources
+            {incomes.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-gray-900">No Incomes Found</h3>
+                  <p className="text-gray-500 mt-1">Get started by creating a new income.</p>
+                  <button
+                    onClick={() => openModal()}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Income
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={page === 1}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page === totalPages}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+            )}
+
+            {incomes.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Showing {incomes.length} Incomes
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
-      {/* Not Authenticated State */}
       {!isAuthenticated && !isAuthLoading && !isLoading && (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
           <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <LogIn className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign in to Manage Income Sources</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign in to Manage Incomes</h2>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            You need to be signed in to view and manage your income sources. Please sign in to continue.
+            You need to be signed in to view and manage your incomes. Please sign in to continue.
           </p>
           <Link
             href="/auth/signin"
@@ -386,7 +428,6 @@ export default function IncomeSourceList() {
         </div>
       )}
 
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <motion.div
@@ -397,18 +438,15 @@ export default function IncomeSourceList() {
           >
             <div className="flex justify-between items-center px-6 py-4 border-b">
               <h2 className="text-xl font-semibold">
-                {editingSource ? 'Edit Income Source' : 'New Income Source'}
+                {editingIncome ? "Edit Income" : "New Income"}
               </h2>
-              <button
-                onClick={closeModal}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
+              <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
-              <IncomeSourceForm
-                initialData={editingSource || undefined}
+              <IncomeForm
+                initialData={editingIncome || undefined}
                 onCancel={closeModal}
                 onSuccess={handleSuccess}
               />

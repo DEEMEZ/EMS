@@ -117,6 +117,17 @@ const IncomeAnalysisTable = () => {
 
       {isAuthenticated && !isAuthLoading && (
         <>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="text-gray-600 list-disc list-inside">
+              <li><strong>Purpose:</strong> This page allows you to analyze your income by source and organizations.</li>
+              <li><strong>Select Date Range:</strong> Use the date pickers to select a start and end date for the analysis period, then click "Filter" to view the report.</li>
+              <li><strong>View Table Data:</strong> Review the table to see total amounts per income source, along with associated organizations.</li>
+              <li><strong>Interpret Charts:</strong> Use the bar chart to compare income amounts across sources and the pie chart to see the distribution of income.</li>
+              <li><strong>Handle Errors:</strong> If an error occurs, click the "Retry" button to attempt fetching the data again.</li>
+            </ul>
+          </div>
+
           <div className="flex flex-wrap gap-4 justify-center mb-6">
             <DatePicker
               selected={safeStartDate}

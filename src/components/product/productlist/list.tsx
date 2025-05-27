@@ -55,46 +55,47 @@ export default function ProductList() {
 
   // Fetch Products
   const fetchProducts = useCallback(async () => {
-  try {
-    setIsLoading(true);
-    setError('');
-    
-    // Only fetch data if the user is authenticated
-    if (authStatus !== 'authenticated') {
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      // Only fetch data if the user is authenticated
+      if (authStatus !== 'authenticated') {
+        setIsLoading(false);
+        return;
+      }
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+        ...(selectedCategory && { category: selectedCategory })
+      });
+
+      const response = await fetch(`/api/products?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      
+      const data = await response.json();
+      setProducts(data.products || []);
+      setTotalPages(data.pagination?.totalPages || 1);
+
+      // Extract unique categories with proper typing
+      if (data.products?.length > 0) {
+        const productCategories = data.products.map((p: IProduct) => p.category);
+        const uniqueCategories = [...new Set(productCategories)] as string[];
+        setCategories(uniqueCategories);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to fetch products. Please try again.');
+    } finally {
       setIsLoading(false);
-      return;
     }
-    
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: '10',
-      ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-      ...(selectedCategory && { category: selectedCategory })
-    });
+  }, [authStatus, page, debouncedSearchTerm, selectedCategory]);
 
-    const response = await fetch(`/api/products?${params.toString()}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch products');
-    }
-    
-    const data = await response.json();
-    setProducts(data.products || []);
-    setTotalPages(data.pagination?.totalPages || 1);
-
-    // Extract unique categories with proper typing
-    if (data.products?.length > 0) {
-      const productCategories = data.products.map((p: IProduct) => p.category);
-      const uniqueCategories = [...new Set(productCategories)] as string[];
-      setCategories(uniqueCategories);
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    setError('Failed to fetch products. Please try again.');
-  } finally {
-    setIsLoading(false);
-  }
-}, [authStatus, page, debouncedSearchTerm, selectedCategory]);
   // Delete Product
   const handleDelete = async (productId: string) => {
     try {
@@ -257,8 +258,10 @@ export default function ProductList() {
           </button>
         </div>
       </motion.div>
-{/* Add StatsSection here */}
-    {isAuthenticated && !isLoading && <StatsSection />}
+
+      {/* Add StatsSection here */}
+      {isAuthenticated && !isLoading && <StatsSection />}
+
       {/* Error Message */}
       <AnimatePresence>
         {error && (
@@ -299,128 +302,143 @@ export default function ProductList() {
 
       {/* Products Table - Only show when authenticated and not loading */}
       {isAuthenticated && !isLoading && !isAuthLoading && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Product</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Category</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Quantity</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Price</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {products.map((product, index) => (
-                    <motion.tr
-                      key={product._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                            <Package className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">{product.name}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                          {product.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">{product.quantity}</td>
-                      <td className="px-6 py-4 font-medium">${product.price.toFixed(2)}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openModal(product)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product._id!)}
-                            disabled={isDeleting === product._id}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            {isDeleting === product._id ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+        <>
+          {/* Instructions Section */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <li><strong>Purpose:</strong> This page allows you to manage your product inventory.</li>
+              <li><strong>Add a New Product:</strong> Click the "New Product" button, fill in the product name, quantity, price, and category, then click "Save".</li>
+              <li><strong>Edit a Product:</strong> Click the Edit (pencil) button in the Actions column to modify an existing product.</li>
+              <li><strong>Delete a Product:</strong> Click the Delete (trash) button in the Actions column to remove a product.</li>
+              <li><strong>Search Products:</strong> Use the search bar to find products by name.</li>
+              <li><strong>Filter by Category:</strong> Use the category dropdown to filter products.</li>
+              <li><strong>Navigate Pages:</strong> Use the pagination controls at the bottom to navigate through pages of products.</li>
+            </ul>
           </div>
 
-          {/* Empty State - Only when authenticated but no products */}
-          {products.length === 0 && !isLoading && isAuthenticated && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-12"
-            >
-              <Package className="w-12 h-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">No Products Found</h3>
-              <p className="text-gray-500 mt-1">Get started by creating a new product.</p>
-              <button
-                onClick={() => openModal()}
-                className="mt-4 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                <Plus className="w-5 h-5" />
-                New Product
-              </button>
-            </motion.div>
-          )}
-
-          {/* Pagination - Only show when there are products */}
-          {products.length > 0 && (
-            <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-              <div className="text-sm text-gray-500">
-                Showing {products.length} products
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
-                  disabled={page === 1}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={page === totalPages}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Product</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Category</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Quantity</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Price</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {products.map((product, index) => (
+                      <motion.tr
+                        key={product._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                              <Package className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">{product.name}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                            {product.category}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">{product.quantity}</td>
+                        <td className="px-6 py-4 font-medium">${product.price.toFixed(2)}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => openModal(product)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product._id!)}
+                              disabled={isDeleting === product._id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {isDeleting === product._id ? (
+                                <LoadingSpinner size="sm" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+
+            {/* Empty State */}
+            {products.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-gray-900">No Products Found</h3>
+                  <p className="text-gray-500 mt-1">Get started by creating a new product.</p>
+                  <button
+                    onClick={() => openModal()}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Product
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {products.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Showing {products.length} Products
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Not Authenticated State */}
       {!isAuthenticated && !isAuthLoading && !isLoading && (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
-          <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <LogIn className="w-8 h-8" />
+          </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign in to Manage Products</h2>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             You need to be signed in to view and manage your products. Please sign in to continue.

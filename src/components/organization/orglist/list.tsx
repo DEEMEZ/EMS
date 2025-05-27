@@ -271,9 +271,9 @@ export default function OrganizationList() {
           </div>
 
           <button
-          onClick={() => fetchOrganizations()}
-    className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 text-white transition-colors"
-    disabled={!isAuthenticated}
+            onClick={() => fetchOrganizations()}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 text-white transition-colors"
+            disabled={!isAuthenticated}
           >
             <RefreshCw className="w-5 h-5" />
             Refresh
@@ -321,127 +321,143 @@ export default function OrganizationList() {
 
       {/* Organizations Table - Only show when authenticated and not loading */}
       {isAuthenticated && !isLoading && !isAuthLoading && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Modified Date</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {organizations.map((org, index) => (
-                    <motion.tr
-                      key={org._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">{org.name}</div>
-                            <div className="text-sm text-gray-500">{org.description}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                          ${org.status === 'Active' ? 'bg-green-100 text-green-800' : ''}
-                          ${org.status === 'Inactive' ? 'bg-gray-100 text-gray-800' : ''}
-                          ${org.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : ''}
-                        `}>
-                          {org.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {new Date(org.modifiedDate!).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openModal(org)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(org._id!)}
-                            disabled={isDeleting === org._id}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            {isDeleting === org._id ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+        <>
+          {/* Instructions Section */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <li><strong>Purpose:</strong> This page allows you to manage your organization listings.</li>
+              <li><strong>Add a New Organization:</strong> Click the "New Organization" button, fill in the organization name, description, and select a status (Active, Inactive, Pending), then click "Save".</li>
+              <li><strong>Edit an Organization:</strong> Click the Edit (pencil) button in the Actions column to modify an existing organization.</li>
+              <li><strong>Delete an Organization:</strong> Click the Delete (trash) button in the Actions column to remove an organization.</li>
+              <li><strong>Search Organizations:</strong> Use the search bar to find organizations by name.</li>
+              <li><strong>Filter by Status:</strong> Use the status dropdown (All, Active, Inactive, Pending) to filter organizations.</li>
+              <li><strong>Navigate Pages:</strong> Use the pagination controls at the bottom to navigate through pages of organizations.</li>
+            </ul>
           </div>
 
-          {/* Empty State - Only when authenticated but no organizations */}
-          {organizations.length === 0 && !isLoading && isAuthenticated && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-12"
-            >
-              <Building2 className="w-12 h-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">No Organizations Found</h3>
-              <p className="text-gray-500 mt-1">Get started by creating a new organization.</p>
-              <button
-                onClick={() => openModal()}
-                className="mt-4 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                <Plus className="w-5 h-5" />
-                New Organization
-              </button>
-            </motion.div>
-          )}
-
-          {/* Pagination - Only show when there are organizations */}
-          {organizations.length > 0 && (
-            <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-              <div className="text-sm text-gray-500">
-                Showing {organizations.length} organizations
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
-                  disabled={page === 1}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={page === totalPages}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Modified Date</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {organizations.map((org, index) => (
+                      <motion.tr
+                        key={org._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                              <Building2 className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">{org.name}</div>
+                              <div className="text-sm text-gray-500">{org.description}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                            ${org.status === 'Active' ? 'bg-green-100 text-green-800' : ''}
+                            ${org.status === 'Inactive' ? 'bg-gray-100 text-gray-800' : ''}
+                            ${org.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : ''}
+                          `}>
+                            {org.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {new Date(org.modifiedDate!).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => openModal(org)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(org._id!)}
+                              disabled={isDeleting === org._id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {isDeleting === org._id ? (
+                                <LoadingSpinner size="sm" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+
+            {/* Empty State - Only when authenticated but no organizations */}
+            {organizations.length === 0 && !isLoading && isAuthenticated && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center py-12"
+              >
+                <Building2 className="w-12 h-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900">No Organizations Found</h3>
+                <p className="text-gray-500 mt-1">Get started by creating a new organization.</p>
+                <button
+                  onClick={() => openModal()}
+                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  <Plus className="w-5 h-5" />
+                  New Organization
+                </button>
+              </motion.div>
+            )}
+
+            {/* Pagination - Only show when there are organizations */}
+            {organizations.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Showing {organizations.length} organizations
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Not Authenticated State */}

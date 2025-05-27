@@ -295,115 +295,129 @@ export default function ExpenseList() {
 
       {/* Expenses Table - Only show when authenticated and not loading */}
       {isAuthenticated && !isLoading && !isAuthLoading && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Type</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Organization</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Payment Method</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {expenses.map((expense: IExpense, index: number) => (
-                    <motion.tr
-                      key={expense._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">{expense.transactionId?.type || 'Unknown'}</td>
-                      <td className="px-6 py-4">
-                        {expense.transactionId?.transactionDate
-                          ? new Date(expense.transactionId.transactionDate).toLocaleDateString()
-                          : 'Unknown'}
-                      </td>
-                      <td className="px-6 py-4">
-                        {typeof expense.transactionAmount === 'number'
-                          ? `${expense.transactionAmount.toFixed(2)} PKR`
-                          : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4">{expense.expensecategoriesId?.name || 'Unknown'}</td>
-                      <td className="px-6 py-4">{expense.orgId?.name || 'Unknown'}</td>
-                      <td className="px-6 py-4">{expense.paymentMethod?.name || 'Unknown'}</td>
-                      <td className="px-6 py-4 flex justify-end gap-2">
-                        <button
-                          onClick={() => openModal(expense)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(expense._id)}
-                          disabled={isDeleting === expense._id}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          {isDeleting === expense._id ? (
-                            <LoadingSpinner size="sm" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+        <div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-sm font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="text-sm text-gray-600 list-disc list-inside leading-tight">
+              <li><strong>Purpose:</strong> This page allows you to manage your expenses.</li>
+              <li><strong>Add a New Expense:</strong> click the "New Expense" button, fill in the transaction type, amount, transaction date, expense category, organization, and payment method (optional), then click "Create".</li>
+              <li><strong>Edit a Transaction:</strong> Click the Edit (pencil) button in the Actions column to modify an existing transaction.</li>
+              <li><strong>Delete a Transaction:</strong> Click the Delete (trash) button in the Actions column to remove a transaction.</li>
+              <li><strong>Search Transactions:</strong> Use the search bar to find transactions.</li>
+              <li><strong>Navigate Pages:</strong> Use the "Previous" and "Next" buttons at the bottom to navigate through pages of transactions.</li>
+            </ul>
           </div>
 
-          {/* Empty State */}
-          {expenses.length === 0 && !isLoading && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900">No Expenses Found</h3>
-                <p className="text-gray-500 mt-1">Get started by creating a new expense.</p>
-                <button
-                  onClick={() => openModal()}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  <Plus className="w-5 h-5" />
-                  New Expense
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-10 py-6 text-left text-sm font-semibold text-gray-600">Transaction Type</th>
+                    <th className="px-10 py-6 text-left text-sm font-semibold text-gray-600">Transaction Date</th>
+                    <th className="px-10 py-6 text-left text-sm font-semibold text-gray-600">Amount</th>
+                    <th className="px-10 py-6 text-left text-sm font-semibold text-gray-600">Expense Category</th>
+                    <th className="px-10 py-6 text-left text-sm font-semibold text-gray-600">Organization</th>
+                    <th className="px-10 py-6 text-left text-sm font-semibold text-gray-600">Payment Method</th>
+                    <th className="px-10 py-6 text-right text-sm font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {expenses.map((expense: IExpense, index: number) => (
+                      <motion.tr
+                        key={expense._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="px-10 py-6">{expense.transactionId?.type || 'Unknown'}</td>
+                        <td className="px-10 py-6">
+                          {expense.transactionId?.transactionDate
+                            ? new Date(expense.transactionId.transactionDate).toLocaleDateString()
+                            : 'Unknown'}
+                        </td>
+                        <td className="px-10 py-6">
+                          {typeof expense.transactionAmount === 'number'
+                            ? `${expense.transactionAmount.toFixed(2)} PKR`
+                            : 'N/A'}
+                        </td>
+                        <td className="px-10 py-6">{expense.expensecategoriesId?.name || 'Unknown'}</td>
+                        <td className="px-10 py-6">{expense.orgId?.name || 'Unknown'}</td>
+                        <td className="px-10 py-6">{expense.paymentMethod?.name || 'Unknown'}</td>
+                        <td className="px-10 py-6 flex justify-end gap-2">
+                          <button
+                            onClick={() => openModal(expense)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(expense._id)}
+                            disabled={isDeleting === expense._id}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {isDeleting === expense._id ? (
+                              <LoadingSpinner size="sm" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
-          )}
 
-          {/* Pagination */}
-          {expenses.length > 0 && (
-            <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-              <div className="text-sm text-gray-500">
-                Showing {expenses.length} Expenses
+            {/* Empty State */}
+            {expenses.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-gray-900">No Expenses Found</h3>
+                  <p className="text-gray-500 mt-1">Get started by creating a new expense.</p>
+                  <button
+                    onClick={() => openModal()}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Expense
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={page === 1}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page === totalPages}
-                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+            )}
+
+            {/* Pagination */}
+            {expenses.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Showing {expenses.length} Expenses
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-600">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 

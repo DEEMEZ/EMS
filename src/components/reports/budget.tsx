@@ -113,6 +113,17 @@ const BudgetAnalysisTable = () => {
       {/* Budget Analysis Content */}
       {isAuthenticated && !isAuthLoading && (
         <>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">How to Use This Page</h2>
+            <ul className="text-gray-600 list-disc list-inside">
+              <li><strong>Purpose:</strong> This page allows you to analyze your budget by category, including monthly limits, total spent, and remaining budget.</li>
+              <li><strong>Select Date Range:</strong> Use the date pickers to select a start and end date for the analysis period, then click "Filter" to view the report.</li>
+              <li><strong>View Table Data:</strong> Review the table to see monthly limits, total spent, and remaining budget per category.</li>
+              <li><strong>Interpret Charts:</strong> Use the bar chart to compare monthly limits and total spent, and the pie chart to see the distribution of monthly limits.</li>
+              <li><strong>Handle Errors:</strong> If an error occurs or a date range issue is detected, review the error message and adjust the dates accordingly.</li>
+            </ul>
+          </div>
+
           <div className="flex flex-wrap gap-4 justify-center mb-6">
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1">Start Date</label>

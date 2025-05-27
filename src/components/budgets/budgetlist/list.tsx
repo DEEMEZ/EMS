@@ -197,88 +197,102 @@ export default function BudgetList() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Monthly Limit</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Spent Amount</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Remaining Budget</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Start Date</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">End Date</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
-              </tr>
-            </thead>
+      <div>
+        <div className="bg-gray-100 text-gray-900 rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">How to Use This Page</h2>
+          <ul className="list-disc list-inside space-y-2">
+            <li><strong>Purpose:</strong> This page allows you to manage your budgets.</li>
+            <li><strong>Add a New Budget:</strong> Click the "New Budget" button, fill in the user, expense category, monthly limit, spent amount, remaining budget, start date, and end date (optional), then click "Create".</li>
+            <li><strong>Edit a Transaction:</strong> Click the Edit (pencil) button in the Actions column to modify an existing transaction.</li>
+            <li><strong>Delete a Transaction:</strong> Click the Delete (trash) button in the Actions column to remove a transaction.</li>
+            <li><strong>Search Transactions:</strong> Use the search bar to find transactions.</li>
+            <li><strong>Navigate Pages:</strong> Use the "Previous" and "Next" buttons at the bottom to navigate through pages of transactions.</li>
+          </ul>
+        </div>
 
-            <tbody>
-              <AnimatePresence>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                      <LoadingSpinner size="lg" />
-                    </td>
-                  </tr>
-                ) : budgets.length > 0 ? (
-                  budgets.map((budget, index) => (
-                    <motion.tr
-                      key={budget._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">{budget.userId?.fullname || 'Unknown User'}</td>
-                      <td className="px-6 py-4">{budget.expensecategoriesId?.name || 'Unknown Category'}</td>
-                      <td className="px-6 py-4">
-                        {typeof budget.monthlyLimit === 'number'
-                          ? `${budget.monthlyLimit.toFixed(2)} PKR`
-                          : 'N/A'}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Expense Category</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Monthly Limit</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Spent Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Remaining Budget</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Start Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">End Date</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <AnimatePresence>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                        <LoadingSpinner size="lg" />
                       </td>
-                      <td className="px-6 py-4">
-                        {typeof budget.spentAmount === 'number'
-                          ? `${budget.spentAmount.toFixed(2)} PKR`
-                          : 'N/A'}
+                    </tr>
+                  ) : budgets.length > 0 ? (
+                    budgets.map((budget, index) => (
+                      <motion.tr
+                        key={budget._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4">{budget.userId?.fullname || 'Unknown User'}</td>
+                        <td className="px-6 py-4">{budget.expensecategoriesId?.name || 'Unknown Category'}</td>
+                        <td className="px-6 py-4">
+                          {typeof budget.monthlyLimit === 'number'
+                            ? `${budget.monthlyLimit.toFixed(2)} PKR`
+                            : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {typeof budget.spentAmount === 'number'
+                            ? `${budget.spentAmount.toFixed(2)} PKR`
+                            : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {typeof budget.remainingBudget === 'number'
+                            ? `${budget.remainingBudget.toFixed(2)} PKR`
+                            : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4">{new Date(budget.startDate).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">{new Date(budget.endDate).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => openModal(budget)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(budget._id)}
+                              disabled={isDeleting === budget._id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {isDeleting === budget._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                        No budgets found.
                       </td>
-                      <td className="px-6 py-4">
-                        {typeof budget.remainingBudget === 'number'
-                          ? `${budget.remainingBudget.toFixed(2)} PKR`
-                          : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4">{new Date(budget.startDate).toLocaleDateString()}</td>
-                      <td className="px-6 py-4">{new Date(budget.endDate).toLocaleDateString()}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openModal(budget)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(budget._id)}
-                            disabled={isDeleting === budget._id}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            {isDeleting === budget._id ? <LoadingSpinner size="sm" /> : <Trash2 className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                      No budgets found.
-                    </td>
-                  </tr>
-                )}
-              </AnimatePresence>
-            </tbody>
-          </table>
+                    </tr>
+                  )}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
